@@ -45,8 +45,17 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Prompt is required" });
   }
 
+  if (prompt.trim().length < 20) {
+    return res.status(400).json({ error: "Please describe your dashboard idea in more detail (at least 20 characters)." });
+  }
+
   if (prompt.length > 500) {
-    return res.status(400).json({ error: "Prompt too long (max 500 characters)" });
+    return res.status(400).json({ error: "Prompt too long (max 500 characters)." });
+  }
+
+  const dashboardWords = /dashboard|tracker|report|analytics|monitor|chart|metric|stat|sales|finance|budget|pipeline|inventory|hr|employee|project|task|kpi|revenue|customer|order|ticket|lead/i;
+  if (!dashboardWords.test(prompt)) {
+    return res.status(400).json({ error: "Please describe a dashboard or tracker you'd like to build. For example: \"A sales pipeline tracker with deal stages and revenue metrics.\"" });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -63,8 +72,8 @@ module.exports = async (req, res) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2048,
         system: SYSTEM_PROMPT,
         messages: [
           {
