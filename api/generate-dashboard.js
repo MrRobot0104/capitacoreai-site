@@ -1,3 +1,7 @@
+const Anthropic = require("@anthropic-ai/sdk");
+
+const client = new Anthropic();
+
 const SYSTEM_PROMPT = `You are a premium dashboard generator for CapitaCoreAI. Given a user's idea, generate a stunning, production-ready HTML dashboard.
 
 CRITICAL RULES:
@@ -49,43 +53,23 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Prompt too long (max 500 characters)" });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: "API key not configured" });
-  }
-
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5-20241022",
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `Build a dashboard for: ${prompt.trim()}`,
-          },
-        ],
-      }),
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-5-20241022",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: `Build a dashboard for: ${prompt.trim()}`,
+        },
+      ],
     });
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      console.error("Anthropic API error:", response.status, errBody);
-      return res.status(500).json({ error: "Failed to generate dashboard. Please try again." });
-    }
-
-    const data = await response.json();
-    const html = data.content[0].text;
+    const html = message.content[0].text;
     res.status(200).json({ html });
   } catch (err) {
-    console.error("Request error:", err);
+    console.error("Claude API error:", err.status, err.message);
     res.status(500).json({ error: "Failed to generate dashboard. Please try again." });
   }
 };
