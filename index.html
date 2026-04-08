@@ -324,6 +324,23 @@
       width: 100%; border: none; border-radius: 12px;
       background: #f9fafb; min-height: 300px;
     }
+    .chat-actions {
+      display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .chat-action-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 16px; border-radius: 10px; font-size: 13px;
+      font-weight: 500; font-family: inherit; cursor: pointer;
+      transition: all 0.2s; border: none;
+    }
+    .chat-action-btn.primary {
+      background: #0a1628; color: #fff;
+    }
+    .chat-action-btn.primary:hover { background: #162240; }
+    .chat-action-btn.secondary {
+      background: #fff; color: #0a1628; border: 1px solid #e5e7eb;
+    }
+    .chat-action-btn.secondary:hover { background: #f9fafb; border-color: #d1d5db; }
     .chat-input-row {
       padding: 14px 16px; border-top: 1px solid #f3f4f6;
       display: flex; gap: 8px; align-items: center;
@@ -799,31 +816,49 @@
       if (el) el.remove();
     }
 
+    let lastDashboardHtml = '';
+
     function addDashboard(html) {
+      lastDashboardHtml = html;
       const msgs = document.getElementById('chatMessages');
       const wrapper = document.createElement('div');
       wrapper.className = 'chat-msg bot';
       wrapper.style.maxWidth = '100%';
-      wrapper.style.padding = '8px';
-      wrapper.innerHTML = '<p style="font-size:13px;color:#6b7280;margin-bottom:8px;">Here\'s your dashboard:</p>';
-
-      const iframe = document.createElement('iframe');
-      iframe.className = 'chat-dashboard-frame';
-      iframe.sandbox = 'allow-scripts';
-      wrapper.appendChild(iframe);
+      wrapper.style.padding = '12px 16px';
+      wrapper.innerHTML = `
+        <p style="font-size:14px;font-weight:500;color:#0a1628;margin-bottom:4px;">Your dashboard is ready!</p>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">Preview it or download the HTML file.</p>
+        <div class="chat-actions">
+          <button class="chat-action-btn primary" onclick="previewDashboard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open Preview
+          </button>
+          <button class="chat-action-btn secondary" onclick="downloadDashboard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download .html
+          </button>
+        </div>
+      `;
       msgs.appendChild(wrapper);
-
-      iframe.srcdoc = html;
-      iframe.onload = function() {
-        try {
-          const h = iframe.contentDocument.documentElement.scrollHeight;
-          iframe.style.height = Math.min(h + 20, 400) + 'px';
-        } catch(e) {
-          iframe.style.height = '350px';
-        }
-      };
-
       msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function previewDashboard() {
+      const win = window.open('', '_blank');
+      win.document.write(lastDashboardHtml);
+      win.document.close();
+    }
+
+    function downloadDashboard() {
+      const blob = new Blob([lastDashboardHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dashboard.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     async function sendChat() {
