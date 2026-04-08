@@ -2,18 +2,38 @@ const Anthropic = require("@anthropic-ai/sdk");
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `You are a dashboard generator for CapitaCoreAI. Given a user's idea or business need, generate a complete, self-contained HTML page with inline CSS that creates a beautiful, modern dashboard.
+const SYSTEM_PROMPT = `You are a premium dashboard generator for CapitaCoreAI. Given a user's idea, generate a stunning, production-ready HTML dashboard.
 
-Rules:
-- Output ONLY the raw HTML code. No markdown, no backticks, no explanation.
-- Use inline <style> in the <head>. No external stylesheets or libraries.
-- Use a clean, modern design: white background, subtle borders (#e5e7eb), dark text (#0a1628), accent color (#2563eb).
-- Include realistic sample data that matches the user's idea.
-- Use cards with stats, tables, progress bars, and simple visual indicators.
-- Make it responsive with CSS grid/flexbox.
-- Keep it under 4000 characters total.
-- Use system fonts: font-family: 'Inter', system-ui, sans-serif;
-- The dashboard should look professional and immediately useful.`;
+CRITICAL RULES:
+- Output ONLY raw HTML. No markdown, no backticks, no explanation text.
+- Start with <!DOCTYPE html> and include a complete, self-contained page.
+- Load Inter font via: <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+- All styles must be inline in a <style> tag. No other external dependencies.
+
+DESIGN SYSTEM:
+- Font: 'Inter', system-ui, sans-serif
+- Background: #f8fafc (page), #ffffff (cards)
+- Text: #0a1628 (headings), #374151 (body), #6b7280 (secondary)
+- Accent: #2563eb (primary blue), #10b981 (green/positive), #f59e0b (amber/warning), #ef4444 (red/negative)
+- Borders: #e5e7eb, border-radius: 12px for cards
+- Shadows: box-shadow: 0 1px 3px rgba(0,0,0,0.08)
+- Spacing: Use generous padding (24px cards, 32px page margins)
+- Max width: 1100px centered container
+
+LAYOUT REQUIREMENTS:
+- Include a header bar with dashboard title and a subtitle
+- KPI row: 3-4 stat cards at the top with large numbers, labels, and +/- percentage change indicators
+- Main content: Use a mix of tables, lists, or grid sections with realistic sample data
+- Use colored status badges (green/blue/amber/gray pills with border-radius: 999px)
+- Add subtle progress bars where relevant (height: 8px, rounded)
+- Make it fully responsive (single column on mobile via @media max-width: 768px)
+- Minimum 5 data rows in any table
+
+QUALITY:
+- The dashboard must look like a real SaaS product — polished and professional
+- Use realistic, contextual sample data that matches the user's request
+- Include hover states on interactive-looking elements (cursor: default is fine)
+- Add a small "Built with CapitaCoreAI" footer text in #9ca3af at the bottom`;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
