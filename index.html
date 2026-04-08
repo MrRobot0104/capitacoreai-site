@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #ffffff;
+      color: #0a1628;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ========== ANIMATED DNA CANVAS ========== */
+    #dna-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ========== CONTENT ========== */
+    .content { position: relative; z-index: 1; }
+
+    /* ========== NAV ========== */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .nav-inner {
+      max-width: 1152px; margin: 0 auto; padding: 0 32px;
+      height: 80px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #0a1628; }
+    .btn-nav {
+      background: #0a1628; color: #fff; font-size: 14px; font-weight: 500;
+      padding: 10px 24px; border-radius: 999px; text-decoration: none; transition: background 0.2s;
+    }
+    .btn-nav:hover { background: #162240; }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .hero-inner { max-width: 720px; padding: 0 24px; }
+    .hero-logo { width: 80px; height: 80px; margin: 0 auto 44px; }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5.5vw, 4rem); font-weight: 700;
+      letter-spacing: -0.035em; line-height: 1.1; color: #0a1628; margin-bottom: 24px;
+    }
+    .hero p { font-size: 1.05rem; color: #9ca3af; max-width: 480px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-hero {
+      background: #0a1628; color: #fff; font-size: 15px; font-weight: 500;
+      padding: 14px 28px; border-radius: 999px; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    }
+    .btn-hero:hover { background: #162240; }
+    .btn-outline {
+      font-size: 15px; font-weight: 500; color: #9ca3af;
+      border: 1px solid #e5e7eb; padding: 14px 28px; border-radius: 999px; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .btn-outline:hover { color: #0a1628; border-color: #d1d5db; }
+    .scroll-line {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, #d1d5db);
+    }
+
+    /* ========== SECTIONS ========== */
+    section { padding: 112px 0; }
+    .section-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; }
+    .section-label {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em;
+      font-weight: 500; color: #9ca3af; margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700;
+      color: #0a1628; letter-spacing: -0.03em; line-height: 1.15;
+    }
+
+    /* ========== SERVICES ========== */
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 64px; }
+    .service-card .icon-box {
+      width: 52px; height: 52px; border-radius: 16px; background: rgba(10,22,40,0.04);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+      transition: background 0.3s;
+    }
+    .service-card:hover .icon-box { background: rgba(10,22,40,0.07); }
+    .service-card h3 { font-size: 18px; font-weight: 600; color: #0a1628; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .service-card p { font-size: 15px; color: #9ca3af; line-height: 1.7; }
+
+    /* ========== PRODUCTS ========== */
+    .products-section { background: #f9fafb; }
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 64px; }
+    .product-card {
+      background: #fff; border-radius: 16px; border: 1px solid #f3f4f6; padding: 28px;
+      transition: all 0.3s; cursor: pointer; text-decoration: none; color: inherit; display: block;
+    }
+    .product-card:hover { border-color: #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transform: translateY(-2px); }
+    .product-card .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .product-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: #9ca3af; }
+    .product-card .status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #10b981; font-weight: 500; }
+    .product-card .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; }
+    .product-card h3 { font-size: 17px; font-weight: 600; color: #0a1628; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .product-card .tagline { font-size: 14px; color: #9ca3af; line-height: 1.65; margin-bottom: 20px; }
+    .product-card ul { list-style: none; margin-bottom: 24px; }
+    .product-card li { font-size: 13px; color: #9ca3af; padding: 4px 0; display: flex; align-items: center; gap: 10px; }
+    .product-card li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(10,22,40,0.15); flex-shrink: 0; }
+    .product-card .card-link { font-size: 13px; font-weight: 500; color: #0a1628; display: flex; align-items: center; gap: 6px; }
+
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(10,22,40,0.6); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #fff; border-radius: 20px; max-width: 900px; width: 100%;
+      max-height: 85vh; overflow: hidden; position: relative;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      padding: 24px 28px; border-bottom: 1px solid #f3f4f6;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 18px; font-weight: 600; color: #0a1628; }
+    .modal-header .badge { font-size: 11px; background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 999px; font-weight: 500; }
+    .modal-close {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid #f3f4f6;
+      background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; font-size: 18px; color: #9ca3af;
+    }
+    .modal-close:hover { background: #f9fafb; }
+    .modal-body { padding: 28px; overflow-y: auto; max-height: calc(85vh - 80px); }
+    .dashboard-preview {
+      background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 32px; min-height: 400px; position: relative;
+    }
+    .dash-nav { display: flex; gap: 24px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 24px; }
+    .dash-nav span { font-size: 13px; color: #9ca3af; font-weight: 500; cursor: default; }
+    .dash-nav span.active { color: #0a1628; border-bottom: 2px solid #0a1628; padding-bottom: 14px; margin-bottom: -16px; }
+    .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .dash-stat { background: #fff; border: 1px solid #f3f4f6; border-radius: 10px; padding: 20px; }
+    .dash-stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 8px; }
+    .dash-stat .value { font-size: 24px; font-weight: 700; color: #0a1628; }
+    .dash-table { width: 100%; background: #fff; border: 1px solid #f3f4f6; border-radius: 10px; overflow: hidden; }
+    .dash-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; padding: 14px 16px; background: #fafbfc; border-bottom: 1px solid #f3f4f6; font-weight: 500; }
+    .dash-table td { font-size: 13px; color: #4b5563; padding: 12px 16px; border-bottom: 1px solid #f9fafb; }
+    .dash-bar { height: 6px; border-radius: 3px; background: #e5e7eb; width: 100px; }
+    .dash-bar-fill { height: 100%; border-radius: 3px; background: #0a1628; }
+    .dash-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 500; }
+    .dash-badge.green { background: #f0fdf4; color: #16a34a; }
+    .dash-badge.blue { background: #eff6ff; color: #2563eb; }
+    .dash-badge.gray { background: #f3f4f6; color: #6b7280; }
+    .preview-watermark {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 48px; font-weight: 700; color: rgba(10,22,40,0.04);
+      letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none;
+    }
+
+    /* ========== ABOUT ========== */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+    .about-grid h2 { margin-bottom: 32px; }
+    .about-grid p { font-size: 15px; color: #9ca3af; line-height: 1.8; margin-bottom: 20px; }
+    .values-list { border-top: 1px solid #f3f4f6; }
+    .value-item { padding: 24px 0; border-bottom: 1px solid #f3f4f6; }
+    .value-item h3 { font-size: 15px; font-weight: 600; color: #0a1628; margin-bottom: 8px; }
+    .value-item p { font-size: 14px; color: #9ca3af; line-height: 1.7; }
+
+    /* ========== CONTACT ========== */
+    .contact-section { background: #f9fafb; }
+    .contact-inner { max-width: 560px; }
+    .contact-inner p.desc { font-size: 15px; color: #9ca3af; line-height: 1.7; margin: 16px 0 40px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-input {
+      width: 100%; background: #fff; border: 1px solid #e5e7eb; color: #0a1628;
+      padding: 14px 18px; border-radius: 12px; font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input::placeholder { color: #9ca3af; }
+    .form-input:focus { border-color: rgba(10,22,40,0.3); }
+    textarea.form-input { resize: none; margin-bottom: 16px; }
+    .btn-submit {
+      background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; font-family: inherit;
+      padding: 14px 28px; border-radius: 999px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #162240; }
+    .form-success { display: none; background: #fff; border: 1px solid #f3f4f6; border-radius: 16px; padding: 40px; text-align: center; }
+    .form-success.active { display: block; }
+    .form-success h4 { font-size: 16px; font-weight: 600; color: #0a1628; margin-bottom: 4px; }
+    .form-success p { font-size: 14px; color: #9ca3af; }
+
+    /* ========== FOOTER ========== */
+    .footer { background: #fff; border-top: 1px solid #f3f4f6; }
+    .footer-top { padding: 48px 0; display: flex; justify-content: space-between; align-items: center; }
+    .footer-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0a1628; margin-bottom: 12px; }
+    .footer-brand img { width: 24px; height: 24px; }
+    .footer-brand span { font-weight: 600; font-size: 14px; }
+    .footer-desc { font-size: 13px; color: #9ca3af; }
+    .footer-nav { display: flex; gap: 32px; }
+    .footer-nav a { font-size: 13px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+    .footer-nav a:hover { color: #0a1628; }
+    .footer-bottom { border-top: 1px solid #f3f4f6; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .footer-bottom p { font-size: 12px; color: #9ca3af; }
+    .footer-bottom .built { color: #d1d5db; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .nav-inner { height: 68px; padding: 0 20px; }
+      .nav-links, .nav .btn-nav { display: none; }
+      .services-grid, .products-grid { grid-template-columns: 1fr; }
+      .about-grid { grid-template-columns: 1fr; gap: 48px; }
+      .form-row { grid-template-columns: 1fr; }
+      .footer-top { flex-direction: column; align-items: flex-start; gap: 32px; }
+      .dash-grid { grid-template-columns: 1fr; }
+      section { padding: 80px 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { opacity: 0; animation: fadeUp 0.6s ease forwards; }
+    .d1 { animation-delay: 100ms; }
+    .d2 { animation-delay: 200ms; }
+    .d3 { animation-delay: 300ms; }
+  </style>
+</head>
+<body>
+
+  <!-- ANIMATED DNA BACKGROUND (JavaScript Canvas) -->
+  <canvas id="dna-canvas"></canvas>
+
+  <div class="content">
+
+    <!-- NAV -->
+    <header class="nav">
+      <div class="nav-inner">
+        <a href="#" class="nav-brand">
+          <img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI">
+          <span>CapitaCoreAI</span>
+        </a>
+        <div class="nav-links">
+          <a href="#services">Services</a>
+          <a href="#products">Products</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <a href="#contact" class="btn-nav">Get in Touch</a>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="fade-up">
+          <img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI" class="hero-logo">
+        </div>
+        <h1 class="fade-up d1">AI consulting &amp;<br>intelligence software</h1>
+        <p class="fade-up d2">We build specialized AI solutions and digital products for businesses that need precision, speed, and clarity.</p>
+        <div class="hero-buttons fade-up d3">
+          <a href="#services" class="btn-hero">
+            See what we do
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#contact" class="btn-outline">Contact us</a>
+        </div>
+      </div>
+      <div class="scroll-line"></div>
+    </section>
+
+    <!-- SERVICES -->
+    <section id="services">
+      <div class="section-inner">
+        <p class="section-label">What we do</p>
+        <h2 class="section-title">Three ways we can help</h2>
+        <div class="services-grid">
+          <div class="service-card">
+            <div class="icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a1628" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><path d="M9 21h6M10 17v4M14 17v4"/></svg>
+            </div>
+            <h3>AI Consulting</h3>
+            <p>Strategic guidance on integrating AI into your business. We help you identify opportunities, build roadmaps, and implement solutions that deliver real results.</p>
+          </div>
+          <div class="service-card">
+            <div class="icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a1628" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Custom AI Products</h3>
+            <p>Purpose-built AI tools tailored to your workflow. From sales intelligence to financial dashboards — engineered for the way you actually work.</p>
+          </div>
+          <div class="service-card">
+            <div class="icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a1628" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <h3>Data &amp; Analytics</h3>
+            <p>Turn your data into decisions. We build dashboards, trackers, and reporting tools that give you clarity on the metrics that matter most.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section id="products" class="products-section">
+      <div class="section-inner">
+        <p class="section-label">Products</p>
+        <h2 class="section-title">Tools built for performance</h2>
+        <div class="products-grid">
+          <div class="product-card" onclick="openModal('sales')">
+            <div class="card-top">
+              <span class="category">Sales Intelligence</span>
+              <span class="status"><span class="status-dot"></span> Live</span>
+            </div>
+            <h3>AI Sales Prompt Pack</h3>
+            <p class="tagline">55 battle-tested AI prompts across 8 sales stages — from prospect research to closing.</p>
+            <ul><li>55 curated prompts</li><li>8 sales categories</li><li>Favorites &amp; custom prompts</li><li>Copy-to-clipboard</li></ul>
+            <div class="card-link">Preview dashboard <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></div>
+          </div>
+          <div class="product-card" onclick="openModal('budget')">
+            <div class="card-top">
+              <span class="category">Personal Finance</span>
+              <span class="status"><span class="status-dot"></span> Live</span>
+            </div>
+            <h3>Monthly Budget Planner</h3>
+            <p class="tagline">Full-featured personal finance dashboard with income tracking, budgets, and savings goals.</p>
+            <ul><li>Budget by category</li><li>Transaction log</li><li>Debt tracker</li><li>Savings goals</li></ul>
+            <div class="card-link">Preview dashboard <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></div>
+          </div>
+          <div class="product-card" onclick="openModal('pipeline')">
+            <div class="card-top">
+              <span class="category">Pipeline Management</span>
+              <span class="status"><span class="status-dot"></span> Live</span>
+            </div>
+            <h3>AI Pipeline Tracker</h3>
+            <p class="tagline">Sales pipeline management with deal tracking, forecasting, activity logs, and team analytics.</p>
+            <ul><li>Deal pipeline view</li><li>Weighted forecasting</li><li>Activity log</li><li>Team analytics</li></ul>
+            <div class="card-link">Preview dashboard <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-sales" onclick="closeModal(event,'sales')">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:12px"><h3>AI Sales Prompt Pack</h3><span class="badge">Live</span></div>
+          <button class="modal-close" onclick="closeModal(event,'sales')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="dashboard-preview">
+            <div class="preview-watermark">PREVIEW</div>
+            <div class="dash-nav"><span class="active">All Prompts</span><span>Favorites</span><span>Custom</span><span>Analytics</span></div>
+            <div class="dash-grid">
+              <div class="dash-stat"><div class="label">Total Prompts</div><div class="value">55</div></div>
+              <div class="dash-stat"><div class="label">Categories</div><div class="value">8</div></div>
+              <div class="dash-stat"><div class="label">Saved</div><div class="value">12</div></div>
+            </div>
+            <table class="dash-table"><thead><tr><th>Prompt</th><th>Category</th><th>Stage</th></tr></thead>
+            <tbody>
+              <tr><td>Research prospect's tech stack</td><td>Research</td><td><span class="dash-badge blue">Discovery</span></td></tr>
+              <tr><td>Draft personalized opener</td><td>Outreach</td><td><span class="dash-badge green">Prospecting</span></td></tr>
+              <tr><td>Handle pricing objection</td><td>Objections</td><td><span class="dash-badge gray">Negotiation</span></td></tr>
+              <tr><td>Generate follow-up email</td><td>Follow-up</td><td><span class="dash-badge blue">Closing</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-budget" onclick="closeModal(event,'budget')">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:12px"><h3>Monthly Budget Planner</h3><span class="badge">Live</span></div>
+          <button class="modal-close" onclick="closeModal(event,'budget')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="dashboard-preview">
+            <div class="preview-watermark">PREVIEW</div>
+            <div class="dash-nav"><span class="active">Overview</span><span>Transactions</span><span>Savings</span><span>Debt</span></div>
+            <div class="dash-grid">
+              <div class="dash-stat"><div class="label">Monthly Income</div><div class="value">$5,400</div></div>
+              <div class="dash-stat"><div class="label">Total Spent</div><div class="value">$3,180</div></div>
+              <div class="dash-stat"><div class="label">Remaining</div><div class="value">$2,220</div></div>
+            </div>
+            <table class="dash-table"><thead><tr><th>Category</th><th>Budget</th><th>Spent</th><th>Progress</th></tr></thead>
+            <tbody>
+              <tr><td>Housing</td><td>$1,500</td><td>$1,500</td><td><div class="dash-bar"><div class="dash-bar-fill" style="width:100%"></div></div></td></tr>
+              <tr><td>Food</td><td>$600</td><td>$420</td><td><div class="dash-bar"><div class="dash-bar-fill" style="width:70%"></div></div></td></tr>
+              <tr><td>Transport</td><td>$300</td><td>$180</td><td><div class="dash-bar"><div class="dash-bar-fill" style="width:60%"></div></div></td></tr>
+              <tr><td>Entertainment</td><td>$200</td><td>$80</td><td><div class="dash-bar"><div class="dash-bar-fill" style="width:40%"></div></div></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pipeline" onclick="closeModal(event,'pipeline')">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:12px"><h3>AI Pipeline Tracker</h3><span class="badge">Live</span></div>
+          <button class="modal-close" onclick="closeModal(event,'pipeline')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="dashboard-preview">
+            <div class="preview-watermark">PREVIEW</div>
+            <div class="dash-nav"><span class="active">Pipeline</span><span>Forecast</span><span>Activity</span><span>Team</span></div>
+            <div class="dash-grid">
+              <div class="dash-stat"><div class="label">Open Deals</div><div class="value">24</div></div>
+              <div class="dash-stat"><div class="label">Pipeline Value</div><div class="value">$284K</div></div>
+              <div class="dash-stat"><div class="label">Win Rate</div><div class="value">34%</div></div>
+            </div>
+            <table class="dash-table"><thead><tr><th>Deal</th><th>Value</th><th>Stage</th><th>Probability</th></tr></thead>
+            <tbody>
+              <tr><td>Acme Corp — Enterprise</td><td>$48,000</td><td><span class="dash-badge green">Proposal</span></td><td>65%</td></tr>
+              <tr><td>TechStart — Platform</td><td>$24,000</td><td><span class="dash-badge blue">Discovery</span></td><td>30%</td></tr>
+              <tr><td>GlobalFin — Analytics</td><td>$86,000</td><td><span class="dash-badge green">Negotiation</span></td><td>80%</td></tr>
+              <tr><td>StartupXYZ — Basic</td><td>$12,000</td><td><span class="dash-badge gray">Qualified</span></td><td>20%</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="section-inner">
+        <div class="about-grid">
+          <div>
+            <p class="section-label">About</p>
+            <h2 class="section-title">We believe AI should solve specific problems, not everything at once</h2>
+            <p>CapitaCoreAI was founded on a simple idea: the most valuable AI isn't general-purpose — it's purpose-built. We work with businesses to design, build, and deploy AI tools that solve the exact problems keeping them up at night.</p>
+            <p>Whether it's a sales team that needs better pipeline visibility, a founder who needs to automate their workflow, or an enterprise that needs real-time intelligence — we build the tool that fits.</p>
+          </div>
+          <div class="values-list">
+            <div class="value-item"><h3>Precision</h3><p>Every product is designed for a specific use case. No bloat, no unnecessary features — just what you need to make better decisions.</p></div>
+            <div class="value-item"><h3>Speed</h3><p>We move fast. From concept to working product, we deliver solutions in weeks, not quarters.</p></div>
+            <div class="value-item"><h3>Clarity</h3><p>Complex problems deserve simple interfaces. Our tools surface the signal, not the noise.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="contact-section">
+      <div class="section-inner">
+        <div class="contact-inner">
+          <p class="section-label">Contact</p>
+          <h2 class="section-title">Let's build something together</h2>
+          <p class="desc">Have a project in mind? Tell us what you're working on and we'll get back to you within 24 hours.</p>
+          <form id="contactForm" onsubmit="submitForm(event)">
+            <div class="form-row">
+              <input type="text" id="fname" class="form-input" placeholder="Your name" required>
+              <input type="email" id="femail" class="form-input" placeholder="your@email.com" required>
+            </div>
+            <textarea id="fmessage" class="form-input" rows="4" placeholder="Tell us about your project..." required></textarea>
+            <button type="submit" class="btn-submit">
+              Send message
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+          <div class="form-success" id="formSuccess">
+            <h4>Message sent!</h4>
+            <p>We'll get back to you within 24 hours.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="section-inner">
+        <div class="footer-top">
+          <div>
+            <a href="#" class="footer-brand">
+              <img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI">
+              <span>CapitaCoreAI</span>
+            </a>
+            <p class="footer-desc">AI consulting &amp; intelligence software.</p>
+          </div>
+          <nav class="footer-nav">
+            <a href="#services">Services</a>
+            <a href="#products">Products</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+          </nav>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+          <p class="built">Built with precision.</p>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // ============ ANIMATED DNA BACKGROUND ============
+    const canvas = document.getElementById('dna-canvas');
+    const ctx = canvas.getContext('2d');
+    let time = 0;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSize, opacity) {
+      const spacing = length / nodeCount;
+
+      for (let i = 0; i < nodeCount; i++) {
+        const t = (time * speed) + (i * 0.4) + phase;
+        const y = startY + (i * spacing);
+        const x1 = cx + Math.sin(t) * amplitude;
+        const x2 = cx + Math.sin(t + Math.PI) * amplitude;
+
+        // Connector line between the two strands
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.strokeStyle = 'rgba(10, 22, 40, ' + (opacity * 0.25) + ')';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Left strand line to next node
+        if (i < nodeCount - 1) {
+          const nextT = (time * speed) + ((i + 1) * 0.4) + phase;
+          const nextY = startY + ((i + 1) * spacing);
+          const nextX1 = cx + Math.sin(nextT) * amplitude;
+          const nextX2 = cx + Math.sin(nextT + Math.PI) * amplitude;
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y);
+          ctx.lineTo(nextX1, nextY);
+          ctx.strokeStyle = 'rgba(10, 22, 40, ' + (opacity * 0.4) + ')';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x2, y);
+          ctx.lineTo(nextX2, nextY);
+          ctx.strokeStyle = 'rgba(10, 22, 40, ' + (opacity * 0.4) + ')';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Nodes
+        ctx.beginPath();
+        ctx.arc(x1, y, nodeSize, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(10, 22, 40, ' + (opacity * 0.6) + ')';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(x2, y, nodeSize * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(10, 22, 40, ' + (opacity * 0.45) + ')';
+        ctx.fill();
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.008;
+
+      const scrollY = window.scrollY * 0.15;
+
+      // Strand 1 — right side, large
+      drawDNA(
+        canvas.width - 120,
+        -100 - scrollY,
+        canvas.height + 400,
+        22, 80, 0.6, 0, 4, 0.35
+      );
+
+      // Strand 2 — left side, medium
+      drawDNA(
+        100,
+        50 - scrollY * 0.7,
+        canvas.height + 300,
+        18, 60, 0.5, 2, 3.5, 0.2
+      );
+
+      // Strand 3 — center-right, subtle
+      drawDNA(
+        canvas.width * 0.65,
+        200 - scrollY * 0.5,
+        canvas.height,
+        14, 50, 0.4, 4, 3, 0.12
+      );
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ============ MODALS ============
+    function openModal(id) {
+      document.getElementById('modal-' + id).classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(e, id) {
+      document.getElementById('modal-' + id).classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // ============ CONTACT FORM ============
+    function submitForm(e) {
+      e.preventDefault();
+      const name = document.getElementById('fname').value;
+      const email = document.getElementById('femail').value;
+      const message = document.getElementById('fmessage').value;
+
+      // Use Web3Forms (free, no signup for basic use)
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: 'YOUR_ACCESS_KEY',
+          name: name,
+          email: email,
+          message: message,
+          to: 'capitacoreai@gmail.com',
+          subject: 'New inquiry from CapitaCoreAI.com'
+        })
+      }).then(() => {
+        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById('formSuccess').classList.add('active');
+      }).catch(() => {
+        // Fallback: open email client
+        window.location.href = 'mailto:capitacoreai@gmail.com?subject=CapitaCoreAI Inquiry from ' + name + '&body=' + encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\n\n' + message);
+      });
+    }
+  </script>
+</body>
+</html>
