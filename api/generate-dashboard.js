@@ -93,7 +93,11 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "API error: " + detail });
     }
 
-    const html = data.content[0].text;
+    let html = data.content[0].text;
+
+    // Strip markdown code fences if the model wraps output in ```html ... ```
+    html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
+
     res.status(200).json({ html });
   } catch (err) {
     console.error("Request error:", err.message);
