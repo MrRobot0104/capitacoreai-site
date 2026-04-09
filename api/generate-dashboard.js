@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages: [
           {
@@ -97,6 +97,16 @@ module.exports = async (req, res) => {
 
     // Strip markdown code fences if the model wraps output in ```html ... ```
     html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
+
+    // If output was truncated (no closing html tag), patch it
+    if (!html.includes('</html>')) {
+      html += '\n</body></html>';
+    }
+
+    // Verify it starts with valid HTML
+    if (!html.startsWith('<!') && !html.startsWith('<html')) {
+      return res.status(500).json({ error: "Dashboard generation failed — invalid output. Please try again." });
+    }
 
     res.status(200).json({ html });
   } catch (err) {
