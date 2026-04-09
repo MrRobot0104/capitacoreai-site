@@ -861,11 +861,43 @@
       URL.revokeObjectURL(url);
     }
 
+    // ============ RATE LIMITING ============
+    const MAX_GENERATIONS = 3;
+    const COOLDOWN_MS = 30000;
+    let lastRequestTime = 0;
+
+    function getUsageCount() {
+      return parseInt(localStorage.getItem('ccai_usage') || '0', 10);
+    }
+    function incrementUsage() {
+      localStorage.setItem('ccai_usage', (getUsageCount() + 1).toString());
+    }
+
     async function sendChat() {
       const input = document.getElementById('chatInput');
       const sendBtn = document.getElementById('chatSendBtn');
       const prompt = input.value.trim();
       if (!prompt) return;
+
+      // Rate limit check
+      const usage = getUsageCount();
+      if (usage >= MAX_GENERATIONS) {
+        addMessage(prompt, 'user');
+        input.value = '';
+        addMessage('You\'ve used all ' + MAX_GENERATIONS + ' free dashboard builds! Want more? Contact us at capitacoreai@gmail.com', 'bot');
+        return;
+      }
+
+      // Cooldown check
+      const now = Date.now();
+      const elapsed = now - lastRequestTime;
+      if (lastRequestTime > 0 && elapsed < COOLDOWN_MS) {
+        const wait = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+        addMessage(prompt, 'user');
+        input.value = '';
+        addMessage('Please wait ' + wait + ' seconds before generating another dashboard.', 'bot');
+        return;
+      }
 
       addMessage(prompt, 'user');
       input.value = '';
@@ -889,8 +921,13 @@
         }
 
         const data = await res.json();
+        lastRequestTime = Date.now();
+        incrementUsage();
+        const remaining = MAX_GENERATIONS - getUsageCount();
         addDashboard(data.html);
-        addMessage('Want to try another idea? Just type it in!', 'bot');
+        addMessage(remaining > 0
+          ? 'You have ' + remaining + ' free build' + (remaining === 1 ? '' : 's') + ' left. Try another idea!'
+          : 'That was your last free build! Contact us for unlimited access.', 'bot');
       } catch (err) {
         removeLoading();
         addMessage('Connection error. Please try again.', 'bot');
