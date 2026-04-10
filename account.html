@@ -203,8 +203,14 @@
     }
 
     async function init() {
-      sb.auth.onAuthStateChange((event) => {
-        if (event === 'PASSWORD_RECOVERY') showResetForm();
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') { showResetForm(); return; }
+        if (event === 'SIGNED_IN' && session && !IS_RECOVERY) showDashboard(session.user);
+        if (event === 'SIGNED_OUT') {
+          document.getElementById('dashboard').classList.remove('active');
+          document.getElementById('authSection').style.display = 'block';
+          switchTab('login');
+        }
       });
       await sb.auth.getSession();
       if (IS_RECOVERY) { showResetForm(); return; }
