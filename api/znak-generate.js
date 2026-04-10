@@ -21,13 +21,16 @@ DASHBOARD STRUCTURE (follow this exactly):
 4. DATA TABLE: Full HTML table with all available data rows. Styled with alternating row colors, hover states, and status badges where appropriate.
 5. FOOTER: "Built with znak by CapitaCoreAI" in #aaaaaa, centered, small text
 
-CHART.JS REQUIREMENTS (critical — charts must render):
-- ALL Chart.js code goes in ONE <script> tag at the very end of <body>
+CHART.JS REQUIREMENTS (THIS IS WHY CHARTS ARE EMPTY IF YOU GET IT WRONG):
+- ALL Chart.js code MUST be inside: window.addEventListener('load', function() { ... });
+  This ensures Chart.js CDN has loaded before any chart is created.
 - Each chart: new Chart(document.getElementById('chartId'), { type: '...', data: { labels: [...], datasets: [{ data: [...], ... }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } })
-- ALWAYS populate labels[] and data[] arrays with REAL numbers from the user's data
+- ALWAYS populate labels[] and data[] arrays with REAL HARDCODED numbers. Example:
+  labels: ['Switch', 'Service', 'PSU', 'Storage'],
+  datasets: [{ label: 'Net Price', data: [28500, 4200, 1800, 950], backgroundColor: ['#111111','#555555','#999999','#cccccc'] }]
 - Use backgroundColor arrays for pie/doughnut charts
-- NEVER reference undefined variables. All data must be inline in the chart config.
-- Chart types: bar (comparisons), line (trends over time), doughnut (proportions), horizontalBar via indexAxis:'y'
+- NEVER reference undefined variables. NEVER use empty arrays. All data must be literal values.
+- Chart types: bar (comparisons), line (trends over time), doughnut (proportions), horizontal bar via indexAxis:'y'
 
 WHEN USER PROVIDES DATA (CSV/Excel):
 - This is the most important part. PARSE the data and USE IT.
