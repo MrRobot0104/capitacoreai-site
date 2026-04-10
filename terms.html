@@ -52,8 +52,9 @@
         <a href="agents.html">Agents</a>
         <a href="/#about">About</a>
         <a href="/#contact">Contact</a>
+        <a href="account.html" id="navMyAgents" style="display:none;color:#111111;font-weight:600;">My Agents</a>
       </div>
-      <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
         <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
@@ -135,6 +136,12 @@
       </nav>
     </div>
   </footer>
-  <script>function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}
+    const sb=supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8');
+    async function checkNav(){const{data:{session}}=await sb.auth.getSession();const n=document.getElementById('navMyAgents'),l=document.getElementById('navLoginBtn');if(session){if(n)n.style.display='inline';if(l)l.style.display='none';}else{if(n)n.style.display='none';if(l)l.style.display='inline-block';}}
+    checkNav();sb.auth.onAuthStateChange(()=>checkNav());
+  </script>
 </body>
 </html>
