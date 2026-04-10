@@ -1,43 +1,66 @@
-const { renderDashboard } = require('../dashboard-template.js');
+const EXTRACT_PROMPT = `You are a data extraction expert. Given CSV/Excel data, extract it into a structured JSON format. Output ONLY valid JSON.
 
-const SYSTEM_PROMPT = `You are a data analyst. You receive data and output a JSON dashboard config. Output ONLY valid JSON.
+Read the DATA SUMMARY (pre-computed stats) and RAW DATA carefully. Use the ACTUAL numbers.
 
-CRITICAL: The user's message contains a DATA SUMMARY with pre-computed sums, averages, etc. USE THOSE EXACT NUMBERS in the KPI values. DO NOT output zeros or placeholders.
-
-JSON SCHEMA:
 {
-  "title": "Dashboard Title",
-  "subtitle": "Quote #123 · Deal ID 456 · Date",
-  "badges": [{"text": "Status: Approved", "color": "green"}, {"text": "Currency: USD", "color": "blue"}],
+  "title": "Descriptive Dashboard Title",
+  "subtitle": "Metadata like quote IDs, dates, company name",
   "kpis": [
-    {"label": "TOTAL LIST PRICE", "value": "$98,622", "change": "+15% vs benchmark", "subtitle": "Sum of all line items"}
+    {"label": "TOTAL LIST PRICE", "value": "$98,622", "change": "Across all line items"}
   ],
   "charts": [
     {
       "title": "Chart Title",
-      "subtitle": "What this shows",
+      "subtitle": "Description",
       "type": "bar",
       "labels": ["Item A", "Item B"],
       "datasets": [{"label": "Series", "data": [23500, 7050]}]
     }
   ],
   "table": {
-    "title": "Line Items Detail",
-    "headers": ["SKU", "Description", "Qty", "List Price", "Net Price", "Discount"],
-    "rows": [["C9350-48HX", "Catalyst Switch", "48", "$23,500", "$7,050", "70%"]]
+    "title": "Detailed Line Items",
+    "headers": ["Col1", "Col2"],
+    "rows": [["val1", "val2"]]
   }
 }
 
-RULES:
-1. KPI values: Use the pre-computed sums/averages from DATA SUMMARY. Format nicely ($98.6K, 68.2%, 761 units).
-2. Charts: ALWAYS put real numbers in data arrays. Get them from the DATA SUMMARY and RAW DATA.
-   - "bar": comparisons (e.g. list vs net price per SKU — use 2 datasets)
-   - "horizontalBar": rankings (e.g. discount rate by SKU)
-   - "doughnut": proportions (e.g. spend by category)
-   - "line": trends over time
-3. Table: Include ALL data rows from the raw data. Format $ values and percentages.
-4. 3-5 KPIs, 2-3 charts, full table.
-5. Output ONLY the JSON object. No markdown. No backticks. No explanation.`;
+Chart types: bar, horizontalBar, line, doughnut, pie.
+KPI values: Use pre-computed sums/averages. Format as $98.6K, 68.2%, 761 units.
+Charts: Put REAL numbers in data arrays from the actual data.
+Table: Include ALL rows.
+Output ONLY JSON.`;
+
+const DESIGN_PROMPT = `You are an elite dashboard designer. You receive a JSON data config and create a STUNNING, UNIQUE HTML dashboard.
+
+IMPORTANT: The JSON below contains ALL the data — KPIs, chart configs, and table data. Your job is to make it BEAUTIFUL. Every value is already extracted — just embed them in your HTML.
+
+OUTPUT: A single complete HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
+
+Load in <head>:
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+DESIGN FREEDOM: Make each dashboard UNIQUE. Be creative with:
+- Layout variations (sidebar stats, full-width charts, card grids, split sections)
+- Color themes (each dashboard should have its own personality)
+- Custom SVG icons, gradient accents, glass-morphism effects
+- Animated number counters, progress rings, sparklines
+- Creative chart styling (gradient fills, custom tooltips, annotations)
+- Professional typography hierarchy
+- Creative section dividers, badges, tags
+
+CHART.JS RULES:
+- ALL chart code inside: window.addEventListener('load', function() { ... })
+- Use the EXACT data values from the JSON config
+- borderRadius on bars, tension on lines, custom colors
+
+DATA RULES:
+- The KPI values from the JSON go directly into the KPI cards
+- The chart labels and datasets from JSON go directly into Chart.js configs
+- The table headers and rows from JSON go directly into the HTML table
+- DO NOT change, recalculate, or zero-out any values. Use them AS-IS.
+
+Make this look like a $50,000 custom executive dashboard. Each one should be different.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -93,40 +116,61 @@ module.exports = async (req, res) => {
     }));
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // ========= STEP 1: Extract data with Haiku (fast, cheap, accurate) =========
+      const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 6000,
-          system: SYSTEM_PROMPT,
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4000,
+          system: EXTRACT_PROMPT,
           messages: messages,
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        console.error('Claude API error:', response.status, JSON.stringify(data));
-        return res.status(500).json({ error: 'Generation failed: ' + (data.error?.message || 'AI error') });
+      const extractData = await extractRes.json();
+      if (!extractRes.ok) {
+        console.error('Haiku error:', extractRes.status, JSON.stringify(extractData));
+        return res.status(500).json({ error: 'Data extraction failed: ' + (extractData.error?.message || 'AI error') });
       }
 
-      let jsonText = data.content[0].text;
+      let jsonText = extractData.content[0].text;
       jsonText = jsonText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
       let dashConfig;
       try {
         dashConfig = JSON.parse(jsonText);
       } catch (e) {
-        console.error('JSON parse error:', e.message, 'Raw:', jsonText.substring(0, 500));
-        return res.status(500).json({ error: 'Failed to parse dashboard config. Trying again may help.' });
+        console.error('JSON parse error:', e.message, 'Raw:', jsonText.substring(0, 300));
+        return res.status(500).json({ error: 'Data extraction returned invalid JSON. Try again.' });
       }
 
-      const html = renderDashboard(dashConfig);
+      // ========= STEP 2: Generate unique HTML with Sonnet (creative) =========
+      const designRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 8000,
+          system: DESIGN_PROMPT,
+          messages: [{
+            role: 'user',
+            content: 'Here is the dashboard data config. Create a stunning, unique HTML dashboard using this exact data:\n\n' + JSON.stringify(dashConfig, null, 2) + '\n\nUser request: ' + (messages[messages.length - 1]?.content || '').substring(0, 500)
+          }],
+        }),
+      });
 
+      const designData = await designRes.json();
+      if (!designRes.ok) {
+        console.error('Sonnet error:', designRes.status, JSON.stringify(designData));
+        return res.status(500).json({ error: 'Design generation failed: ' + (designData.error?.message || 'AI error') });
+      }
+
+      let html = designData.content[0].text;
+      html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
+      if (!html.includes('</html>')) html += '\n</body></html>';
+
+      // Log usage
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
