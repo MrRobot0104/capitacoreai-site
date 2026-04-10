@@ -110,9 +110,10 @@ module.exports = async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: 'AI service not configured' });
 
     // Build messages from history (last 10 messages for context)
+    // Truncate very long messages to avoid hitting token limits
     const messages = history.slice(-10).map(h => ({
       role: h.role === 'assistant' ? 'assistant' : 'user',
-      content: h.content
+      content: typeof h.content === 'string' ? h.content.substring(0, 15000) : String(h.content).substring(0, 15000)
     }));
 
     try {
@@ -134,6 +135,7 @@ module.exports = async (req, res) => {
       const data = await response.json();
       if (!response.ok) {
         const detail = data.error ? data.error.message : 'AI error';
+        console.error('Claude API error:', response.status, JSON.stringify(data));
         return res.status(500).json({ error: 'Generation failed: ' + detail });
       }
 

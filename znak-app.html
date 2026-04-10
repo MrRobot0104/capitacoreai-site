@@ -415,8 +415,16 @@
       let fileContext = '';
       if (uploadedFileData) {
         const cols = Object.keys(uploadedFileData[0] || {});
-        const sampleRows = uploadedFileData.slice(0, 15);
-        fileContext = '\n\n[Uploaded file: ' + uploadedFileName + ']\nColumns: ' + cols.join(', ') + '\nSample data (' + uploadedFileData.length + ' rows total):\n' + JSON.stringify(sampleRows, null, 1);
+        const sampleRows = uploadedFileData.slice(0, 30);
+        // CSV format is more compact than JSON
+        let csv = cols.join(',') + '\n';
+        sampleRows.forEach(row => {
+          csv += cols.map(c => {
+            let v = String(row[c] || '');
+            return v.includes(',') ? '"' + v + '"' : v;
+          }).join(',') + '\n';
+        });
+        fileContext = '\n\n[Uploaded file: ' + uploadedFileName + ']\n' + uploadedFileData.length + ' total rows, ' + cols.length + ' columns.\nData:\n' + csv.substring(0, 8000);
       }
 
       addUserMessage(message || 'Build a dashboard from this data', uploadedFileData ? uploadedFileName : null);
