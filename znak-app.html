@@ -206,10 +206,13 @@
     }
     init();
 
+    let isAdmin = false;
+
     async function refreshCredits() {
-      const { data } = await sb.from('profiles').select('token_balance').eq('id', currentUser.id).single();
-      creditBalance = data ? data.token_balance : 0;
-      document.getElementById('creditDisplay').textContent = creditBalance;
+      const { data } = await sb.from('profiles').select('token_balance, is_admin').eq('id', currentUser.id).single();
+      isAdmin = data?.is_admin === true;
+      creditBalance = isAdmin ? 9999 : (data ? data.token_balance : 0);
+      document.getElementById('creditDisplay').textContent = isAdmin ? '∞' : creditBalance;
       if (creditBalance <= 0 && !conversationStarted) {
         addBotMessage("You don't have any credits. Purchase some to start building dashboards.");
         disableInput();
