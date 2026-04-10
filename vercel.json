@@ -4,8 +4,8 @@
   "framework": null,
   "functions": {
     "api/znak-generate.js": {
-      "memory": 512,
-      "maxDuration": 120
+      "memory": 1024,
+      "maxDuration": 300
     },
     "api/*.js": {
       "memory": 256,

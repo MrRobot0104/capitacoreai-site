@@ -461,7 +461,7 @@
       try {
         const { data: { session } } = await sb.auth.getSession();
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 150000); // 2.5 min timeout
+        const timeout = setTimeout(() => controller.abort(), 300000); // 5 min timeout
         const res = await fetch('/api/znak-generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
