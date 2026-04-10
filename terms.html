@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0a1628; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #0a1628; }
+    .btn-nav { background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+    .mobile-menu a:hover { color: #0a1628; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+    .page { max-width: 768px; margin: 0 auto; padding: 140px 32px 80px; }
+    .page h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+    .page .updated { font-size: 13px; color: #6b7280; margin-bottom: 40px; }
+    .page h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
+    .page p, .page li { font-size: 15px; color: #374151; line-height: 1.8; margin-bottom: 12px; }
+    .page ul { padding-left: 20px; margin-bottom: 16px; }
+    .footer { background: #fff; border-top: 1px solid #f3f4f6; }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: #6b7280; }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: #6b7280; text-decoration: none; }
+    .footer-nav a:hover { color: #0a1628; }
+    @media (max-width: 768px) {
+      .nav-inner { height: 68px; padding: 0 20px; }
+      .nav-links, .nav .btn-nav { display: none; }
+      .hamburger { display: flex; align-items: center; justify-content: center; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI"><span>CapitaCoreAI</span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="agents.html">Products</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Products</a><a href="/#about">About</a><a href="/#contact">Contact</a></div>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+  <main class="page">
+    <h1>Terms of Service</h1>
+    <p class="updated">Last updated: April 9, 2026</p>
+
+    <p>These Terms of Service ("Terms") govern your use of the CapitaCoreAI website, products, and services (collectively, the "Service") operated by CapitaCoreAI ("we," "us," or "our"). By accessing or using the Service, you agree to be bound by these Terms.</p>
+
+    <h2>1. Account Registration</h2>
+    <p>To access certain features, you must create an account by providing your first name, username, email address, and a password. You must be at least 18 years of age to create an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate and complete information and to update it as necessary.</p>
+
+    <h2>2. Products and Credits</h2>
+    <p>CapitaCoreAI offers AI-powered products ("Agents"), including Znak, an AI dashboard builder. Access to Agents requires purchasing credits through our platform. Each credit entitles you to one use of the applicable Agent (e.g., one dashboard generation for Znak).</p>
+    <ul>
+      <li>Credits are non-refundable once purchased.</li>
+      <li>Credits do not expire.</li>
+      <li>Credits are non-transferable between accounts.</li>
+      <li>Pricing is as displayed at the time of purchase and may change at our discretion.</li>
+    </ul>
+
+    <h2>3. Payments</h2>
+    <p>All payments are processed securely through Stripe. We do not store your credit card information. By making a purchase, you agree to Stripe's terms of service. All prices are in US dollars. You are responsible for any applicable taxes.</p>
+
+    <h2>4. AI-Generated Content</h2>
+    <p>Our Agents generate content using artificial intelligence (powered by third-party AI providers). You acknowledge that:</p>
+    <ul>
+      <li>AI-generated content is provided "as is" without warranties of accuracy, completeness, or fitness for any particular purpose.</li>
+      <li>You are solely responsible for reviewing, validating, and using any AI-generated content.</li>
+      <li>Generated content may contain errors, inaccuracies, or biases.</li>
+      <li>You own the content generated through your use of the Service, subject to any third-party rights.</li>
+    </ul>
+
+    <h2>5. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use the Service for any unlawful purpose or in violation of any applicable laws.</li>
+      <li>Attempt to gain unauthorized access to the Service, other accounts, or our systems.</li>
+      <li>Use the Service to generate content that is illegal, harmful, threatening, abusive, defamatory, or otherwise objectionable.</li>
+      <li>Reverse engineer, decompile, or disassemble any part of the Service.</li>
+      <li>Use automated scripts, bots, or tools to access the Service in an unauthorized manner.</li>
+      <li>Resell, redistribute, or sublicense access to the Service without our written consent.</li>
+    </ul>
+
+    <h2>6. Intellectual Property</h2>
+    <p>The Service, including its design, branding, code, and underlying technology, is the property of CapitaCoreAI and is protected by intellectual property laws. You retain ownership of content you generate using the Service, but you grant us a limited license to use anonymized usage data to improve our products.</p>
+
+    <h2>7. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, CAPITACOREAI SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUE, WHETHER INCURRED DIRECTLY OR INDIRECTLY. OUR TOTAL LIABILITY FOR ANY CLAIM ARISING FROM THESE TERMS OR THE SERVICE SHALL NOT EXCEED THE AMOUNT YOU PAID TO US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+
+    <h2>8. Disclaimer of Warranties</h2>
+    <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE.</p>
+
+    <h2>9. Termination</h2>
+    <p>We may suspend or terminate your account at any time for violation of these Terms or for any other reason at our sole discretion. Upon termination, your right to use the Service ceases immediately. Unused credits may be forfeited upon termination for cause. You may delete your account at any time by contacting us.</p>
+
+    <h2>10. Changes to Terms</h2>
+    <p>We reserve the right to modify these Terms at any time. We will notify users of material changes by updating the "Last updated" date. Your continued use of the Service after changes constitutes acceptance of the modified Terms.</p>
+
+    <h2>11. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of the United States. Any disputes arising from these Terms shall be resolved through binding arbitration or in the courts of competent jurisdiction.</p>
+
+    <h2>12. Contact</h2>
+    <p>If you have questions about these Terms, please contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#2563eb;">capitacoreai@gmail.com</a>.</p>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+  <script>function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}</script>
+</body>
+</html>

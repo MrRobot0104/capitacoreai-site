@@ -81,10 +81,18 @@
 
     @media (max-width: 768px) {
       .nav-links, .nav .btn-nav { display: none; }
+      .hamburger { display: flex; align-items: center; justify-content: center; }
       .hero-row { grid-template-columns: 1fr; gap: 32px; }
       .pricing-grid { grid-template-columns: 1fr; }
       .preview-stat-row { grid-template-columns: 1fr; }
     }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+    .mobile-menu a:hover { color: #0a1628; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-overlay.active { display: block; }
   </style>
 </head>
 <body>
@@ -99,8 +107,13 @@
         <a href="/#contact">Contact</a>
       </div>
       <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+      </button>
     </div>
   </header>
+  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Products</a><a href="/#about">About</a><a href="/#contact">Contact</a></div>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
   <main class="page">
     <!-- HERO -->
@@ -149,6 +162,7 @@
         <div class="form-group"><label>Email</label><input type="email" id="signupEmail" required></div>
         <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="signupPass" required minlength="6"></div>
         <button type="submit" class="btn-auth" id="signupBtn">Create Account</button>
+        <p style="font-size:12px;color:#6b7280;text-align:center;margin-top:12px;line-height:1.6;">By creating an account, you agree to our <a href="terms.html" style="color:#0a1628;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#0a1628;text-decoration:underline;">Privacy Policy</a>.</p>
       </form>
       <form class="auth-form" id="forgotForm" onsubmit="handleForgot(event)">
         <p style="font-size:14px;color:#6b7280;margin-bottom:16px;">Enter your email and we'll send you a password reset link.</p>
@@ -445,6 +459,13 @@
     // Handle payment success redirect
     if (new URLSearchParams(location.search).get('payment') === 'success') {
       setTimeout(() => init(), 1500);
+    }
+
+    function toggleMobileMenu() {
+      const m = document.getElementById('mobileMenu'), o = document.getElementById('mobileOverlay');
+      const open = m.classList.contains('active');
+      m.classList.toggle('active'); o.classList.toggle('active');
+      document.body.style.overflow = open ? '' : 'hidden';
     }
   </script>
 </body>

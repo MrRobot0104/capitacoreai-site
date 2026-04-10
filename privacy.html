@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0a1628; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #0a1628; }
+    .btn-nav { background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+    .mobile-menu a:hover { color: #0a1628; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+    .page { max-width: 768px; margin: 0 auto; padding: 140px 32px 80px; }
+    .page h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+    .page .updated { font-size: 13px; color: #6b7280; margin-bottom: 40px; }
+    .page h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
+    .page p, .page li { font-size: 15px; color: #374151; line-height: 1.8; margin-bottom: 12px; }
+    .page ul { padding-left: 20px; margin-bottom: 16px; }
+    .footer { background: #fff; border-top: 1px solid #f3f4f6; }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: #6b7280; }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: #6b7280; text-decoration: none; }
+    .footer-nav a:hover { color: #0a1628; }
+    @media (max-width: 768px) {
+      .nav-inner { height: 68px; padding: 0 20px; }
+      .nav-links, .nav .btn-nav { display: none; }
+      .hamburger { display: flex; align-items: center; justify-content: center; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI"><span>CapitaCoreAI</span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="agents.html">Products</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Products</a><a href="/#about">About</a><a href="/#contact">Contact</a></div>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+  <main class="page">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: April 9, 2026</p>
+
+    <p>CapitaCoreAI ("we," "us," or "our") respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and services.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p><strong>Account Information:</strong> When you create an account, we collect your first name, username, email address, and password. Your password is securely hashed by our authentication provider and is never stored in plain text.</p>
+    <p><strong>Payment Information:</strong> Payments are processed by Stripe. We do not store your credit card number, CVV, or full payment details. We receive and store transaction IDs, purchase amounts, and package details for our records.</p>
+    <p><strong>Usage Data:</strong> We collect the prompts you submit to our AI Agents (e.g., dashboard descriptions sent to Znak), generated content metadata, credit balances, and generation counts.</p>
+    <p><strong>Contact Form Data:</strong> If you use our contact form, we collect your name, email, and message.</p>
+    <p><strong>Technical Data:</strong> We may collect your IP address, browser type, device information, and pages visited for security and analytics purposes.</p>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+      <li>To create and manage your account</li>
+      <li>To process payments and deliver purchased credits</li>
+      <li>To generate AI-powered content based on your prompts</li>
+      <li>To provide customer support</li>
+      <li>To improve our products and services</li>
+      <li>To prevent fraud and ensure security</li>
+      <li>To comply with legal obligations</li>
+    </ul>
+
+    <h2>3. Third-Party Services</h2>
+    <p>We use the following third-party services that may process your data:</p>
+    <ul>
+      <li><strong>Supabase</strong> — Authentication and database hosting. Stores your account data and usage records.</li>
+      <li><strong>Stripe</strong> — Payment processing. Handles all credit card and payment data securely.</li>
+      <li><strong>Anthropic (Claude API)</strong> — AI content generation. Your prompts are sent to Anthropic's API to generate dashboards. Refer to Anthropic's privacy policy for their data handling practices.</li>
+      <li><strong>Vercel</strong> — Website hosting and serverless functions.</li>
+      <li><strong>Web3Forms</strong> — Contact form processing.</li>
+    </ul>
+    <p>Each third-party service has its own privacy policy governing their use of your data.</p>
+
+    <h2>4. Data Storage and Security</h2>
+    <p>Your data is stored securely using industry-standard encryption and security practices. Authentication tokens are stored in your browser's local storage. We use Row Level Security (RLS) in our database to ensure users can only access their own data. While we take reasonable measures to protect your data, no method of transmission over the Internet is 100% secure.</p>
+
+    <h2>5. Data Retention</h2>
+    <p>We retain your account data for as long as your account is active. Usage logs and transaction history are retained for accounting and support purposes. If you request account deletion, we will remove your personal data within 30 days, except where retention is required by law.</p>
+
+    <h2>6. Your Rights</h2>
+    <p>Depending on your jurisdiction, you may have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> the personal data we hold about you</li>
+      <li><strong>Correct</strong> inaccurate or incomplete data</li>
+      <li><strong>Delete</strong> your personal data ("right to be forgotten")</li>
+      <li><strong>Export</strong> your data in a portable format</li>
+      <li><strong>Object</strong> to or restrict certain processing of your data</li>
+    </ul>
+    <p>To exercise any of these rights, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#2563eb;">capitacoreai@gmail.com</a>.</p>
+
+    <h2>7. Cookies and Local Storage</h2>
+    <p>We do not use traditional tracking cookies. We use browser local storage for authentication tokens (to keep you logged in) and to track free usage limits on our homepage chatbot. No third-party tracking cookies are used.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>Our Service is not intended for users under the age of 18. We do not knowingly collect personal data from children. If we become aware that we have collected data from a child under 18, we will take steps to delete it promptly.</p>
+
+    <h2>9. International Data Transfers</h2>
+    <p>Your data may be processed in the United States, where our service providers (Supabase, Stripe, Anthropic, Vercel) operate. By using the Service, you consent to the transfer of your data to the United States and other jurisdictions where our providers operate.</p>
+
+    <h2>10. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify users of material changes by updating the "Last updated" date at the top of this page. Your continued use of the Service after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>11. Contact</h2>
+    <p>For questions or concerns about this Privacy Policy or your data, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#2563eb;">capitacoreai@gmail.com</a>.</p>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+  <script>function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}</script>
+</body>
+</html>
