@@ -198,13 +198,31 @@
     let conversationStarted = false;
 
     // AUTH
+    let initDone = false;
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = 'account.html'; return; }
+      if (!session) {
+        // Wait a moment for session to load from storage, then check again
+        setTimeout(async () => {
+          const { data: { session: retrySession } } = await sb.auth.getSession();
+          if (!retrySession) { window.location.href = 'account.html'; }
+          else { currentUser = retrySession.user; await refreshCredits(); initDone = true; }
+        }, 1000);
+        return;
+      }
       currentUser = session.user;
       await refreshCredits();
+      initDone = true;
     }
     init();
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session && !initDone) {
+        currentUser = session.user;
+        refreshCredits();
+        initDone = true;
+      }
+      if (event === 'SIGNED_OUT') { window.location.href = 'account.html'; }
+    });
 
     let isAdmin = false;
 

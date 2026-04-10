@@ -243,17 +243,13 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function init() {
-      // Listen for recovery event as backup
       sb.auth.onAuthStateChange((event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          showResetForm();
-        }
+        if (event === 'PASSWORD_RECOVERY') { showResetForm(); return; }
+        if (event === 'SIGNED_IN' && session && !IS_RECOVERY) showLoggedIn(session.user);
       });
 
-      // Let Supabase process the token from the hash
       await sb.auth.getSession();
 
-      // If this was a recovery link, show reset form (NOT the logged-in page)
       if (IS_RECOVERY) {
         showResetForm();
         return;

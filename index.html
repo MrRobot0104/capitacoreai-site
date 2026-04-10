@@ -880,6 +880,7 @@
       }
     }
     checkMenuAuth();
+    sb.auth.onAuthStateChange(() => checkMenuAuth());
 
     async function menuLogout() {
       await sb.auth.signOut();
