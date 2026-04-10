@@ -1,58 +1,50 @@
-const SYSTEM_PROMPT = `You are znak, a world-class AI dashboard builder. You create stunning, data-rich, interactive HTML dashboards that look like professional SaaS products.
+const { renderDashboard } = require('../dashboard-template.js');
 
-CRITICAL OUTPUT RULES:
-- Output ONLY the raw HTML. No markdown. No backticks. No explanation. No text before or after.
-- Start with <!DOCTYPE html>. Complete, self-contained page.
-- CDN in <head>:
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+const SYSTEM_PROMPT = `You are a data analyst. Given user data or a description, output a JSON dashboard configuration. Output ONLY valid JSON — no markdown, no backticks, no explanation.
 
-DESIGN:
-- Font: 'Inter', system-ui, sans-serif
-- Page bg: #f5f5f5, Cards: #ffffff, Headings: #111111, Body: #555555, Muted: #999999
-- Borders: #e0e0e0, radius: 12px, Shadow: 0 1px 3px rgba(0,0,0,0.08)
-- Chart colors: ['#111111','#555555','#999999','#cccccc','#10b981','#f59e0b','#ef4444','#3b82f6']
-- Generous padding (24px cards, 32px page). Max-width 1200px centered.
+JSON SCHEMA (follow exactly):
+{
+  "title": "Dashboard Title",
+  "subtitle": "Brief description",
+  "kpis": [
+    { "label": "METRIC NAME", "value": "$1.2M", "change": "+12% vs prior" }
+  ],
+  "charts": [
+    {
+      "title": "Chart Title",
+      "subtitle": "What this shows",
+      "type": "bar",
+      "labels": ["Label1", "Label2", "Label3"],
+      "datasets": [
+        { "label": "Series Name", "data": [100, 200, 300] }
+      ]
+    }
+  ],
+  "table": {
+    "title": "Data Table",
+    "headers": ["Col1", "Col2", "Col3"],
+    "rows": [["val1", "val2", "val3"]]
+  }
+}
 
-DASHBOARD STRUCTURE (follow this exactly):
-1. HEADER: Title + subtitle describing the data
-2. KPI ROW: 3-4 stat cards in a grid. Each has: large number (font-size:28px, font-weight:700), label above (11px uppercase), and a colored +/-% change indicator
-3. CHARTS SECTION: 2-3 Chart.js charts in a grid. EVERY chart MUST have real data values in its datasets array. NEVER leave datasets empty. Each chart wrapped in a card with a title and a <div style="height:320px"><canvas id="uniqueId"></canvas></div>
-4. DATA TABLE: Full HTML table with all available data rows. Styled with alternating row colors, hover states, and status badges where appropriate.
-5. FOOTER: "Built with znak by CapitaCoreAI" in #aaaaaa, centered, small text
+CHART TYPES: "bar", "horizontalBar", "line", "doughnut", "pie"
 
-CHART.JS REQUIREMENTS (THIS IS WHY CHARTS ARE EMPTY IF YOU GET IT WRONG):
-- ALL Chart.js code MUST be inside: window.addEventListener('load', function() { ... });
-  This ensures Chart.js CDN has loaded before any chart is created.
-- Each chart: new Chart(document.getElementById('chartId'), { type: '...', data: { labels: [...], datasets: [{ data: [...], ... }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } })
-- ALWAYS populate labels[] and data[] arrays with REAL HARDCODED numbers. Example:
-  labels: ['Switch', 'Service', 'PSU', 'Storage'],
-  datasets: [{ label: 'Net Price', data: [28500, 4200, 1800, 950], backgroundColor: ['#111111','#555555','#999999','#cccccc'] }]
-- Use backgroundColor arrays for pie/doughnut charts
-- NEVER reference undefined variables. NEVER use empty arrays. All data must be literal values.
-- Chart types: bar (comparisons), line (trends over time), doughnut (proportions), horizontal bar via indexAxis:'y'
-
-WHEN USER PROVIDES DATA (CSV/Excel):
-- This is the most important part. PARSE the data and USE IT.
-- Calculate real KPIs: sums, averages, counts, min, max from the actual numbers
-- Populate chart labels and data arrays with actual values from the data
-- Group/aggregate data for charts (e.g., sum by category, count by status)
-- Show the full data in the table section
-- If there are monetary values, format them with $ and commas
-- If there are dates, use them as chart labels for time series
-- If there are categories, use them for bar/pie charts
+RULES:
+- Output ONLY the JSON object. Nothing else.
+- KPIs: 3-4 cards. Format values nicely ($1.2M, 48 units, 70.3%, etc.)
+- Charts: 2-3 charts. Pick the best type for the data. ALWAYS include real numbers in data arrays.
+- Table: Include ALL available data rows. Format monetary values with $ and commas.
+- If user provides CSV/Excel data: CALCULATE real sums, averages, percentages from the data. Use actual values, never placeholder or zero values.
+- For comparisons (list vs net price): use grouped bar chart with 2 datasets.
+- For proportions (budget allocation): use doughnut chart.
+- For rankings (discount by SKU): use horizontalBar chart.
+- For trends over time: use line chart.
+- Labels should be short (truncate long product names to ~20 chars).
 
 WHEN USER ASKS FOR EDITS:
-- The previous assistant message contains a summary of the current dashboard
-- Apply the requested changes and regenerate the ENTIRE HTML page
-- Keep all existing charts/tables and add/modify as requested
-- Never output partial snippets — always a complete <!DOCTYPE html> page
-
-QUALITY STANDARD:
-- This must look like a $10,000 custom dashboard, not a template
-- Pixel-perfect spacing, professional typography, clean data visualization
-- Every chart must render with visible data — no blank charts ever
-- Responsive: @media (max-width: 768px) single column grid`;
+- The previous message contains the current dashboard JSON.
+- Modify it according to the user's request and output the updated JSON.
+- Always output the COMPLETE JSON, not a partial update.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -61,7 +53,6 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Verify auth
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Not authenticated' });
@@ -77,7 +68,6 @@ module.exports = async (req, res) => {
   if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
   const user = await userRes.json();
 
-  // Check if admin (unlimited access)
   const adminCheck = await fetch(
     supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=is_admin',
     { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
@@ -87,7 +77,6 @@ module.exports = async (req, res) => {
 
   const { action, history } = req.body;
 
-  // START CONVERSATION — deducts 1 credit (skip for admin)
   if (action === 'start_conversation') {
     if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999 });
     const deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_token', {
@@ -97,21 +86,18 @@ module.exports = async (req, res) => {
     });
     if (!deductRes.ok) return res.status(500).json({ error: 'Failed to check credits' });
     const newBalance = await deductRes.json();
-    if (newBalance === -1) return res.status(402).json({ error: 'No credits remaining. Purchase more to continue.' });
+    if (newBalance === -1) return res.status(402).json({ error: 'No credits remaining.' });
     return res.status(200).json({ ok: true, remaining: newBalance });
   }
 
-  // GENERATE — no credit deduction (already deducted at conversation start)
   if (action === 'generate') {
     if (!Array.isArray(history) || history.length === 0) {
-      return res.status(400).json({ error: 'No conversation history provided.' });
+      return res.status(400).json({ error: 'No conversation history.' });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'AI service not configured' });
+    if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
-    // Build messages from history (last 10 messages for context)
-    // Truncate very long messages to avoid hitting token limits
     const messages = history.slice(-10).map(h => ({
       role: h.role === 'assistant' ? 'assistant' : 'user',
       content: typeof h.content === 'string' ? h.content.substring(0, 15000) : String(h.content).substring(0, 15000)
@@ -127,7 +113,7 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
+          max_tokens: 4096,
           system: SYSTEM_PROMPT,
           messages: messages,
         }),
@@ -140,9 +126,19 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Generation failed: ' + detail });
       }
 
-      let html = data.content[0].text;
-      html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
-      if (!html.includes('</html>')) html += '\n</body></html>';
+      let jsonText = data.content[0].text;
+      // Strip markdown fences
+      jsonText = jsonText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+
+      let dashConfig;
+      try {
+        dashConfig = JSON.parse(jsonText);
+      } catch (e) {
+        console.error('JSON parse error:', e.message, '\nRaw:', jsonText.substring(0, 500));
+        return res.status(500).json({ error: 'Failed to parse dashboard data. Please try again.' });
+      }
+
+      const html = renderDashboard(dashConfig);
 
       // Log usage
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
@@ -151,7 +147,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({ user_id: user.id, prompt: (messages[messages.length - 1]?.content || '').substring(0, 500) }),
       });
 
-      res.status(200).json({ html });
+      res.status(200).json({ html, config: dashConfig });
     } catch (err) {
       console.error('Generate error:', err.message);
       res.status(500).json({ error: 'Generation failed: ' + err.message });

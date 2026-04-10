@@ -491,9 +491,9 @@
         }
 
         lastDashboardHtml = data.html;
-        // Include a summary of the dashboard for edit context
-        const dashSummary = lastDashboardHtml.substring(0, 2000).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        conversationHistory.push({ role: 'assistant', content: 'I generated a dashboard with this structure: ' + dashSummary.substring(0, 800) });
+        // Store the JSON config so Claude can edit it on follow-up messages
+        const configJson = data.config ? JSON.stringify(data.config) : '';
+        conversationHistory.push({ role: 'assistant', content: 'Here is the current dashboard JSON:\n' + configJson.substring(0, 3000) });
 
         // Show dashboard
         document.getElementById('previewEmpty').style.display = 'none';
