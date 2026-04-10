@@ -213,8 +213,11 @@
     function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}
 
     const sb = supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8');
-    async function checkMenuAuth() {
-      const { data: { session } } = await sb.auth.getSession();
+    async function checkMenuAuth(session) {
+      if (session === undefined) {
+        const r = await sb.auth.getSession();
+        session = r.data.session;
+      }
       const navMyAgents = document.getElementById('navMyAgents');
       const navLoginBtn = document.getElementById('navLoginBtn');
       if (session) {
@@ -234,8 +237,8 @@
         if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
       }
     }
-    checkMenuAuth();
-    sb.auth.onAuthStateChange(() => checkMenuAuth());
+    // Use onAuthStateChange as PRIMARY auth mechanism (fires INITIAL_SESSION on load)
+    sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
     async function menuLogout() { await sb.auth.signOut(); toggleMobileMenu(); location.reload(); }
   </script>
 
