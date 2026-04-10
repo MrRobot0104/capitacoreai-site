@@ -1,6 +1,6 @@
-const EXTRACT_PROMPT = `You are a data extraction expert. Given CSV/Excel data, extract it into a structured JSON format. Output ONLY valid JSON.
+const EXTRACT_PROMPT = `You are a data extraction expert. Given CSV/Excel data, extract it into structured JSON. Output ONLY valid JSON.
 
-Read the DATA SUMMARY (pre-computed stats) and RAW DATA carefully. Use the ACTUAL numbers.
+Read the DATA SUMMARY (pre-computed stats) and RAW DATA. Use the ACTUAL numbers.
 
 {
   "title": "Descriptive Dashboard Title",
@@ -26,13 +26,15 @@ Read the DATA SUMMARY (pre-computed stats) and RAW DATA carefully. Use the ACTUA
 
 Chart types: bar, horizontalBar, line, doughnut, pie.
 KPI values: Use pre-computed sums/averages. Format as $98.6K, 68.2%, 761 units.
-Charts: Put REAL numbers in data arrays from the actual data.
+Charts: Put REAL numbers in data arrays.
 Table: Include ALL rows.
 Output ONLY JSON.`;
 
-const DESIGN_PROMPT = `You are an elite dashboard designer. You receive a JSON data config and create a STUNNING, UNIQUE HTML dashboard.
+const DESIGN_PROMPT = `You are an elite dashboard designer and data storyteller. You receive JSON data and create STUNNING, UNIQUE, executive-grade HTML dashboards.
 
-IMPORTANT: The JSON below contains ALL the data — KPIs, chart configs, and table data. Your job is to make it BEAUTIFUL. Every value is already extracted — just embed them in your HTML.
+The JSON below contains ALL the data — KPIs, chart configs, and table data. Your job is to make it UNFORGETTABLE.
+
+You also have web search — use it to enrich the dashboard with real company info, product details, industry context, and relevant facts that would impress a CFO.
 
 OUTPUT: A single complete HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
 
@@ -40,27 +42,28 @@ Load in <head>:
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
-DESIGN FREEDOM: Make each dashboard UNIQUE. Be creative with:
-- Layout variations (sidebar stats, full-width charts, card grids, split sections)
-- Color themes (each dashboard should have its own personality)
-- Custom SVG icons, gradient accents, glass-morphism effects
-- Animated number counters, progress rings, sparklines
-- Creative chart styling (gradient fills, custom tooltips, annotations)
-- Professional typography hierarchy
-- Creative section dividers, badges, tags
+THINK DEEPLY about the best way to present this data. Consider:
+- What story does this data tell?
+- What would a CFO care about most?
+- What insights are hidden in the numbers?
+- What context from the web makes this more compelling?
 
-CHART.JS RULES:
-- ALL chart code inside: window.addEventListener('load', function() { ... })
-- Use the EXACT data values from the JSON config
-- borderRadius on bars, tension on lines, custom colors
+DESIGN — be creative and UNIQUE every time:
+- Each dashboard should have its own visual personality
+- Use creative layouts: hero sections, split panels, sidebar stats, full-bleed charts
+- Rich color palettes, gradient accents, glass-morphism, dark/light sections
+- Animated number counters, progress rings, sparklines, trend arrows
+- Custom SVG icons, creative section dividers
+- Chart.js with gradient fills, custom tooltips, annotations
+- If the user mentions a company or product, include real facts from your web search
+- Add an "insights" section with AI-generated observations about the data
 
-DATA RULES:
-- The KPI values from the JSON go directly into the KPI cards
-- The chart labels and datasets from JSON go directly into Chart.js configs
-- The table headers and rows from JSON go directly into the HTML table
-- DO NOT change, recalculate, or zero-out any values. Use them AS-IS.
+CHART.JS: ALL code inside window.addEventListener('load', function() { ... })
+Use the EXACT values from the JSON. borderRadius on bars, tension on lines.
 
-Make this look like a $50,000 custom executive dashboard. Each one should be different.`;
+DATA: The KPI values, chart data, and table rows from JSON go directly into the HTML. DO NOT change or zero-out any values.
+
+Make this look like a McKinsey deliverable meets a Silicon Valley product.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -142,20 +145,29 @@ module.exports = async (req, res) => {
         dashConfig = JSON.parse(jsonText);
       } catch (e) {
         console.error('JSON parse error:', e.message, 'Raw:', jsonText.substring(0, 300));
-        return res.status(500).json({ error: 'Data extraction returned invalid JSON. Try again.' });
+        return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
       }
 
-      // ========= STEP 2: Generate unique HTML with Sonnet (creative) =========
+      // ========= STEP 2: Generate unique HTML with Sonnet + thinking + web search =========
+      const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 1000);
+
       const designRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
+          max_tokens: 16000,
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 5000
+          },
+          tools: [
+            { type: 'web_search_20250305', name: 'web_search', max_uses: 3 }
+          ],
           system: DESIGN_PROMPT,
           messages: [{
             role: 'user',
-            content: 'Here is the dashboard data config. Create a stunning, unique HTML dashboard using this exact data:\n\n' + JSON.stringify(dashConfig, null, 2) + '\n\nUser request: ' + (messages[messages.length - 1]?.content || '').substring(0, 500)
+            content: 'Dashboard data (use these exact values):\n\n' + JSON.stringify(dashConfig, null, 2) + '\n\nUser request: ' + userRequest
           }],
         }),
       });
@@ -166,7 +178,9 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Design generation failed: ' + (designData.error?.message || 'AI error') });
       }
 
-      let html = designData.content[0].text;
+      // Extract text blocks only (skip thinking and tool_result blocks)
+      const textBlocks = designData.content.filter(b => b.type === 'text');
+      let html = textBlocks.map(b => b.text).join('');
       html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
       if (!html.includes('</html>')) html += '\n</body></html>';
 
@@ -174,7 +188,7 @@ module.exports = async (req, res) => {
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ user_id: user.id, prompt: (messages[messages.length - 1]?.content || '').substring(0, 500) }),
+        body: JSON.stringify({ user_id: user.id, prompt: userRequest.substring(0, 500) }),
       });
 
       res.status(200).json({ html, config: dashConfig });
