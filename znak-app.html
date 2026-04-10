@@ -437,15 +437,20 @@
       messageCount++;
 
       document.getElementById('sendBtn').disabled = true;
+      addBotMessage('Building your dashboard... this may take up to a minute.');
       addTyping();
 
       try {
         const { data: { session } } = await sb.auth.getSession();
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 150000); // 2.5 min timeout
         const res = await fetch('/api/znak-generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ action: 'generate', history: conversationHistory })
+          body: JSON.stringify({ action: 'generate', history: conversationHistory }),
+          signal: controller.signal
         });
+        clearTimeout(timeout);
 
         removeTyping();
         document.getElementById('sendBtn').disabled = false;
