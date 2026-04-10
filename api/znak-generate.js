@@ -76,10 +76,19 @@ module.exports = async (req, res) => {
   if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
   const user = await userRes.json();
 
+  // Check if admin (unlimited access)
+  const adminCheck = await fetch(
+    supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=is_admin',
+    { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
+  );
+  const adminData = await adminCheck.json();
+  const isAdmin = adminData[0]?.is_admin === true;
+
   const { action, history } = req.body;
 
-  // START CONVERSATION — deducts 1 credit
+  // START CONVERSATION — deducts 1 credit (skip for admin)
   if (action === 'start_conversation') {
+    if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999 });
     const deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_token', {
       method: 'POST',
       headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
