@@ -433,16 +433,43 @@
       let fileContext = '';
       if (uploadedFileData) {
         const cols = Object.keys(uploadedFileData[0] || {});
-        const sampleRows = uploadedFileData.slice(0, 50);
-        // CSV format is more compact than JSON
-        let csv = cols.join(',') + '\n';
-        sampleRows.forEach(row => {
-          csv += cols.map(c => {
-            let v = String(row[c] || '');
-            return v.includes(',') ? '"' + v + '"' : v;
-          }).join(',') + '\n';
+        const allRows = uploadedFileData;
+
+        // Pre-compute summary stats for numeric columns
+        let stats = '\n\nDATA SUMMARY (pre-computed — use these exact numbers):\n';
+        cols.forEach(col => {
+          const nums = allRows.map(r => parseFloat(String(r[col]).replace(/[$,]/g, ''))).filter(n => !isNaN(n));
+          if (nums.length > 0 && nums.length > allRows.length * 0.3) {
+            const sum = nums.reduce((a,b) => a+b, 0);
+            const avg = sum / nums.length;
+            const min = Math.min(...nums);
+            const max = Math.max(...nums);
+            stats += '  ' + col + ': sum=' + sum.toFixed(2) + ', avg=' + avg.toFixed(2) + ', min=' + min + ', max=' + max + ', count=' + nums.length + '\n';
+          }
         });
-        fileContext = '\n\n[Uploaded file: ' + uploadedFileName + ']\n' + uploadedFileData.length + ' total rows, ' + cols.length + ' columns.\nIMPORTANT: Use this actual data to populate ALL charts and tables. Every chart MUST have hardcoded data values from this dataset.\nData:\n' + csv.substring(0, 12000);
+
+        // Count unique values for categorical columns
+        cols.forEach(col => {
+          const vals = allRows.map(r => String(r[col] || '')).filter(v => v);
+          const unique = [...new Set(vals)];
+          if (unique.length > 0 && unique.length <= 20 && unique.length < vals.length * 0.5) {
+            const counts = {};
+            vals.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+            const top = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            stats += '  ' + col + ' (categorical): ' + top.map(([k,v]) => k + '=' + v).join(', ') + '\n';
+          }
+        });
+
+        // Send rows as JSON (clearer than CSV for Claude)
+        const sampleRows = allRows.slice(0, 60);
+        const jsonData = JSON.stringify(sampleRows, null, 1);
+
+        fileContext = '\n\n=== UPLOADED DATA: ' + uploadedFileName + ' ===\n' +
+          'Total rows: ' + allRows.length + ', Columns: ' + cols.join(', ') + '\n' +
+          stats +
+          '\nRAW DATA (first ' + sampleRows.length + ' rows as JSON — extract values from here):\n' +
+          jsonData.substring(0, 14000) +
+          '\n\nCRITICAL: The KPIs and charts MUST show the real numbers from the DATA SUMMARY above. Do NOT use zeros or placeholders.';
       }
 
       addUserMessage(message || 'Build a dashboard from this data', uploadedFileData ? uploadedFileName : null);
