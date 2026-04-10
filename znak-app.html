@@ -173,7 +173,7 @@
         </div>
       </div>
       <div class="preview-frame" id="previewFrame" style="display:none;">
-        <iframe id="dashboardIframe" sandbox="allow-scripts allow-same-origin"></iframe>
+        <iframe id="dashboardIframe"></iframe>
       </div>
     </div>
   </div>
@@ -500,7 +500,10 @@
         document.getElementById('previewFrame').style.display = 'block';
         document.getElementById('expandBtn').style.display = 'inline-flex';
         document.getElementById('downloadBtn').style.display = 'inline-flex';
-        document.getElementById('dashboardIframe').srcdoc = lastDashboardHtml;
+        // Use blob URL instead of srcdoc — allows Chart.js CDN to load
+        const blob = new Blob([lastDashboardHtml], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        document.getElementById('dashboardIframe').src = blobUrl;
 
         const remaining = messageLimit - messageCount;
         addBotMessage("Dashboard ready! " + (remaining > 0 ? "You have " + remaining + " message" + (remaining === 1 ? '' : 's') + " left to refine it." : ""));
