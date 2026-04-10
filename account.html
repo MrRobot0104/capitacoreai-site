@@ -16,6 +16,7 @@
     .nav-links { display: flex; align-items: center; gap: 36px; }
     .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
     .nav-links a:hover { color: #111111; }
+    .nav-links a.active { color: #111111; border-bottom: 2px solid #111111; padding-bottom: 2px; }
     .btn-nav { background: #111111; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
     .mobile-menu { position: fixed; top: 0; right: -300px; width: 300px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
@@ -92,7 +93,7 @@
         <a href="agents.html">Agents</a>
         <a href="/#about">About</a>
         <a href="/#contact">Contact</a>
-        <a href="account.html" id="navMyAgents" style="display:none;color:#111111;font-weight:600;">My Agents</a>
+        <a href="account.html" id="navMyAgents" style="display:none;">My Agents</a>
       </div>
       <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
@@ -365,7 +366,7 @@
     function updateNav(loggedIn) {
       const n = document.getElementById('navMyAgents');
       const l = document.getElementById('navLoginBtn');
-      if (n) n.style.display = loggedIn ? 'inline' : 'none';
+      if (n) { n.style.display = loggedIn ? 'inline' : 'none'; if (loggedIn) n.classList.add('active'); }
       if (l) l.style.display = loggedIn ? 'none' : 'inline-block';
     }
   </script>
