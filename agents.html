@@ -211,7 +211,7 @@
   <script>
     function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}
 
-    const sb = supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co', 'sb_publishable_jm9CDpvcI6xSWWkwK4rIXg_oRSVtfyU');
+    const sb = supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8');
     async function checkMenuAuth() {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
