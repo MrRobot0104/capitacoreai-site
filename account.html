@@ -319,19 +319,21 @@
     async function showDashboard(user) {
       document.getElementById('authSection').style.display = 'none';
       document.getElementById('dashboard').classList.add('active');
-      const { data } = await sb.from('profiles').select('token_balance, first_name, username').eq('id', user.id).single();
+      const { data } = await sb.from('profiles').select('token_balance, first_name, username, is_admin').eq('id', user.id).single();
       const name = data?.first_name || user.email;
+      const isAdmin = data?.is_admin === true;
       document.getElementById('dashUserInfo').textContent = 'Welcome, ' + name;
 
       const list = document.getElementById('agentsList');
       const balance = data?.token_balance || 0;
+      const hasAccess = isAdmin || balance > 0;
 
-      // Show all agents — those with credits get "Launch", others get "Buy"
+      // Show all agents — those with access get "Launch", others get "Buy"
       let html = '';
       // znak
       html += '<div class="agent-card-dash"><div class="agent-info"><h3>znak</h3><p>AI-powered dashboard builder</p></div><div class="agent-actions">';
-      if (balance > 0) {
-        html += '<span class="credits-badge">' + balance + ' credits</span>';
+      if (hasAccess) {
+        html += '<span class="credits-badge">' + (isAdmin ? '∞' : balance) + ' credits</span>';
         html += '<a href="znak-app.html" class="btn-launch">Launch →</a>';
       } else {
         html += '<span class="credits-badge">No credits</span>';
