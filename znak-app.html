@@ -473,16 +473,27 @@
         removeTyping();
         document.getElementById('sendBtn').disabled = false;
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          addBotMessage(err.error || 'Something went wrong.');
+        // Parse response - handle HTML error pages from Vercel
+        const responseText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          addBotMessage('Server timed out or returned an error. Please try again.');
           messageCount--;
           return;
         }
 
-        const data = await res.json();
+        if (!res.ok) {
+          addBotMessage(data.error || 'Something went wrong.');
+          messageCount--;
+          return;
+        }
+
         lastDashboardHtml = data.html;
-        conversationHistory.push({ role: 'assistant', content: 'I generated a dashboard. Here it is.' });
+        // Include a summary of the dashboard for edit context
+        const dashSummary = lastDashboardHtml.substring(0, 2000).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        conversationHistory.push({ role: 'assistant', content: 'I generated a dashboard with this structure: ' + dashSummary.substring(0, 800) });
 
         // Show dashboard
         document.getElementById('previewEmpty').style.display = 'none';
