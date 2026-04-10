@@ -112,7 +112,12 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Agents</a><a href="/#about">About</a><a href="/#contact">Contact</a>
-    <div id="menuAuth" style="padding-top:24px;"><a href="znak.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
+    <div id="menuMyAgents" style="display:none;padding-top:24px;">
+      <div id="menuAgentsList"></div>
+      <a href="account.html" style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;text-align:center;text-decoration:none;">My Agents</a>
+      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="handleLogout()">Log Out</button>
+    </div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
@@ -464,6 +469,27 @@
       m.classList.toggle('active'); o.classList.toggle('active');
       document.body.style.overflow = open ? '' : 'hidden';
     }
+
+    // Keep hamburger menu in sync with auth state
+    async function updateMenu() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        document.getElementById('menuAuth').style.display = 'none';
+        document.getElementById('menuMyAgents').style.display = 'block';
+        const { data } = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
+        const bal = data ? data.token_balance : 0;
+        const isAdmin = data?.is_admin === true;
+        const hasAccess = isAdmin || bal > 0;
+        document.getElementById('menuAgentsList').innerHTML = hasAccess
+          ? '<a href="znak-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;font-size:14px;">znak <span style="font-size:12px;color:#999999;">' + (isAdmin ? '∞' : bal) + ' credits</span></a>'
+          : '<a href="znak.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;font-size:14px;">znak <span style="font-size:12px;color:#999999;">Buy credits</span></a>';
+      } else {
+        document.getElementById('menuAuth').style.display = 'block';
+        document.getElementById('menuMyAgents').style.display = 'none';
+      }
+    }
+    updateMenu();
+    sb.auth.onAuthStateChange(() => updateMenu());
   </script>
 </body>
 </html>
