@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Znak App — Dashboard Builder | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #0a1628; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #0a1628; font-weight: 600; font-size: 15px; }
+    .topbar-left a img { width: 28px; height: 28px; }
+    .topbar-left .sep { width: 1px; height: 24px; background: #e5e7eb; }
+    .topbar-left .app-name { font-size: 14px; font-weight: 500; color: #6b7280; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .balance-chip { background: #f3f4f6; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+    .balance-chip strong { color: #0a1628; }
+    .btn-small { font-size: 13px; color: #6b7280; background: none; border: 1px solid #e5e7eb; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-family: inherit; text-decoration: none; }
+    .btn-small:hover { background: #f9fafb; }
+
+    .app-container { max-width: 800px; margin: 40px auto; padding: 0 24px; }
+    .builder-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; margin-bottom: 24px; }
+    .builder-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .builder-card .desc { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+    .prompt-input { width: 100%; padding: 14px 18px; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 14px; font-family: inherit; outline: none; resize: none; transition: border-color 0.2s; }
+    .prompt-input:focus { border-color: #0a1628; }
+    .btn-generate { margin-top: 16px; padding: 14px 28px; background: #0a1628; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-generate:hover { background: #162240; }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .result-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; display: none; }
+    .result-card.active { display: block; }
+    .result-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .result-card .result-desc { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+    .result-actions { display: flex; gap: 10px; }
+    .btn-result { padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: none; }
+    .btn-result.primary { background: #0a1628; color: #fff; }
+    .btn-result.primary:hover { background: #162240; }
+    .btn-result.secondary { background: #fff; color: #0a1628; border: 1px solid #e5e7eb; }
+    .btn-result.secondary:hover { background: #f9fafb; }
+
+    .loading { display: none; align-items: center; gap: 8px; font-size: 14px; color: #6b7280; margin-top: 16px; }
+    .loading.active { display: flex; }
+    .spinner { width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top-color: #0a1628; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .no-credits { background: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 20px; text-align: center; }
+    .no-credits p { font-size: 14px; color: #92400e; margin-bottom: 12px; }
+    .no-credits a { color: #0a1628; font-weight: 500; }
+
+    .error-msg { background: #fef2f2; color: #dc2626; font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; display: none; }
+    .error-msg.active { display: block; }
+
+    @media (max-width: 768px) { .topbar { padding: 0 16px; } .app-container { padding: 0 16px; } }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/"><img src="capitacoreai_logo_v2.png" alt="CC">CapitaCoreAI</a>
+      <div class="sep"></div>
+      <span class="app-name">Znak — Dashboard Builder</span>
+    </div>
+    <div class="topbar-right">
+      <span class="balance-chip">Credits: <strong id="balanceDisplay">—</strong></span>
+      <a href="znak.html" class="btn-small">Buy Credits</a>
+      <button class="btn-small" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div class="builder-card">
+      <h2>Build a Dashboard</h2>
+      <p class="desc">Describe the dashboard you need and Znak will generate it for you. Uses 1 credit per dashboard.</p>
+      <textarea class="prompt-input" id="promptInput" rows="3" placeholder="e.g. A sales pipeline dashboard with deal stages, revenue metrics, and team performance..."></textarea>
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="loading" id="loading"><div class="spinner"></div> Generating your dashboard...</div>
+      <button class="btn-generate" id="generateBtn" onclick="generate()">
+        Generate Dashboard
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <div id="noCredits" class="no-credits" style="display:none;">
+        <p>You're out of dashboard credits.</p>
+        <a href="znak.html">Buy more credits →</a>
+      </div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <h3>Your dashboard is ready!</h3>
+      <p class="result-desc">Preview it in a new tab or download the HTML file.</p>
+      <div class="result-actions">
+        <button class="btn-result primary" onclick="previewDashboard()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Preview
+        </button>
+        <button class="btn-result secondary" onclick="downloadDashboard()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download .html
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://bdlcgzdptcanoadxbhwv.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_jm9CDpvcI6xSWWkwK4rIXg_oRSVtfyU';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let lastHtml = '';
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'znak.html'; return; }
+      currentUser = session.user;
+      await refreshBalance();
+    }
+    init();
+
+    async function refreshBalance() {
+      const { data } = await sb.from('profiles').select('token_balance').eq('id', currentUser.id).single();
+      const balance = data ? data.token_balance : 0;
+      document.getElementById('balanceDisplay').textContent = balance;
+      if (balance <= 0) {
+        document.getElementById('noCredits').style.display = 'block';
+        document.getElementById('generateBtn').style.display = 'none';
+        document.getElementById('promptInput').disabled = true;
+      } else {
+        document.getElementById('noCredits').style.display = 'none';
+        document.getElementById('generateBtn').style.display = 'inline-flex';
+        document.getElementById('promptInput').disabled = false;
+      }
+    }
+
+    async function logout() {
+      await sb.auth.signOut();
+      window.location.href = 'znak.html';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.add('active');
+    }
+    function hideError() { document.getElementById('errorMsg').classList.remove('active'); }
+
+    async function generate() {
+      hideError();
+      const prompt = document.getElementById('promptInput').value.trim();
+      if (!prompt) { showError('Please describe the dashboard you want.'); return; }
+
+      const btn = document.getElementById('generateBtn');
+      const loading = document.getElementById('loading');
+      btn.disabled = true;
+      loading.classList.add('active');
+      document.getElementById('resultCard').classList.remove('active');
+
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'znak.html'; return; }
+
+      try {
+        const res = await fetch('/api/znak-generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await res.json();
+        loading.classList.remove('active');
+        btn.disabled = false;
+
+        if (!res.ok) {
+          showError(data.error || 'Something went wrong.');
+          return;
+        }
+
+        lastHtml = data.html;
+        document.getElementById('resultCard').classList.add('active');
+        await refreshBalance();
+      } catch (err) {
+        loading.classList.remove('active');
+        btn.disabled = false;
+        showError('Connection error. Please try again.');
+      }
+    }
+
+    function previewDashboard() {
+      const win = window.open('', '_blank');
+      win.document.write(lastHtml);
+      win.document.close();
+    }
+
+    function downloadDashboard() {
+      const blob = new Blob([lastHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dashboard.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
