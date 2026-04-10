@@ -42,6 +42,7 @@
     .nav-links { display: flex; align-items: center; gap: 36px; }
     .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
     .nav-links a:hover { color: #111111; }
+    .nav-links a.active { color: #111111; border-bottom: 2px solid #111111; padding-bottom: 2px; }
     .btn-nav {
       background: #111111; color: #fff; font-size: 14px; font-weight: 500;
       padding: 10px 24px; border-radius: 999px; text-decoration: none; transition: background 0.2s;
@@ -405,7 +406,7 @@
           <a href="agents.html">Agents</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
-          <a href="account.html" id="navMyAgents" style="display:none;color:#111111;font-weight:600;">My Agents</a>
+          <a href="account.html" id="navMyAgents" style="display:none;">My Agents</a>
         </div>
         <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
         <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
@@ -896,6 +897,23 @@
       toggleMobileMenu();
       checkMenuAuth();
     }
+
+    // ============ ACTIVE NAV HIGHLIGHT ============
+    function updateActiveNav() {
+      const sections = ['services', 'about', 'contact'];
+      const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+      let current = '';
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && window.scrollY >= el.offsetTop - 200) current = id;
+      });
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+      });
+    }
+    window.addEventListener('scroll', updateActiveNav);
+    updateActiveNav();
   </script>
 </body>
 </html>
