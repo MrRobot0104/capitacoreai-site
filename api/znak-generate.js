@@ -119,6 +119,16 @@ module.exports = async (req, res) => {
     }));
 
     try {
+      // Safe JSON parser — handles text error responses from API
+      async function safeJson(response, label) {
+        const text = await response.text();
+        try { return JSON.parse(text); }
+        catch (e) {
+          console.error(label + ' returned non-JSON:', text.substring(0, 200));
+          return null;
+        }
+      }
+
       // ========= STEP 1: Extract data with Haiku (fast, cheap, accurate) =========
       const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -131,9 +141,10 @@ module.exports = async (req, res) => {
         }),
       });
 
-      const extractData = await extractRes.json();
+      const extractData = await safeJson(extractRes, 'Haiku');
+      if (!extractData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
       if (!extractRes.ok) {
-        console.error('Haiku error:', extractRes.status, JSON.stringify(extractData));
+        console.error('Haiku error:', extractRes.status);
         return res.status(500).json({ error: 'Data extraction failed: ' + (extractData.error?.message || 'AI error') });
       }
 
@@ -172,9 +183,10 @@ module.exports = async (req, res) => {
         }),
       });
 
-      const designData = await designRes.json();
+      const designData = await safeJson(designRes, 'Sonnet');
+      if (!designData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
       if (!designRes.ok) {
-        console.error('Sonnet error:', designRes.status, JSON.stringify(designData));
+        console.error('Sonnet error:', designRes.status);
         return res.status(500).json({ error: 'Design generation failed: ' + (designData.error?.message || 'AI error') });
       }
 
