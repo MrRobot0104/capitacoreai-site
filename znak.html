@@ -7,45 +7,45 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0a1628; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #111111; -webkit-font-smoothing: antialiased; }
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
     .nav-brand img { width: 38px; height: 38px; }
     .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: #0a1628; }
-    .btn-nav { background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: #111111; }
+    .btn-nav { background: #111111; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
 
     .page { max-width: 1152px; margin: 0 auto; padding: 140px 32px 80px; }
     .hero-row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; margin-bottom: 80px; }
     .hero-text h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 16px; }
-    .hero-text p { font-size: 15px; color: #6b7280; line-height: 1.7; margin-bottom: 24px; }
-    .hero-preview { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; position: relative; min-height: 300px; }
-    .hero-preview .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 36px; font-weight: 700; color: rgba(10,22,40,0.04); letter-spacing: 0.1em; }
+    .hero-text p { font-size: 15px; color: #999999; line-height: 1.7; margin-bottom: 24px; }
+    .hero-preview { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 16px; padding: 24px; position: relative; min-height: 300px; }
+    .hero-preview .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 36px; font-weight: 700; color: rgba(17,17,17,0.04); letter-spacing: 0.1em; }
     .preview-stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
-    .preview-stat { background: #fff; border: 1px solid #f3f4f6; border-radius: 10px; padding: 16px; }
-    .preview-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 4px; }
-    .preview-stat .value { font-size: 20px; font-weight: 700; color: #0a1628; }
-    .preview-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-bottom: 8px; }
-    .preview-bar-fill { height: 100%; border-radius: 3px; background: #0a1628; }
+    .preview-stat { background: #fff; border: 1px solid #eeeeee; border-radius: 10px; padding: 16px; }
+    .preview-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #999999; margin-bottom: 4px; }
+    .preview-stat .value { font-size: 20px; font-weight: 700; color: #111111; }
+    .preview-bar { height: 6px; background: #e0e0e0; border-radius: 3px; margin-bottom: 8px; }
+    .preview-bar-fill { height: 100%; border-radius: 3px; background: #111111; }
 
     /* AUTH */
     .auth-section { max-width: 420px; margin: 0 auto 80px; }
     .auth-section h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
-    .auth-section .subtitle { font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 32px; }
-    .auth-tabs { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
-    .auth-tab { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-    .auth-tab.active { color: #0a1628; border-bottom-color: #0a1628; }
+    .auth-section .subtitle { font-size: 14px; color: #999999; text-align: center; margin-bottom: 32px; }
+    .auth-tabs { display: flex; border-bottom: 1px solid #e0e0e0; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #999999; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .auth-tab.active { color: #111111; border-bottom-color: #111111; }
     .auth-form { display: none; }
     .auth-form.active { display: block; }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
-    .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
-    .form-group input:focus { border-color: #0a1628; }
-    .btn-auth { width: 100%; padding: 14px; background: #0a1628; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.2s; }
-    .btn-auth:hover { background: #162240; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #555555; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus { border-color: #111111; }
+    .btn-auth { width: 100%; padding: 14px; background: #111111; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.2s; }
+    .btn-auth:hover { background: #222222; }
     .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
     .auth-error { background: #fef2f2; color: #dc2626; font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display: none; }
     .auth-error.show { display: block; }
@@ -53,31 +53,31 @@
     /* LOGGED IN STATE */
     .logged-in-section { display: none; }
     .logged-in-section.active { display: block; }
-    .user-bar { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 40px; }
+    .user-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px 20px; margin-bottom: 40px; }
     .user-bar .email { font-size: 14px; font-weight: 500; }
-    .user-bar .balance { font-size: 14px; color: #6b7280; }
-    .user-bar .balance strong { color: #0a1628; }
-    .btn-logout { font-size: 13px; color: #6b7280; background: none; border: 1px solid #e5e7eb; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; }
-    .btn-logout:hover { background: #f9fafb; }
-    .btn-app { display: inline-flex; align-items: center; gap: 8px; background: #0a1628; color: #fff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 40px; }
+    .user-bar .balance { font-size: 14px; color: #999999; }
+    .user-bar .balance strong { color: #111111; }
+    .btn-logout { font-size: 13px; color: #999999; background: none; border: 1px solid #e0e0e0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    .btn-logout:hover { background: #f5f5f5; }
+    .btn-app { display: inline-flex; align-items: center; gap: 8px; background: #111111; color: #fff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 40px; }
 
     /* PRICING */
     .pricing-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .pricing-desc { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+    .pricing-desc { font-size: 14px; color: #999999; margin-bottom: 24px; }
     .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-    .price-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; text-align: center; transition: all 0.2s; }
-    .price-card:hover { border-color: #d1d5db; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .price-card.popular { border-color: #0a1628; }
-    .price-card .pkg-name { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 8px; }
-    .price-card .pkg-price { font-size: 32px; font-weight: 700; color: #0a1628; margin-bottom: 4px; }
-    .price-card .pkg-detail { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
-    .btn-buy { width: 100%; padding: 12px; background: #0a1628; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; }
-    .btn-buy:hover { background: #162240; }
+    .price-card { border: 1px solid #e0e0e0; border-radius: 14px; padding: 24px; text-align: center; transition: all 0.2s; }
+    .price-card:hover { border-color: #cccccc; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .price-card.popular { border-color: #111111; }
+    .price-card .pkg-name { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: #999999; margin-bottom: 8px; }
+    .price-card .pkg-price { font-size: 32px; font-weight: 700; color: #111111; margin-bottom: 4px; }
+    .price-card .pkg-detail { font-size: 13px; color: #999999; margin-bottom: 20px; }
+    .btn-buy { width: 100%; padding: 12px; background: #111111; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; }
+    .btn-buy:hover { background: #222222; }
     .btn-buy:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .footer { background: #fff; border-top: 1px solid #f3f4f6; margin-top: 80px; }
+    .footer { background: #fff; border-top: 1px solid #eeeeee; margin-top: 80px; }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; }
-    .footer-inner p { font-size: 12px; color: #6b7280; text-align: center; }
+    .footer-inner p { font-size: 12px; color: #999999; text-align: center; }
 
     @media (max-width: 768px) {
       .nav-links, .nav .btn-nav { display: none; }
@@ -88,9 +88,9 @@
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
     .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
     .mobile-menu.active { right: 0; }
-    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
-    .mobile-menu a:hover { color: #0a1628; }
-    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
+    .mobile-menu a:hover { color: #111111; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
     .mobile-overlay.active { display: block; }
   </style>
 </head>
@@ -107,12 +107,12 @@
       </div>
       <a href="/#contact" class="btn-nav">Get in Touch</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
     </div>
   </header>
   <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Agents</a><a href="/#about">About</a><a href="/#contact">Contact</a>
-    <div id="menuAuth" style="padding-top:24px;"><a href="znak.html" style="display:block;padding:12px 20px;background:#0a1628;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
+    <div id="menuAuth" style="padding-top:24px;"><a href="znak.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
@@ -122,7 +122,7 @@
       <div class="hero-text">
         <h1>Meet znak</h1>
         <p>Tell znak what you need — it builds your dashboard in real time. Describe your idea in plain English and get a production-ready, downloadable HTML dashboard in seconds.</p>
-        <p style="font-size:13px;color:#6b7280;">Powered by AI. Built by CapitaCoreAI.</p>
+        <p style="font-size:13px;color:#999999;">Powered by AI. Built by CapitaCoreAI.</p>
       </div>
       <div class="hero-preview">
         <div class="watermark">ZNAK</div>
@@ -151,7 +151,7 @@
         <div class="form-group"><label>Email</label><input type="email" id="loginEmail" required></div>
         <div class="form-group"><label>Password</label><input type="password" id="loginPass" required minlength="6"></div>
         <button type="submit" class="btn-auth" id="loginBtn">Log In</button>
-        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('forgot');return false;" style="font-size:13px;color:#6b7280;text-decoration:none;">Forgot your password?</a></p>
+        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('forgot');return false;" style="font-size:13px;color:#999999;text-decoration:none;">Forgot your password?</a></p>
       </form>
       <form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
         <div class="form-group"><label>First Name</label><input type="text" id="signupName" required placeholder="John"></div>
@@ -163,13 +163,13 @@
         <div class="form-group"><label>Email</label><input type="email" id="signupEmail" required></div>
         <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="signupPass" required minlength="6"></div>
         <button type="submit" class="btn-auth" id="signupBtn">Create Account</button>
-        <p style="font-size:12px;color:#6b7280;text-align:center;margin-top:12px;line-height:1.6;">By creating an account, you agree to our <a href="terms.html" style="color:#0a1628;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#0a1628;text-decoration:underline;">Privacy Policy</a>.</p>
+        <p style="font-size:12px;color:#999999;text-align:center;margin-top:12px;line-height:1.6;">By creating an account, you agree to our <a href="terms.html" style="color:#111111;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#111111;text-decoration:underline;">Privacy Policy</a>.</p>
       </form>
       <form class="auth-form" id="forgotForm" onsubmit="handleForgot(event)">
-        <p style="font-size:14px;color:#6b7280;margin-bottom:16px;">Enter your email and we'll send you a password reset link.</p>
+        <p style="font-size:14px;color:#999999;margin-bottom:16px;">Enter your email and we'll send you a password reset link.</p>
         <div class="form-group"><label>Email</label><input type="email" id="forgotEmail" required></div>
         <button type="submit" class="btn-auth" id="forgotBtn">Send Reset Link</button>
-        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('login');return false;" style="font-size:13px;color:#6b7280;text-decoration:none;">← Back to login</a></p>
+        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('login');return false;" style="font-size:13px;color:#999999;text-decoration:none;">← Back to login</a></p>
       </form>
       <div id="signupSuccess" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">
         <p style="font-size:16px;font-weight:600;color:#166534;margin-bottom:4px;">Check your email!</p>
@@ -181,7 +181,7 @@
       </div>
       <form id="newPasswordForm" style="display:none;" onsubmit="handleNewPassword(event)">
         <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Set New Password</h2>
-        <p style="font-size:14px;color:#6b7280;margin-bottom:24px;">Enter your new password below.</p>
+        <p style="font-size:14px;color:#999999;margin-bottom:24px;">Enter your new password below.</p>
         <div class="form-group"><label>New Password (min 6 chars)</label><input type="password" id="newPass" required minlength="6"></div>
         <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPass" required minlength="6"></div>
         <button type="submit" class="btn-auth" id="newPassBtn">Update Password</button>
@@ -189,7 +189,7 @@
       <div id="passwordUpdated" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">
         <p style="font-size:16px;font-weight:600;color:#166534;margin-bottom:4px;">Password updated!</p>
         <p style="font-size:14px;color:#166534;margin-bottom:16px;">You can now log in with your new password.</p>
-        <a href="znak.html" style="font-size:14px;font-weight:500;color:#0a1628;">Go to login →</a>
+        <a href="znak.html" style="font-size:14px;font-weight:500;color:#111111;">Go to login →</a>
       </div>
     </div>
 
@@ -330,11 +330,11 @@
       const status = document.getElementById('usernameStatus');
       const clean = val.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
       if (clean.length < 3) {
-        status.innerHTML = '<span style="color:#6b7280;">Min 3 characters</span>';
+        status.innerHTML = '<span style="color:#999999;">Min 3 characters</span>';
         usernameAvailable = false;
         return;
       }
-      status.innerHTML = '<span style="color:#6b7280;">Checking...</span>';
+      status.innerHTML = '<span style="color:#999999;">Checking...</span>';
       clearTimeout(usernameTimer);
       usernameTimer = setTimeout(async () => {
         try {

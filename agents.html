@@ -10,7 +10,7 @@
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: #ffffff;
-      color: #0a1628;
+      color: #111111;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -25,30 +25,30 @@
       max-width: 1152px; margin: 0 auto; padding: 0 32px;
       height: 80px; display: flex; align-items: center; justify-content: space-between;
     }
-    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
     .nav-brand img { width: 38px; height: 38px; }
     .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: #0a1628; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: #111111; }
     .btn-nav {
-      background: #0a1628; color: #fff; font-size: 14px; font-weight: 500;
+      background: #111111; color: #fff; font-size: 14px; font-weight: 500;
       padding: 10px 24px; border-radius: 999px; text-decoration: none; transition: background 0.2s;
     }
-    .btn-nav:hover { background: #162240; }
+    .btn-nav:hover { background: #222222; }
 
     /* PAGE */
     .page { max-width: 1152px; margin: 0 auto; padding: 140px 32px 80px; }
     .page-label {
       font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em;
-      font-weight: 500; color: #6b7280; margin-bottom: 12px;
+      font-weight: 500; color: #999999; margin-bottom: 12px;
     }
     .page-title {
       font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700;
-      color: #0a1628; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px;
+      color: #111111; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px;
     }
     .page-desc {
-      font-size: 15px; color: #6b7280; line-height: 1.7; max-width: 520px; margin-bottom: 48px;
+      font-size: 15px; color: #999999; line-height: 1.7; max-width: 520px; margin-bottom: 48px;
     }
 
     /* AGENT GRID */
@@ -56,47 +56,47 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
     }
     .agent-card {
-      background: #fff; border-radius: 16px; border: 1px solid #f3f4f6; padding: 28px;
+      background: #fff; border-radius: 16px; border: 1px solid #eeeeee; padding: 28px;
       transition: all 0.3s; text-decoration: none; color: inherit; display: block;
     }
-    .agent-card:hover { border-color: #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transform: translateY(-2px); }
+    .agent-card:hover { border-color: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transform: translateY(-2px); }
     .agent-card .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .agent-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: #6b7280; }
+    .agent-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: #999999; }
     .agent-card .status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; }
     .status-live { color: #10b981; }
     .status-live .status-dot { background: #34d399; }
     .status-soon { color: #f59e0b; }
     .status-soon .status-dot { background: #f59e0b; }
-    .agent-card h3 { font-size: 17px; font-weight: 600; color: #0a1628; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .agent-card .tagline { font-size: 14px; color: #6b7280; line-height: 1.65; margin-bottom: 20px; }
+    .agent-card h3 { font-size: 17px; font-weight: 600; color: #111111; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .agent-card .tagline { font-size: 14px; color: #999999; line-height: 1.65; margin-bottom: 20px; }
     .agent-card ul { list-style: none; margin-bottom: 20px; }
-    .agent-card li { font-size: 13px; color: #6b7280; padding: 4px 0; display: flex; align-items: center; gap: 10px; }
-    .agent-card li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(10,22,40,0.15); flex-shrink: 0; }
-    .agent-card .price { font-size: 14px; font-weight: 600; color: #0a1628; }
-    .agent-card .price span { font-size: 12px; font-weight: 400; color: #6b7280; }
+    .agent-card li { font-size: 13px; color: #999999; padding: 4px 0; display: flex; align-items: center; gap: 10px; }
+    .agent-card li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(17,17,17,0.15); flex-shrink: 0; }
+    .agent-card .price { font-size: 14px; font-weight: 600; color: #111111; }
+    .agent-card .price span { font-size: 12px; font-weight: 400; color: #999999; }
 
     /* FOOTER */
-    .footer { background: #fff; border-top: 1px solid #f3f4f6; }
+    .footer { background: #fff; border-top: 1px solid #eeeeee; }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; }
     .footer-top { padding: 48px 0; display: flex; justify-content: space-between; align-items: center; }
-    .footer-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0a1628; margin-bottom: 12px; }
+    .footer-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #111111; margin-bottom: 12px; }
     .footer-brand img { width: 24px; height: 24px; }
     .footer-brand span { font-weight: 600; font-size: 14px; }
-    .footer-desc { font-size: 13px; color: #6b7280; }
+    .footer-desc { font-size: 13px; color: #999999; }
     .footer-nav { display: flex; gap: 32px; }
-    .footer-nav a { font-size: 13px; color: #6b7280; text-decoration: none; transition: color 0.2s; }
-    .footer-nav a:hover { color: #0a1628; }
-    .footer-bottom { border-top: 1px solid #f3f4f6; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
-    .footer-bottom p { font-size: 12px; color: #6b7280; }
-    .footer-bottom .built { color: #d1d5db; }
+    .footer-nav a { font-size: 13px; color: #999999; text-decoration: none; transition: color 0.2s; }
+    .footer-nav a:hover { color: #111111; }
+    .footer-bottom { border-top: 1px solid #eeeeee; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .footer-bottom p { font-size: 12px; color: #999999; }
+    .footer-bottom .built { color: #cccccc; }
 
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
     .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
     .mobile-menu.active { right: 0; }
-    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
-    .mobile-menu a:hover { color: #0a1628; }
-    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
+    .mobile-menu a:hover { color: #111111; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
     .mobile-overlay.active { display: block; }
 
     @media (max-width: 768px) {
@@ -123,7 +123,7 @@
       </div>
       <a href="/#contact" class="btn-nav">Get in Touch</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
     </div>
   </header>
@@ -133,10 +133,10 @@
     <a href="agents.html">Agents</a>
     <a href="/#about">About</a>
     <a href="/#contact">Contact</a>
-    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#0a1628;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
     <div id="menuMyAgents" style="display:none;padding-top:24px;">
       <div id="menuAgentsList"></div>
-      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#0a1628;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="menuLogout()">Log Out</button>
+      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="menuLogout()">Log Out</button>
     </div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
@@ -168,14 +168,14 @@
       <div class="agent-card" style="border-style: dashed; display: flex; align-items: center; justify-content: center; min-height: 280px;">
         <div style="text-align: center;">
           <p style="font-size: 24px; margin-bottom: 8px; opacity: 0.2;">+</p>
-          <p style="font-size: 14px; color: #6b7280;">More agents coming soon</p>
+          <p style="font-size: 14px; color: #999999;">More agents coming soon</p>
         </div>
       </div>
 
       <div class="agent-card" style="border-style: dashed; display: flex; align-items: center; justify-content: center; min-height: 280px;">
         <div style="text-align: center;">
           <p style="font-size: 24px; margin-bottom: 8px; opacity: 0.2;">+</p>
-          <p style="font-size: 14px; color: #6b7280;">More agents coming soon</p>
+          <p style="font-size: 14px; color: #999999;">More agents coming soon</p>
         </div>
       </div>
 
@@ -222,8 +222,8 @@
         const isAdmin = data?.is_admin === true;
         const hasAccess = isAdmin || bal > 0;
         document.getElementById('menuAgentsList').innerHTML = hasAccess
-          ? '<a href="znak-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #f3f4f6;color:#0a1628;font-weight:500;">znak <span style="font-size:12px;color:#6b7280;">' + (isAdmin ? '∞' : bal) + ' credits</span></a>'
-          : '<a href="znak.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #f3f4f6;color:#0a1628;font-weight:500;">znak <span style="font-size:12px;color:#6b7280;">Buy credits →</span></a>';
+          ? '<a href="znak-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">' + (isAdmin ? '∞' : bal) + ' credits</span></a>'
+          : '<a href="znak.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">Buy credits →</span></a>';
       }
     }
     checkMenuAuth();

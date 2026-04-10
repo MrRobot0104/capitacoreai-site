@@ -8,10 +8,10 @@ CRITICAL RULES:
 
 DESIGN SYSTEM:
 - Font: 'Inter', system-ui, sans-serif
-- Background: #f8fafc (page), #ffffff (cards)
-- Text: #0a1628 (headings), #374151 (body), #6b7280 (secondary)
-- Accent: #2563eb (primary blue), #10b981 (green/positive), #f59e0b (amber/warning), #ef4444 (red/negative)
-- Borders: #e5e7eb, border-radius: 12px for cards
+- Background: #f5f5f5 (page), #ffffff (cards)
+- Text: #111111 (headings), #555555 (body), #999999 (secondary)
+- Accent: #111111 (primary blue), #10b981 (green/positive), #f59e0b (amber/warning), #ef4444 (red/negative)
+- Borders: #e0e0e0, border-radius: 12px for cards
 - Shadows: box-shadow: 0 1px 3px rgba(0,0,0,0.08)
 - Spacing: Use generous padding (24px cards, 32px page margins)
 - Max width: 1100px centered container
@@ -29,7 +29,7 @@ QUALITY:
 - The dashboard must look like a real SaaS product — polished and professional
 - Use realistic, contextual sample data that matches the user's request
 - Include hover states on interactive-looking elements (cursor: default is fine)
-- Add a small "Built with CapitaCoreAI" footer text in #9ca3af at the bottom`;
+- Add a small "Built with CapitaCoreAI" footer text in #aaaaaa at the bottom`;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
