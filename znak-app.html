@@ -491,9 +491,9 @@
         }
 
         lastDashboardHtml = data.html;
-        // Store the JSON config so Claude can edit it on follow-up messages
-        const configJson = data.config ? JSON.stringify(data.config) : '';
-        conversationHistory.push({ role: 'assistant', content: 'Here is the current dashboard JSON:\n' + configJson.substring(0, 3000) });
+        // Store a summary of the HTML for edit context
+        const htmlSummary = lastDashboardHtml.substring(0, 3000);
+        conversationHistory.push({ role: 'assistant', content: htmlSummary });
 
         // Show dashboard
         document.getElementById('previewEmpty').style.display = 'none';

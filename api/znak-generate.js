@@ -1,50 +1,56 @@
-const { renderDashboard } = require('../dashboard-template.js');
+const SYSTEM_PROMPT = `You are znak — the world's best dashboard builder. You create STUNNING, executive-grade, interactive data dashboards that make CFOs say "wow."
 
-const SYSTEM_PROMPT = `You are a data analyst. Given user data or a description, output a JSON dashboard configuration. Output ONLY valid JSON — no markdown, no backticks, no explanation.
+OUTPUT: A single, complete, self-contained HTML file. No markdown. No backticks. No explanation. Just the HTML starting with <!DOCTYPE html>.
 
-JSON SCHEMA (follow exactly):
-{
-  "title": "Dashboard Title",
-  "subtitle": "Brief description",
-  "kpis": [
-    { "label": "METRIC NAME", "value": "$1.2M", "change": "+12% vs prior" }
-  ],
-  "charts": [
-    {
-      "title": "Chart Title",
-      "subtitle": "What this shows",
-      "type": "bar",
-      "labels": ["Label1", "Label2", "Label3"],
-      "datasets": [
-        { "label": "Series Name", "data": [100, 200, 300] }
-      ]
-    }
-  ],
-  "table": {
-    "title": "Data Table",
-    "headers": ["Col1", "Col2", "Col3"],
-    "rows": [["val1", "val2", "val3"]]
-  }
-}
+LIBRARIES (load ALL of these in <head>):
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
-CHART TYPES: "bar", "horizontalBar", "line", "doughnut", "pie"
+DESIGN PRINCIPLES:
+- This must look like a $50,000 custom-built executive dashboard
+- Clean, minimal, professional — like a top-tier consulting firm's deliverable
+- Lots of whitespace, precise typography, purposeful color
+- Color palette: #2563eb (primary blue), #0891b2 (teal), #7c3aed (purple), #059669 (green), #111 (dark), #f8f9fb (bg)
+- Font: Inter. Headings: 700-800 weight. Body: 400-500.
+- Border radius: 12-16px on cards. Subtle shadows: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)
 
-RULES:
-- Output ONLY the JSON object. Nothing else.
-- KPIs: 3-4 cards. Format values nicely ($1.2M, 48 units, 70.3%, etc.)
-- Charts: 2-3 charts. Pick the best type for the data. ALWAYS include real numbers in data arrays.
-- Table: Include ALL available data rows. Format monetary values with $ and commas.
-- If user provides CSV/Excel data: CALCULATE real sums, averages, percentages from the data. Use actual values, never placeholder or zero values.
-- For comparisons (list vs net price): use grouped bar chart with 2 datasets.
-- For proportions (budget allocation): use doughnut chart.
-- For rankings (discount by SKU): use horizontalBar chart.
-- For trends over time: use line chart.
-- Labels should be short (truncate long product names to ~20 chars).
+REQUIRED STRUCTURE:
+1. HEADER — Title, subtitle with metadata (dates, IDs, etc.), maybe a gradient accent line
+2. KPI CARDS — 3-5 stat cards with: large number, label, colored change indicator with arrow icon, gradient top border. Animate in with staggered fadeUp.
+3. CHARTS — 2-4 interactive charts. Use Chart.js AND/OR custom SVG/D3.js. Pick the best visualization for each dataset:
+   - Bar charts with rounded corners, hover effects, gradient fills
+   - Horizontal bars for rankings
+   - Doughnut/pie with custom center text showing total
+   - Line charts with gradient fills, smooth curves, animated drawing
+   - Gauges, progress rings, sparklines using SVG/D3 where appropriate
+4. DATA TABLE — Sortable-looking, professional. Alternating rows, money values in bold monospace, percentage badges with colored backgrounds, status indicators.
+5. FOOTER — "Built with znak by CapitaCoreAI" subtle at bottom
+
+ANIMATION REQUIREMENTS:
+- Cards fade up on load with staggered delays (use CSS @keyframes)
+- Chart.js charts animate with easing
+- Numbers can count up using requestAnimationFrame
+- Hover effects on cards (lift + shadow)
+- Smooth transitions everywhere
+
+CHART.JS CRITICAL RULES:
+- ALL chart initialization code MUST be inside: window.addEventListener('load', function() { ... })
+- EVERY dataset must have hardcoded numeric data — NEVER empty arrays
+- Use the color palette above for fills and borders
+- borderRadius on bar charts, tension on lines, custom tooltips
+
+WHEN USER PROVIDES DATA:
+- ACTUALLY CALCULATE real values: sums, averages, percentages, comparisons
+- Use EVERY number from the data — don't leave anything out
+- Group and aggregate intelligently (by category, by SKU, by date)
+- Format money with $ and commas, percentages with % sign
+- Include ALL data rows in the table
 
 WHEN USER ASKS FOR EDITS:
-- The previous message contains the current dashboard JSON.
-- Modify it according to the user's request and output the updated JSON.
-- Always output the COMPLETE JSON, not a partial update.`;
+- The previous message shows what you generated. Regenerate the complete page with changes applied.
+
+Go above and beyond. Add creative touches: gradient backgrounds on sections, animated counters, custom SVG icons, sparkline mini-charts in the KPI cards, progress rings, heatmap-style table cells. Make it unforgettable.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -113,7 +119,7 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 4096,
+          max_tokens: 12000,
           system: SYSTEM_PROMPT,
           messages: messages,
         }),
@@ -126,19 +132,9 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Generation failed: ' + detail });
       }
 
-      let jsonText = data.content[0].text;
-      // Strip markdown fences
-      jsonText = jsonText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-
-      let dashConfig;
-      try {
-        dashConfig = JSON.parse(jsonText);
-      } catch (e) {
-        console.error('JSON parse error:', e.message, '\nRaw:', jsonText.substring(0, 500));
-        return res.status(500).json({ error: 'Failed to parse dashboard data. Please try again.' });
-      }
-
-      const html = renderDashboard(dashConfig);
+      let html = data.content[0].text;
+      html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
+      if (!html.includes('</html>')) html += '\n</body></html>';
 
       // Log usage
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
@@ -147,7 +143,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({ user_id: user.id, prompt: (messages[messages.length - 1]?.content || '').substring(0, 500) }),
       });
 
-      res.status(200).json({ html, config: dashConfig });
+      res.status(200).json({ html });
     } catch (err) {
       console.error('Generate error:', err.message);
       res.status(500).json({ error: 'Generation failed: ' + err.message });
