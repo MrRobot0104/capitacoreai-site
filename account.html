@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Agents — CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0a1628; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #0a1628; }
+    .btn-nav { background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -300px; width: 300px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+    .mobile-menu a:hover { color: #0a1628; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+
+    .page { max-width: 560px; margin: 0 auto; padding: 140px 32px 80px; }
+
+    /* AUTH */
+    .auth-section h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .auth-section .subtitle { font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 32px; }
+    .auth-tabs { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .auth-tab.active { color: #0a1628; border-bottom-color: #0a1628; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus { border-color: #0a1628; }
+    .btn-auth { width: 100%; padding: 14px; background: #0a1628; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; }
+    .btn-auth:hover { background: #162240; }
+    .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
+    .auth-error { background: #fef2f2; color: #dc2626; font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display: none; }
+    .auth-error.show { display: block; }
+
+    /* DASHBOARD */
+    .dashboard { display: none; }
+    .dashboard.active { display: block; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .dash-header h2 { font-size: 22px; font-weight: 700; }
+    .dash-header .user-info { font-size: 13px; color: #6b7280; }
+    .btn-logout { font-size: 13px; color: #6b7280; background: none; border: 1px solid #e5e7eb; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    .btn-logout:hover { background: #f9fafb; }
+
+    .agent-card-dash { border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .agent-card-dash .agent-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .agent-card-dash .agent-info p { font-size: 13px; color: #6b7280; }
+    .agent-card-dash .agent-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-launch { padding: 10px 20px; background: #0a1628; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-launch:hover { background: #162240; }
+    .btn-buy-small { padding: 10px 20px; background: #fff; color: #0a1628; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-buy-small:hover { background: #f9fafb; }
+    .credits-badge { font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 4px 10px; border-radius: 999px; }
+
+    .no-agents { text-align: center; padding: 40px; border: 1px dashed #e5e7eb; border-radius: 14px; }
+    .no-agents p { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
+    .no-agents a { color: #0a1628; font-weight: 500; text-decoration: none; }
+
+    .footer { background: #fff; border-top: 1px solid #f3f4f6; margin-top: 40px; }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: #6b7280; }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: #6b7280; text-decoration: none; }
+    .footer-nav a:hover { color: #0a1628; }
+
+    @media (max-width: 768px) {
+      .nav-inner { height: 68px; padding: 0 20px; }
+      .nav-links, .nav .btn-nav { display: none; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+      .agent-card-dash { flex-direction: column; gap: 16px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI"><span>CapitaCoreAI</span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="agents.html">Products</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Products</a><a href="/#about">About</a><a href="/#contact">Contact</a></div>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+  <main class="page">
+    <!-- AUTH (logged out) -->
+    <div id="authSection" class="auth-section">
+      <h2>Agent Profile</h2>
+      <p class="subtitle">Log in or create an account to access your AI agents.</p>
+      <div class="auth-error" id="authError"></div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchTab('login')">Log In</div>
+        <div class="auth-tab" onclick="switchTab('signup')">Sign Up</div>
+      </div>
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group"><label>Email</label><input type="email" id="loginEmail" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="loginPass" required minlength="6"></div>
+        <button type="submit" class="btn-auth" id="loginBtn">Log In</button>
+        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('forgot');return false;" style="font-size:13px;color:#6b7280;text-decoration:none;">Forgot your password?</a></p>
+      </form>
+      <form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
+        <div class="form-group"><label>First Name</label><input type="text" id="signupName" required placeholder="John"></div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="signupUsername" required placeholder="johndoe" pattern="^[a-zA-Z0-9_]{3,20}$" title="3-20 characters, letters, numbers, underscores only" oninput="checkUsername(this.value)">
+          <div id="usernameStatus" style="font-size:12px;margin-top:4px;min-height:16px;"></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" id="signupEmail" required></div>
+        <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="signupPass" required minlength="6"></div>
+        <button type="submit" class="btn-auth" id="signupBtn">Create Account</button>
+        <p style="font-size:12px;color:#6b7280;text-align:center;margin-top:12px;line-height:1.6;">By creating an account, you agree to our <a href="terms.html" style="color:#0a1628;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#0a1628;text-decoration:underline;">Privacy Policy</a>.</p>
+      </form>
+      <form class="auth-form" id="forgotForm" onsubmit="handleForgot(event)">
+        <p style="font-size:14px;color:#6b7280;margin-bottom:16px;">Enter your email and we'll send you a password reset link.</p>
+        <div class="form-group"><label>Email</label><input type="email" id="forgotEmail" required></div>
+        <button type="submit" class="btn-auth" id="forgotBtn">Send Reset Link</button>
+        <p style="text-align:center;margin-top:12px;"><a href="#" onclick="switchTab('login');return false;" style="font-size:13px;color:#6b7280;text-decoration:none;">← Back to login</a></p>
+      </form>
+      <div id="signupSuccess" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">
+        <p style="font-size:16px;font-weight:600;color:#166534;margin-bottom:4px;">Check your email!</p>
+        <p style="font-size:14px;color:#166534;">We sent a verification link. Please verify to continue.</p>
+      </div>
+      <div id="resetSuccess" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:24px;text-align:center;">
+        <p style="font-size:16px;font-weight:600;color:#1e40af;margin-bottom:4px;">Reset link sent!</p>
+        <p style="font-size:14px;color:#1e40af;">Check your email for a password reset link.</p>
+      </div>
+      <form id="newPasswordForm" style="display:none;" onsubmit="handleNewPassword(event)">
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Set New Password</h2>
+        <p style="font-size:14px;color:#6b7280;margin-bottom:24px;">Enter your new password below.</p>
+        <div class="form-group"><label>New Password (min 6 chars)</label><input type="password" id="newPass" required minlength="6"></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPass" required minlength="6"></div>
+        <button type="submit" class="btn-auth" id="newPassBtn">Update Password</button>
+      </form>
+      <div id="passwordUpdated" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">
+        <p style="font-size:16px;font-weight:600;color:#166534;margin-bottom:4px;">Password updated!</p>
+        <p style="font-size:14px;color:#166534;margin-bottom:16px;">You can now log in with your new password.</p>
+        <a href="account.html" style="font-size:14px;font-weight:500;color:#0a1628;">Go to login →</a>
+      </div>
+    </div>
+
+    <!-- DASHBOARD (logged in) -->
+    <div id="dashboard" class="dashboard">
+      <div class="dash-header">
+        <div>
+          <h2>My Agents</h2>
+          <p class="user-info" id="dashUserInfo"></p>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">Log Out</button>
+      </div>
+      <div id="agentsList">
+        <!-- Agents populated by JS -->
+      </div>
+      <div class="no-agents" id="noAgents" style="display:none;">
+        <p>You haven't purchased any agents yet.</p>
+        <a href="agents.html">Browse AI Agents →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const IS_RECOVERY = window.location.hash.includes('type=recovery');
+    const SUPABASE_URL = 'https://bdlcgzdptcanoadxbhwv.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_jm9CDpvcI6xSWWkwK4rIXg_oRSVtfyU';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function toggleMobileMenu() {
+      const m = document.getElementById('mobileMenu'), o = document.getElementById('mobileOverlay');
+      const open = m.classList.contains('active');
+      m.classList.toggle('active'); o.classList.toggle('active');
+      document.body.style.overflow = open ? '' : 'hidden';
+    }
+
+    async function init() {
+      sb.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') showResetForm();
+      });
+      await sb.auth.getSession();
+      if (IS_RECOVERY) { showResetForm(); return; }
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) showDashboard(session.user);
+    }
+    init();
+
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      document.getElementById('signupSuccess').style.display = 'none';
+      document.getElementById('resetSuccess').style.display = 'none';
+      if (tab === 'login') {
+        document.querySelector('.auth-tab:first-child').classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+      } else if (tab === 'forgot') {
+        document.getElementById('forgotForm').classList.add('active');
+      } else {
+        document.querySelector('.auth-tab:last-child').classList.add('active');
+        document.getElementById('signupForm').classList.add('active');
+      }
+      hideError();
+    }
+
+    function showError(msg) { const el = document.getElementById('authError'); el.textContent = msg; el.classList.add('show'); }
+    function hideError() { document.getElementById('authError').classList.remove('show'); }
+
+    function showResetForm() {
+      document.getElementById('authSection').style.display = 'block';
+      document.getElementById('dashboard').classList.remove('active');
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      document.getElementById('newPasswordForm').style.display = 'block';
+    }
+
+    async function handleNewPassword(e) {
+      e.preventDefault(); hideError();
+      const pass = document.getElementById('newPass').value;
+      const confirm = document.getElementById('confirmPass').value;
+      if (pass !== confirm) { showError('Passwords do not match.'); return; }
+      const btn = document.getElementById('newPassBtn'); btn.disabled = true; btn.textContent = 'Updating...';
+      const { error } = await sb.auth.updateUser({ password: pass });
+      btn.disabled = false; btn.textContent = 'Update Password';
+      if (error) { showError(error.message); return; }
+      await sb.auth.signOut();
+      document.getElementById('newPasswordForm').style.display = 'none';
+      document.getElementById('passwordUpdated').style.display = 'block';
+      window.history.replaceState(null, '', 'account.html');
+    }
+
+    let usernameTimer = null, usernameAvailable = false;
+    async function checkUsername(val) {
+      const status = document.getElementById('usernameStatus');
+      const clean = val.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+      if (clean.length < 3) { status.innerHTML = '<span style="color:#6b7280;">Min 3 characters</span>'; usernameAvailable = false; return; }
+      status.innerHTML = '<span style="color:#6b7280;">Checking...</span>';
+      clearTimeout(usernameTimer);
+      usernameTimer = setTimeout(async () => {
+        try {
+          const { data } = await sb.rpc('check_username_available', { uname: clean });
+          if (data === true) { status.innerHTML = '<span style="color:#10b981;">✓ Available</span>'; usernameAvailable = true; }
+          else { status.innerHTML = '<span style="color:#ef4444;">✗ Already taken</span>'; usernameAvailable = false; }
+        } catch (e) { status.innerHTML = ''; usernameAvailable = true; }
+      }, 400);
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault(); hideError();
+      const firstName = document.getElementById('signupName').value.trim();
+      const username = document.getElementById('signupUsername').value.trim().toLowerCase();
+      if (!usernameAvailable) { showError('Please choose an available username.'); return; }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { showError('Username: 3-20 characters, letters/numbers/underscores only.'); return; }
+      const btn = document.getElementById('signupBtn'); btn.disabled = true; btn.textContent = 'Creating account...';
+      const { data, error } = await sb.auth.signUp({
+        email: document.getElementById('signupEmail').value,
+        password: document.getElementById('signupPass').value,
+        options: { data: { first_name: firstName, username: username } }
+      });
+      btn.disabled = false; btn.textContent = 'Create Account';
+      if (error) { showError(error.message); return; }
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('signupSuccess').style.display = 'block';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault(); hideError();
+      const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.textContent = 'Logging in...';
+      const { data, error } = await sb.auth.signInWithPassword({
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPass').value,
+      });
+      btn.disabled = false; btn.textContent = 'Log In';
+      if (error) { showError(error.message); return; }
+      showDashboard(data.user);
+    }
+
+    async function handleForgot(e) {
+      e.preventDefault(); hideError();
+      const btn = document.getElementById('forgotBtn'); btn.disabled = true; btn.textContent = 'Sending...';
+      const { error } = await sb.auth.resetPasswordForEmail(
+        document.getElementById('forgotEmail').value,
+        { redirectTo: window.location.origin + '/account.html' }
+      );
+      btn.disabled = false; btn.textContent = 'Send Reset Link';
+      if (error) { showError(error.message); return; }
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      document.getElementById('resetSuccess').style.display = 'block';
+    }
+
+    async function showDashboard(user) {
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      const { data } = await sb.from('profiles').select('token_balance, first_name, username').eq('id', user.id).single();
+      const name = data?.first_name || user.email;
+      document.getElementById('dashUserInfo').textContent = 'Welcome, ' + name;
+
+      const list = document.getElementById('agentsList');
+      const balance = data?.token_balance || 0;
+
+      // Show all agents — those with credits get "Launch", others get "Buy"
+      let html = '';
+      // znak
+      html += '<div class="agent-card-dash"><div class="agent-info"><h3>znak</h3><p>AI-powered dashboard builder</p></div><div class="agent-actions">';
+      if (balance > 0) {
+        html += '<span class="credits-badge">' + balance + ' credits</span>';
+        html += '<a href="znak-app.html" class="btn-launch">Launch →</a>';
+      } else {
+        html += '<span class="credits-badge">No credits</span>';
+        html += '<a href="znak.html" class="btn-buy-small">Buy Credits →</a>';
+      }
+      html += '</div></div>';
+
+      // Placeholder for future agents
+      html += '<div class="agent-card-dash" style="border-style:dashed;opacity:0.6;"><div class="agent-info"><h3>More agents coming soon</h3><p>Stay tuned for new AI agents</p></div><div class="agent-actions"><a href="agents.html" class="btn-buy-small">Browse →</a></div></div>';
+
+      list.innerHTML = html;
+    }
+
+    async function handleLogout() {
+      await sb.auth.signOut();
+      document.getElementById('dashboard').classList.remove('active');
+      document.getElementById('authSection').style.display = 'block';
+      switchTab('login');
+    }
+  </script>
+</body>
+</html>

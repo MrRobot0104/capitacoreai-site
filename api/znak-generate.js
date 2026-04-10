@@ -28,7 +28,7 @@ LAYOUT:
 QUALITY:
 - Must look like a real SaaS product
 - Realistic, contextual sample data
-- Add "Built with Znak by CapitaCoreAI" footer in #9ca3af`;
+- Add "Built with znak by CapitaCoreAI" footer in #9ca3af`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

@@ -420,7 +420,7 @@
       <a href="#contact" onclick="toggleMobileMenu()">Contact</a>
       <div id="menuAuth">
         <div class="menu-section">Account</div>
-        <a href="znak.html" class="menu-btn">Log In / Sign Up</a>
+        <a href="account.html" class="menu-btn">Log In / Sign Up</a>
       </div>
       <div id="menuMyAgents" style="display:none;">
         <div class="menu-section">My Agents</div>
@@ -913,9 +913,9 @@
         const name = data ? data.first_name : '';
         const list = document.getElementById('menuAgentsList');
         if (balance > 0) {
-          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">Znak</span><br><span style="font-size:12px;color:#6b7280;">' + balance + ' credits remaining</span></div><a href="znak-app.html" class="agent-link">Launch →</a></div>';
+          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#6b7280;">' + balance + ' credits remaining</span></div><a href="znak-app.html" class="agent-link">Launch →</a></div>';
         } else {
-          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">Znak</span><br><span style="font-size:12px;color:#6b7280;">No credits</span></div><a href="znak.html" class="agent-link">Buy →</a></div>';
+          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#6b7280;">No credits</span></div><a href="znak.html" class="agent-link">Buy →</a></div>';
         }
       } else {
         authDiv.style.display = 'block';
