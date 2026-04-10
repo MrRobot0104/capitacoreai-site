@@ -518,9 +518,9 @@
         }
 
         lastDashboardHtml = data.html;
-        // Store a summary of the HTML for edit context
-        const htmlSummary = lastDashboardHtml.substring(0, 3000);
-        conversationHistory.push({ role: 'assistant', content: htmlSummary });
+        // Store JSON config so Claude can edit it
+        const configStr = data.config ? JSON.stringify(data.config).substring(0, 3000) : '';
+        conversationHistory.push({ role: 'assistant', content: 'Current dashboard config: ' + configStr });
 
         // Show dashboard
         document.getElementById('previewEmpty').style.display = 'none';
