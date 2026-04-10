@@ -857,8 +857,11 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function checkMenuAuth() {
-      const { data: { session } } = await sb.auth.getSession();
+    async function checkMenuAuth(session) {
+      if (session === undefined) {
+        const r = await sb.auth.getSession();
+        session = r.data.session;
+      }
       const authDiv = document.getElementById('menuAuth');
       const agentsDiv = document.getElementById('menuMyAgents');
       const navMyAgents = document.getElementById('navMyAgents');
@@ -885,8 +888,8 @@
         if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
       }
     }
-    checkMenuAuth();
-    sb.auth.onAuthStateChange(() => checkMenuAuth());
+    // Use onAuthStateChange as PRIMARY auth mechanism (fires INITIAL_SESSION on load)
+    sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
 
     async function menuLogout() {
       await sb.auth.signOut();

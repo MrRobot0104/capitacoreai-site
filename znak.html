@@ -472,8 +472,8 @@
     }
 
     // Keep hamburger menu in sync with auth state
-    async function updateMenu() {
-      const { data: { session } } = await sb.auth.getSession();
+    async function updateMenu(session) {
+      if (session === undefined) { const r = await sb.auth.getSession(); session = r.data.session; }
       const navMyAgents = document.getElementById('navMyAgents');
       const navLoginBtn = document.getElementById('navLoginBtn');
       if (session) {
@@ -495,8 +495,7 @@
         if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
       }
     }
-    updateMenu();
-    sb.auth.onAuthStateChange(() => updateMenu());
+    sb.auth.onAuthStateChange((event, session) => updateMenu(session));
   </script>
 </body>
 </html>
