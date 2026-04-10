@@ -559,22 +559,22 @@
   <button class="chat-fab" id="chatFab" onclick="toggleChat()">
     <div class="pulse"></div>
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <div class="chat-tooltip" id="chatTooltip">Have an Idea? Build it now!</div>
+    <div class="chat-tooltip" id="chatTooltip">Ask us anything!</div>
   </button>
 
   <div class="chat-panel" id="chatPanel">
     <div class="chat-header">
       <div class="chat-header-left">
         <img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI">
-        <span>Dashboard Builder</span>
+        <span>CapitaCoreAI</span>
       </div>
       <button class="chat-close" onclick="toggleChat()">&times;</button>
     </div>
     <div class="chat-messages" id="chatMessages">
-      <div class="chat-msg bot">Hey! Have an idea for a dashboard? Describe it and I'll build it for you in seconds.</div>
+      <div class="chat-msg bot">Hey! I'm the CapitaCoreAI assistant. Ask me anything about our services, products, or how we can help your business.</div>
     </div>
     <div class="chat-input-row">
-      <input type="text" class="chat-input" id="chatInput" placeholder="e.g. A sales pipeline tracker..." onkeydown="if(event.key==='Enter')sendChat()">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendChat()">
       <button class="chat-send" id="chatSendBtn" onclick="sendChat()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -695,12 +695,20 @@
 
     // ============ CHAT WIDGET ============
     let chatOpen = false;
+    const chatHistory = [];
+    const MAX_CHATS = 10;
 
-    // Auto-hide tooltip after 5 seconds
     setTimeout(() => {
       const tip = document.getElementById('chatTooltip');
       if (tip) tip.style.display = 'none';
     }, 5000);
+
+    function getChatCount() {
+      return parseInt(localStorage.getItem('ccai_chat_count') || '0', 10);
+    }
+    function incrementChatCount() {
+      localStorage.setItem('ccai_chat_count', (getChatCount() + 1).toString());
+    }
 
     function toggleChat() {
       chatOpen = !chatOpen;
@@ -719,7 +727,6 @@
       div.textContent = text;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
-      return div;
     }
 
     function addLoading() {
@@ -737,100 +744,46 @@
       if (el) el.remove();
     }
 
-    let lastDashboardHtml = '';
-
-    function addDashboard(html) {
-      lastDashboardHtml = html;
+    function disableChat(msg) {
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSendBtn');
+      input.disabled = true;
+      input.placeholder = '';
+      sendBtn.disabled = true;
       const msgs = document.getElementById('chatMessages');
-      const wrapper = document.createElement('div');
-      wrapper.className = 'chat-msg bot';
-      wrapper.style.maxWidth = '100%';
-      wrapper.style.padding = '12px 16px';
-      wrapper.innerHTML = `
-        <p style="font-size:14px;font-weight:500;color:#0a1628;margin-bottom:4px;">Your dashboard is ready!</p>
-        <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">Preview it or download the HTML file.</p>
-        <div class="chat-actions">
-          <button class="chat-action-btn primary" onclick="previewDashboard()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open Preview
-          </button>
-          <button class="chat-action-btn secondary" onclick="downloadDashboard()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download .html
-          </button>
-        </div>
-      `;
-      msgs.appendChild(wrapper);
+      const div = document.createElement('div');
+      div.className = 'chat-msg bot';
+      div.style.maxWidth = '100%';
+      div.innerHTML = '<p style="font-size:14px;margin-bottom:8px;">' + msg + '</p><a href="#contact" onclick="toggleChat()" style="display:inline-block;padding:10px 20px;background:#0a1628;color:#fff;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;">Contact Us →</a>';
+      msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function previewDashboard() {
-      const win = window.open('', '_blank');
-      win.document.write(lastDashboardHtml);
-      win.document.close();
-    }
-
-    function downloadDashboard() {
-      const blob = new Blob([lastDashboardHtml], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'dashboard.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // ============ RATE LIMITING ============
-    const MAX_GENERATIONS = 3;
-    const COOLDOWN_MS = 30000;
-    let lastRequestTime = 0;
-
-    function getUsageCount() {
-      return parseInt(localStorage.getItem('ccai_usage') || '0', 10);
-    }
-    function incrementUsage() {
-      localStorage.setItem('ccai_usage', (getUsageCount() + 1).toString());
     }
 
     async function sendChat() {
       const input = document.getElementById('chatInput');
       const sendBtn = document.getElementById('chatSendBtn');
-      const prompt = input.value.trim();
-      if (!prompt) return;
+      const message = input.value.trim();
+      if (!message) return;
 
-      // Rate limit check
-      const usage = getUsageCount();
-      if (usage >= MAX_GENERATIONS) {
-        addMessage(prompt, 'user');
+      if (getChatCount() >= MAX_CHATS) {
+        addMessage(message, 'user');
         input.value = '';
-        addMessage('You\'ve used all ' + MAX_GENERATIONS + ' free dashboard builds! Want more? Contact us at capitacoreai@gmail.com', 'bot');
+        disableChat("You've reached the chat limit. For more help, reach out to us directly!");
         return;
       }
 
-      // Cooldown check
-      const now = Date.now();
-      const elapsed = now - lastRequestTime;
-      if (lastRequestTime > 0 && elapsed < COOLDOWN_MS) {
-        const wait = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
-        addMessage(prompt, 'user');
-        input.value = '';
-        addMessage('Please wait ' + wait + ' seconds before generating another dashboard.', 'bot');
-        return;
-      }
-
-      addMessage(prompt, 'user');
+      addMessage(message, 'user');
+      chatHistory.push({ role: 'user', content: message });
       input.value = '';
       input.disabled = true;
       sendBtn.disabled = true;
       addLoading();
 
       try {
-        const res = await fetch('/api/generate-dashboard', {
+        const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ message, history: chatHistory.slice(-6) })
         });
 
         removeLoading();
@@ -838,17 +791,16 @@
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           addMessage(err.error || 'Something went wrong. Please try again.', 'bot');
-          return;
+        } else {
+          const data = await res.json();
+          addMessage(data.reply, 'bot');
+          chatHistory.push({ role: 'assistant', content: data.reply });
+          incrementChatCount();
+          const remaining = MAX_CHATS - getChatCount();
+          if (remaining <= 0) {
+            disableChat("That's all for now! Want to keep the conversation going?");
+          }
         }
-
-        const data = await res.json();
-        lastRequestTime = Date.now();
-        incrementUsage();
-        const remaining = MAX_GENERATIONS - getUsageCount();
-        addDashboard(data.html);
-        addMessage(remaining > 0
-          ? 'You have ' + remaining + ' free build' + (remaining === 1 ? '' : 's') + ' left. Try another idea!'
-          : 'That was your last free build! Contact us for unlimited access.', 'bot');
       } catch (err) {
         removeLoading();
         addMessage('Connection error. Please try again.', 'bot');
@@ -856,6 +808,10 @@
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
+        if (getChatCount() >= MAX_CHATS) {
+          input.disabled = true;
+          sendBtn.disabled = true;
+        }
       }
     }
 
