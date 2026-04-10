@@ -7,35 +7,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0a1628; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #111111; -webkit-font-smoothing: antialiased; }
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #0a1628; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
     .nav-brand img { width: 38px; height: 38px; }
     .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: #6b7280; text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover { color: #0a1628; }
-    .btn-nav { background: #0a1628; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #111111; }
+    .btn-nav { background: #111111; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
     .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
     .mobile-menu.active { right: 0; }
-    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #6b7280; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
-    .mobile-menu a:hover { color: #0a1628; }
-    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(10,22,40,0.4); z-index: 140; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
+    .mobile-menu a:hover { color: #111111; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
     .mobile-overlay.active { display: block; }
     .page { max-width: 768px; margin: 0 auto; padding: 140px 32px 80px; }
     .page h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
-    .page .updated { font-size: 13px; color: #6b7280; margin-bottom: 40px; }
+    .page .updated { font-size: 13px; color: #999999; margin-bottom: 40px; }
     .page h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
-    .page p, .page li { font-size: 15px; color: #374151; line-height: 1.8; margin-bottom: 12px; }
+    .page p, .page li { font-size: 15px; color: #555555; line-height: 1.8; margin-bottom: 12px; }
     .page ul { padding-left: 20px; margin-bottom: 16px; }
-    .footer { background: #fff; border-top: 1px solid #f3f4f6; }
+    .footer { background: #fff; border-top: 1px solid #eeeeee; }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
-    .footer-inner p { font-size: 12px; color: #6b7280; }
+    .footer-inner p { font-size: 12px; color: #999999; }
     .footer-nav { display: flex; gap: 24px; }
-    .footer-nav a { font-size: 12px; color: #6b7280; text-decoration: none; }
-    .footer-nav a:hover { color: #0a1628; }
+    .footer-nav a { font-size: 12px; color: #999999; text-decoration: none; }
+    .footer-nav a:hover { color: #111111; }
     @media (max-width: 768px) {
       .nav-inner { height: 68px; padding: 0 20px; }
       .nav-links, .nav .btn-nav { display: none; }
@@ -55,7 +55,7 @@
       </div>
       <a href="/#contact" class="btn-nav">Get in Touch</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#0a1628" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="7" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="13" r="2" fill="#0a1628" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#0a1628" stroke="none"/><circle cx="22" cy="19" r="2" fill="#0a1628" stroke="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
     </div>
   </header>
@@ -112,7 +112,7 @@
       <li><strong>Export</strong> your data in a portable format</li>
       <li><strong>Object</strong> to or restrict certain processing of your data</li>
     </ul>
-    <p>To exercise any of these rights, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#2563eb;">capitacoreai@gmail.com</a>.</p>
+    <p>To exercise any of these rights, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#111111;">capitacoreai@gmail.com</a>.</p>
 
     <h2>7. Cookies and Local Storage</h2>
     <p>We do not use traditional tracking cookies. We use browser local storage for authentication tokens (to keep you logged in) and to track free usage limits on our homepage chatbot. No third-party tracking cookies are used.</p>
@@ -127,7 +127,7 @@
     <p>We may update this Privacy Policy from time to time. We will notify users of material changes by updating the "Last updated" date at the top of this page. Your continued use of the Service after changes constitutes acceptance of the updated policy.</p>
 
     <h2>11. Contact</h2>
-    <p>For questions or concerns about this Privacy Policy or your data, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#2563eb;">capitacoreai@gmail.com</a>.</p>
+    <p>For questions or concerns about this Privacy Policy or your data, contact us at <a href="mailto:capitacoreai@gmail.com" style="color:#111111;">capitacoreai@gmail.com</a>.</p>
   </main>
 
   <footer class="footer">

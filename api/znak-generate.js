@@ -10,10 +10,10 @@ CRITICAL RULES:
 
 DESIGN SYSTEM:
 - Font: 'Inter', system-ui, sans-serif
-- Background: #f8fafc (page), #ffffff (cards)
-- Text: #0a1628 (headings), #374151 (body), #6b7280 (secondary)
-- Accent: #2563eb (primary blue), #10b981 (green/positive), #f59e0b (amber/warning), #ef4444 (red/negative)
-- Borders: #e5e7eb, border-radius: 12px for cards
+- Background: #f5f5f5 (page), #ffffff (cards)
+- Text: #111111 (headings), #555555 (body), #999999 (secondary)
+- Accent: #111111 (primary dark), #10b981 (green/positive), #f59e0b (amber/warning), #ef4444 (red/negative)
+- Borders: #e0e0e0, border-radius: 12px for cards
 - Shadows: box-shadow: 0 1px 3px rgba(0,0,0,0.08)
 - Spacing: generous padding (24px cards, 32px page margins)
 - Max width: 1200px centered container
@@ -47,7 +47,7 @@ QUALITY:
 - Must look like a real SaaS product — polished and professional
 - Use realistic, contextual sample data if none provided
 - Interactive elements: Chart.js hover tooltips, responsive charts
-- Add "Built with znak by CapitaCoreAI" footer in #9ca3af at the bottom
+- Add "Built with znak by CapitaCoreAI" footer in #aaaaaa at the bottom
 
 WHEN USER ASKS FOR EDITS:
 - Regenerate the ENTIRE dashboard with the requested changes
