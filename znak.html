@@ -104,8 +104,9 @@
         <a href="agents.html">Agents</a>
         <a href="/#about">About</a>
         <a href="/#contact">Contact</a>
+        <a href="account.html" id="navMyAgents" style="display:none;color:#111111;font-weight:600;">My Agents</a>
       </div>
-      <a href="/#contact" class="btn-nav">Get in Touch</a>
+      <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
       <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
         <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
@@ -473,9 +474,13 @@
     // Keep hamburger menu in sync with auth state
     async function updateMenu() {
       const { data: { session } } = await sb.auth.getSession();
+      const navMyAgents = document.getElementById('navMyAgents');
+      const navLoginBtn = document.getElementById('navLoginBtn');
       if (session) {
         document.getElementById('menuAuth').style.display = 'none';
         document.getElementById('menuMyAgents').style.display = 'block';
+        if (navMyAgents) navMyAgents.style.display = 'inline';
+        if (navLoginBtn) navLoginBtn.style.display = 'none';
         const { data } = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
         const bal = data ? data.token_balance : 0;
         const isAdmin = data?.is_admin === true;
@@ -486,6 +491,8 @@
       } else {
         document.getElementById('menuAuth').style.display = 'block';
         document.getElementById('menuMyAgents').style.display = 'none';
+        if (navMyAgents) navMyAgents.style.display = 'none';
+        if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
       }
     }
     updateMenu();
