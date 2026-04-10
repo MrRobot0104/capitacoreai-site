@@ -3,6 +3,10 @@
   "outputDirectory": ".",
   "framework": null,
   "functions": {
+    "api/znak-generate.js": {
+      "memory": 512,
+      "maxDuration": 120
+    },
     "api/*.js": {
       "memory": 256,
       "maxDuration": 60
