@@ -220,25 +220,31 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
+    // IMPORTANT: Capture hash BEFORE Supabase processes and removes it
+    const IS_RECOVERY = window.location.hash.includes('type=recovery');
+
     const SUPABASE_URL = 'https://bdlcgzdptcanoadxbhwv.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_jm9CDpvcI6xSWWkwK4rIXg_oRSVtfyU';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Check if already logged in or in recovery flow
     async function init() {
-      // Listen for auth state changes (catches recovery redirect)
+      // Listen for recovery event as backup
       sb.auth.onAuthStateChange((event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
           showResetForm();
         }
       });
 
-      const { data: { session } } = await sb.auth.getSession();
-      // Check URL hash for recovery type
-      if (window.location.hash.includes('type=recovery')) {
+      // Let Supabase process the token from the hash
+      await sb.auth.getSession();
+
+      // If this was a recovery link, show reset form (NOT the logged-in page)
+      if (IS_RECOVERY) {
         showResetForm();
         return;
       }
+
+      const { data: { session } } = await sb.auth.getSession();
       if (session) {
         showLoggedIn(session.user);
       }
