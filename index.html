@@ -413,16 +413,16 @@
           <a href="account.html" id="navMyAgents" style="display:none;">My Agents</a>
         </div>
         <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
-        <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <button class="hamburger" aria-label="Menu">
           <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
         </button>
       </div>
     </header>
     <div class="mobile-menu" id="mobileMenu">
-      <a href="/" onclick="toggleMobileMenu()">Home</a>
-      <a href="#services" onclick="toggleMobileMenu()">Services</a>
-      <a href="#about" onclick="toggleMobileMenu()">About</a>
-      <a href="#contact" onclick="toggleMobileMenu()">Contact</a>
+      <a href="/">Home</a>
+      <a href="#services">Services</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
       <a href="agents.html">Agents</a>
       <a href="pricing.html">Pricing</a>
       <div id="menuAuth">
@@ -433,10 +433,10 @@
         <div class="menu-section">My Agents</div>
         <div id="menuAgentsList"></div>
         <a href="pricing.html" class="menu-btn outline" style="margin-top:8px;">Buy More Credits</a>
-        <button class="menu-btn outline" style="margin-top:8px;" onclick="menuLogout()">Log Out</button>
+        <button class="menu-btn outline" style="margin-top:8px;" data-action="menuLogout">Log Out</button>
       </div>
     </div>
-    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <!-- HERO -->
     <section class="hero">
@@ -514,7 +514,7 @@
           <p class="section-label">Contact</p>
           <h2 class="section-title">Let's build something together</h2>
           <p class="desc">Have a project in mind? Tell us what you're working on and we'll get back to you within 24 hours.</p>
-          <form id="contactForm" onsubmit="submitForm(event)">
+          <form id="contactForm">
             <div class="form-row">
               <input type="text" id="fname" class="form-input" placeholder="Your name" required>
               <input type="email" id="femail" class="form-input" placeholder="your@email.com" required>
@@ -563,7 +563,7 @@
   </div>
 
   <!-- CHAT WIDGET -->
-  <button class="chat-fab" id="chatFab" onclick="toggleChat()">
+  <button class="chat-fab" id="chatFab">
     <div class="pulse"></div>
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     <div class="chat-tooltip" id="chatTooltip">Ask us anything!</div>
@@ -575,346 +575,21 @@
         <img src="logo.svg" alt="CapitaCoreAI">
         <span>CapitaCoreAI</span>
       </div>
-      <button class="chat-close" onclick="toggleChat()">&times;</button>
+      <button class="chat-close">&times;</button>
     </div>
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg bot">Hey! I'm the CapitaCoreAI assistant. Ask me anything about our services, products, or how we can help your business.</div>
     </div>
     <div class="chat-input-row">
-      <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendChat()">
-      <button class="chat-send" id="chatSendBtn" onclick="sendChat()">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question...">
+      <button class="chat-send" id="chatSendBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script>
-    // ============ ANIMATED DNA BACKGROUND ============
-    const canvas = document.getElementById('dna-canvas');
-    const ctx = canvas.getContext('2d');
-    let time = 0;
-
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSize, opacity) {
-      const spacing = length / nodeCount;
-
-      for (let i = 0; i < nodeCount; i++) {
-        const t = (time * speed) + (i * 0.4) + phase;
-        const y = startY + (i * spacing);
-        const x1 = cx + Math.sin(t) * amplitude;
-        const x2 = cx + Math.sin(t + Math.PI) * amplitude;
-
-        // Connector line between the two strands
-        ctx.beginPath();
-        ctx.moveTo(x1, y);
-        ctx.lineTo(x2, y);
-        ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.25) + ')';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 6]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Left strand line to next node
-        if (i < nodeCount - 1) {
-          const nextT = (time * speed) + ((i + 1) * 0.4) + phase;
-          const nextY = startY + ((i + 1) * spacing);
-          const nextX1 = cx + Math.sin(nextT) * amplitude;
-          const nextX2 = cx + Math.sin(nextT + Math.PI) * amplitude;
-
-          ctx.beginPath();
-          ctx.moveTo(x1, y);
-          ctx.lineTo(nextX1, nextY);
-          ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.4) + ')';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(x2, y);
-          ctx.lineTo(nextX2, nextY);
-          ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.4) + ')';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }
-
-        // Nodes
-        ctx.beginPath();
-        ctx.arc(x1, y, nodeSize, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(17, 17, 17, ' + (opacity * 0.6) + ')';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(x2, y, nodeSize * 0.8, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(17, 17, 17, ' + (opacity * 0.45) + ')';
-        ctx.fill();
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.008;
-
-      const scrollY = window.scrollY * 0.15;
-
-      // Strand 1 — right side, large
-      drawDNA(
-        canvas.width - 120,
-        -100 - scrollY,
-        canvas.height + 400,
-        22, 80, 0.6, 0, 4, 0.35
-      );
-
-      // Strand 2 — left side, medium
-      drawDNA(
-        100,
-        50 - scrollY * 0.7,
-        canvas.height + 300,
-        18, 60, 0.5, 2, 3.5, 0.2
-      );
-
-      // Strand 3 — center-right, subtle
-      drawDNA(
-        canvas.width * 0.65,
-        200 - scrollY * 0.5,
-        canvas.height,
-        14, 50, 0.4, 4, 3, 0.12
-      );
-
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    // ============ MODALS ============
-    function openModal(id) {
-      document.getElementById('modal-' + id).classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeModal(e, id) {
-      document.getElementById('modal-' + id).classList.remove('active');
-      document.body.style.overflow = '';
-    }
-
-    // ============ CHAT WIDGET ============
-    let chatOpen = false;
-    const chatHistory = [];
-    const MAX_CHATS = 10;
-
-    setTimeout(() => {
-      const tip = document.getElementById('chatTooltip');
-      if (tip) tip.style.display = 'none';
-    }, 5000);
-
-    function getChatCount() {
-      return parseInt(localStorage.getItem('ccai_chat_count') || '0', 10);
-    }
-    function incrementChatCount() {
-      localStorage.setItem('ccai_chat_count', (getChatCount() + 1).toString());
-    }
-
-    function toggleChat() {
-      chatOpen = !chatOpen;
-      document.getElementById('chatPanel').classList.toggle('active', chatOpen);
-      document.getElementById('chatFab').classList.toggle('hidden', chatOpen);
-      if (chatOpen) {
-        document.getElementById('chatTooltip').style.display = 'none';
-        document.getElementById('chatInput').focus();
-      }
-    }
-
-    function addMessage(text, sender) {
-      const msgs = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = 'chat-msg ' + sender;
-      div.textContent = text;
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function addLoading() {
-      const msgs = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = 'chat-msg bot loading';
-      div.id = 'chatLoading';
-      div.innerHTML = '<div class="dot-typing"><span></span><span></span><span></span></div>';
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function removeLoading() {
-      const el = document.getElementById('chatLoading');
-      if (el) el.remove();
-    }
-
-    function disableChat(msg) {
-      const input = document.getElementById('chatInput');
-      const sendBtn = document.getElementById('chatSendBtn');
-      input.disabled = true;
-      input.placeholder = '';
-      sendBtn.disabled = true;
-      const msgs = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = 'chat-msg bot';
-      div.style.maxWidth = '100%';
-      div.innerHTML = '<p style="font-size:14px;margin-bottom:8px;">' + msg + '</p><a href="#contact" onclick="toggleChat()" style="display:inline-block;padding:10px 20px;background:#111111;color:#fff;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;">Contact Us →</a>';
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    async function sendChat() {
-      const input = document.getElementById('chatInput');
-      const sendBtn = document.getElementById('chatSendBtn');
-      const message = input.value.trim();
-      if (!message) return;
-
-      if (getChatCount() >= MAX_CHATS) {
-        addMessage(message, 'user');
-        input.value = '';
-        disableChat("You've reached the chat limit. For more help, reach out to us directly!");
-        return;
-      }
-
-      addMessage(message, 'user');
-      chatHistory.push({ role: 'user', content: message });
-      input.value = '';
-      input.disabled = true;
-      sendBtn.disabled = true;
-      addLoading();
-
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, history: chatHistory.slice(-6) })
-        });
-
-        removeLoading();
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          addMessage(err.error || 'Something went wrong. Please try again.', 'bot');
-        } else {
-          const data = await res.json();
-          addMessage(data.reply, 'bot');
-          chatHistory.push({ role: 'assistant', content: data.reply });
-          incrementChatCount();
-          const remaining = MAX_CHATS - getChatCount();
-          if (remaining <= 0) {
-            disableChat("That's all for now! Want to keep the conversation going?");
-          }
-        }
-      } catch (err) {
-        removeLoading();
-        addMessage('Connection error. Please try again.', 'bot');
-      } finally {
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-        if (getChatCount() >= MAX_CHATS) {
-          input.disabled = true;
-          sendBtn.disabled = true;
-        }
-      }
-    }
-
-    // ============ CONTACT FORM ============
-    function submitForm(e) {
-      e.preventDefault();
-      const name = document.getElementById('fname').value;
-      const email = document.getElementById('femail').value;
-      const message = document.getElementById('fmessage').value;
-
-      // Use Web3Forms (free, no signup for basic use)
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: '1845d8ef-284d-447c-b6e7-0ace52d19f4f',
-          name: name,
-          email: email,
-          message: message,
-          to: 'capitacoreai@gmail.com',
-          subject: 'New inquiry from CapitaCoreAI.com'
-        })
-      }).then(() => {
-        document.getElementById('contactForm').style.display = 'none';
-        document.getElementById('formSuccess').classList.add('active');
-      }).catch(() => {
-        // Fallback: open email client
-        window.location.href = 'mailto:capitacoreai@gmail.com?subject=CapitaCoreAI Inquiry from ' + name + '&body=' + encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\n\n' + message);
-      });
-    }
-
-    // ============ MOBILE MENU ============
-    function toggleMobileMenu() {
-      const m = document.getElementById('mobileMenu'), o = document.getElementById('mobileOverlay');
-      const open = m.classList.contains('active');
-      m.classList.toggle('active'); o.classList.toggle('active');
-      document.body.style.overflow = open ? '' : 'hidden';
-    }
-
-    // ============ AUTH & MY AGENTS ============
-    const SUPABASE_URL = 'https://bdlcgzdptcanoadxbhwv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    async function checkMenuAuth(session) {
-      if (session === undefined) {
-        const r = await sb.auth.getSession();
-        session = r.data.session;
-      }
-      const authDiv = document.getElementById('menuAuth');
-      const agentsDiv = document.getElementById('menuMyAgents');
-      const navMyAgents = document.getElementById('navMyAgents');
-      const navLoginBtn = document.getElementById('navLoginBtn');
-      if (session) {
-        authDiv.style.display = 'none';
-        agentsDiv.style.display = 'block';
-        if (navMyAgents) navMyAgents.style.display = 'inline';
-        if (navLoginBtn) navLoginBtn.style.display = 'none';
-        const { data } = await sb.from('profiles').select('token_balance, first_name, is_admin').eq('id', session.user.id).single();
-        const balance = data ? data.token_balance : 0;
-        const isAdmin = data?.is_admin === true;
-        const hasAccess = isAdmin || balance > 0;
-        const list = document.getElementById('menuAgentsList');
-        if (hasAccess) {
-          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">' + (isAdmin ? '∞' : balance) + ' credits remaining</span></div><a href="znak-app.html" class="agent-link">Launch →</a></div>';
-        } else {
-          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="pricing.html" class="agent-link">Buy →</a></div>';
-        }
-      } else {
-        authDiv.style.display = 'block';
-        agentsDiv.style.display = 'none';
-        if (navMyAgents) navMyAgents.style.display = 'none';
-        if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
-      }
-    }
-    // Use onAuthStateChange as PRIMARY auth mechanism (fires INITIAL_SESSION on load)
-    sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
-
-    function menuLogout(){localStorage.clear();sessionStorage.clear();window.location.href='/';}
-
-    // ============ ACTIVE NAV HIGHLIGHT ============
-    function updateActiveNav() {
-      const sections = ['services', 'about', 'contact'];
-      const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
-      let current = '';
-      sections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && window.scrollY >= el.offsetTop - 200) current = id;
-      });
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) link.classList.add('active');
-      });
-    }
-    window.addEventListener('scroll', updateActiveNav);
-    updateActiveNav();
-  </script>
+  <script src="js/common.js"></script>
+  <script src="js/index.js"></script>
 </body>
 </html>

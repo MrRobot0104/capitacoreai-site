@@ -127,7 +127,7 @@
         <a href="account.html" id="navMyAgents" style="display:none;">My Agents</a>
       </div>
       <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
-      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <button class="hamburger" aria-label="Menu">
         <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
       </button>
     </div>
@@ -142,10 +142,10 @@
     <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
     <div id="menuMyAgents" style="display:none;padding-top:24px;">
       <div id="menuAgentsList"></div>
-      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="menuLogout()">Log Out</button>
+      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
     </div>
   </div>
-  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <main class="page">
     <p class="page-label">AI Agents</p>
@@ -155,7 +155,7 @@
     <div class="agents-grid">
 
       <!-- ZNAK -->
-      <div class="agent-card" onclick="window.location.href='znak.html'" style="cursor:pointer;">
+      <div class="agent-card" data-href="znak.html" style="cursor:pointer;">
         <div class="card-top">
           <span class="category">Dashboard Intelligence</span>
           <span class="status status-soon"><span class="status-dot"></span> Coming Soon</span>
@@ -214,38 +214,8 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script>
-    function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}
-
-    const sb = supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8');
-    async function checkMenuAuth(session) {
-      if (session === undefined) {
-        const r = await sb.auth.getSession();
-        session = r.data.session;
-      }
-      const navMyAgents = document.getElementById('navMyAgents');
-      const navLoginBtn = document.getElementById('navLoginBtn');
-      if (session) {
-        document.getElementById('menuAuth').style.display = 'none';
-        document.getElementById('menuMyAgents').style.display = 'block';
-        if (navMyAgents) navMyAgents.style.display = 'inline';
-        if (navLoginBtn) navLoginBtn.style.display = 'none';
-        const { data } = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
-        const bal = data ? data.token_balance : 0;
-        const isAdmin = data?.is_admin === true;
-        const hasAccess = isAdmin || bal > 0;
-        document.getElementById('menuAgentsList').innerHTML = hasAccess
-          ? '<a href="znak-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">' + (isAdmin ? '∞' : bal) + ' credits</span></a>'
-          : '<a href="pricing.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">Buy credits →</span></a>';
-      } else {
-        if (navMyAgents) navMyAgents.style.display = 'none';
-        if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
-      }
-    }
-    // Use onAuthStateChange as PRIMARY auth mechanism (fires INITIAL_SESSION on load)
-    sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
-    function menuLogout(){localStorage.clear();sessionStorage.clear();window.location.href='/';}
-  </script>
+  <script src="js/common.js"></script>
+  <script src="js/agents.js"></script>
 
 </body>
 </html>
