@@ -3,29 +3,38 @@ var currentUser = null;
 var conversationHistory = [];
 var genCount = 0;
 var genLimit = GENS_PER_CREDIT;
-var lastTripHtml = '';
 var creditBalance = 0;
 var conversationStarted = false;
+var map = null;
+var mapLayers = [];
+var lastTripData = null;
+
+// MAP INIT
+map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  maxZoom: 19
+}).addTo(map);
 
 // AUTH
 var initDone = false;
-async function init() {
-  var result = await sb.auth.getSession();
-  var session = result.data.session;
-  if (!session) {
-    setTimeout(async function() {
-      var retry = await sb.auth.getSession();
-      var retrySession = retry.data.session;
-      if (!retrySession) { window.location.href = 'account.html'; }
-      else { currentUser = retrySession.user; await refreshCredits(); initDone = true; }
-    }, 1000);
-    return;
-  }
-  currentUser = session.user;
-  await refreshCredits();
-  initDone = true;
-}
-init();
+(function init() {
+  sb.auth.getSession().then(function(result) {
+    var session = result.data.session;
+    if (!session) {
+      setTimeout(function() {
+        sb.auth.getSession().then(function(retry) {
+          if (!retry.data.session) { window.location.href = 'account.html'; }
+          else { currentUser = retry.data.session.user; refreshCredits(); initDone = true; }
+        });
+      }, 1000);
+      return;
+    }
+    currentUser = session.user;
+    refreshCredits();
+    initDone = true;
+  });
+})();
+
 sb.auth.onAuthStateChange(function(event, session) {
   if (event === 'SIGNED_IN' && session && !initDone) {
     currentUser = session.user;
@@ -36,7 +45,6 @@ sb.auth.onAuthStateChange(function(event, session) {
 });
 
 var isAdmin = false;
-
 async function refreshCredits() {
   var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', currentUser.id).single();
   var data = result.data;
@@ -51,14 +59,9 @@ async function refreshCredits() {
 
 async function logout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
 
-// TEXTAREA AUTO-RESIZE
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
+// TEXTAREA
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
 // MESSAGES
 function addUserMessage(text) {
@@ -82,44 +85,170 @@ function addBotMessage(text) {
 function addTyping() {
   var msgs = document.getElementById('chatMessages');
   var div = document.createElement('div');
-  div.className = 'msg bot';
-  div.id = 'typingMsg';
+  div.className = 'msg bot'; div.id = 'typingMsg';
   div.innerHTML = '<div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
 function removeTyping() { var el = document.getElementById('typingMsg'); if (el) el.remove(); }
-
 function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-function disableInput() {
-  document.getElementById('chatInputArea').style.display = 'none';
-}
-function enableInput() {
-  document.getElementById('chatInputArea').style.display = 'block';
-  document.getElementById('limitBar').style.display = 'none';
-}
+function disableInput() { document.getElementById('chatInputArea').style.display = 'none'; }
+function enableInput() { document.getElementById('chatInputArea').style.display = 'block'; document.getElementById('limitBar').style.display = 'none'; }
 
 function showLimitBar() {
   document.getElementById('chatInputArea').style.display = 'none';
   var bar = document.getElementById('limitBar');
   bar.style.display = 'block';
-  if (creditBalance > 0) {
-    document.getElementById('limitMsg').textContent = "You've used all 5 trip generations for this credit. Add another credit to keep planning.";
-    document.getElementById('continueBtn').style.display = 'inline-block';
-  } else {
-    document.getElementById('limitMsg').textContent = "No credits remaining. Purchase more to continue planning.";
-    document.getElementById('continueBtn').style.display = 'none';
-  }
+  document.getElementById('limitMsg').textContent = creditBalance > 0
+    ? "You've used all 5 trip plans for this credit."
+    : "No credits remaining.";
+  document.getElementById('continueBtn').style.display = creditBalance > 0 ? 'inline-block' : 'none';
 }
 
 function updateGenCounter() {
   var remaining = genLimit - genCount;
   var el = document.getElementById('genCounter');
-  if (el) el.textContent = remaining + ' of ' + genLimit + ' generations left';
+  if (el) el.textContent = remaining + ' of ' + genLimit + ' plans left';
 }
 
-// TRIP CONTROL
+// ==================== MAP RENDERING ====================
+function clearMap() {
+  mapLayers.forEach(function(l) { map.removeLayer(l); });
+  mapLayers = [];
+}
+
+function renderTrip(trip) {
+  lastTripData = trip;
+  clearMap();
+
+  // Hide empty state
+  document.getElementById('mapEmpty').classList.add('hidden');
+
+  // Collect all points
+  var points = [];
+  if (trip.origin && trip.origin.lat) {
+    points.push(trip.origin);
+  }
+  (trip.destinations || []).forEach(function(d) {
+    if (d.lat) points.push(d);
+  });
+
+  if (points.length === 0) return;
+
+  // Add markers
+  var colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4'];
+  points.forEach(function(p, i) {
+    var isOrigin = i === 0 && trip.origin;
+    var icon = L.divIcon({
+      className: '',
+      html: '<div style="background:' + colors[i % colors.length] + ';color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:3px solid rgba(255,255,255,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.4);">' + (i + 1) + '</div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+    var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
+    marker.bindPopup('<div style="font-family:Inter,sans-serif;"><strong>' + (p.city || '') + '</strong><br><span style="color:#666;">' + (p.country || '') + ' (' + (p.code || '') + ')</span>' + (p.days ? '<br>' + p.days + ' days' : '') + '</div>');
+    mapLayers.push(marker);
+  });
+
+  // Draw flight paths
+  for (var i = 0; i < points.length - 1; i++) {
+    var from = points[i];
+    var to = points[i + 1];
+    // Create curved path using midpoint offset
+    var midLat = (from.lat + to.lat) / 2;
+    var midLng = (from.lng + to.lng) / 2;
+    var dist = Math.sqrt(Math.pow(to.lat - from.lat, 2) + Math.pow(to.lng - from.lng, 2));
+    var offset = dist * 0.15;
+    midLat += offset;
+
+    var curve = L.polyline(
+      [[from.lat, from.lng], [midLat, midLng], [to.lat, to.lng]],
+      { color: colors[i % colors.length], weight: 2.5, opacity: 0.8, dashArray: '8,8', smoothFactor: 3 }
+    ).addTo(map);
+    mapLayers.push(curve);
+
+    // Plane icon at midpoint
+    var planeIcon = L.divIcon({
+      className: '',
+      html: '<div style="color:' + colors[i % colors.length] + ';font-size:16px;transform:rotate(' + (Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI) + 'deg);">&#9992;</div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+    var plane = L.marker([midLat, midLng], { icon: planeIcon, interactive: false }).addTo(map);
+    mapLayers.push(plane);
+  }
+
+  // Fit map bounds
+  var bounds = L.latLngBounds(points.map(function(p) { return [p.lat, p.lng]; }));
+  map.fitBounds(bounds, { padding: [60, 60], maxZoom: 6 });
+
+  // Render flight cards
+  renderFlightCards(trip.flights || []);
+
+  // Render itinerary
+  renderItinerary(trip.itinerary || []);
+
+  // Render budget
+  renderBudget(trip.budget || {});
+
+  // Show trip details panel
+  var toggle = document.getElementById('tripToggle');
+  toggle.classList.add('visible');
+  document.getElementById('tripDetails').classList.add('open');
+}
+
+function renderFlightCards(flights) {
+  var container = document.getElementById('flightCards');
+  container.innerHTML = '';
+  flights.forEach(function(f) {
+    var card = document.createElement('div');
+    card.className = 'flight-card';
+    card.innerHTML =
+      '<div class="route">' + escapeHtml(f.fromCode || f.from) + ' → ' + escapeHtml(f.toCode || f.to) + '</div>' +
+      '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
+      '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' · ' + escapeHtml(f.stops) : '') + '</div>' +
+      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || '') + '</div>';
+    container.appendChild(card);
+  });
+}
+
+function renderItinerary(days) {
+  var container = document.getElementById('itinerary');
+  container.innerHTML = '<div class="itin-section-title">Day-by-Day Itinerary</div>';
+  days.forEach(function(day, i) {
+    var div = document.createElement('div');
+    div.className = 'itin-day' + (i === 0 ? ' open' : '');
+    var activitiesHtml = (day.activities || []).map(function(a) {
+      return '<div class="itin-activity">' +
+        (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
+        '<div>' + escapeHtml(a.description || a) + '</div></div>';
+    }).join('');
+    div.innerHTML =
+      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i + 1) + '</span>' + escapeHtml(day.title || '') + '</span><span class="arrow">&#9660;</span></div>' +
+      '<div class="itin-day-body">' + activitiesHtml + '</div>';
+    container.appendChild(div);
+  });
+  // Bind accordion
+  container.querySelectorAll('.itin-day-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+      this.parentElement.classList.toggle('open');
+    });
+  });
+}
+
+function renderBudget(budget) {
+  var container = document.getElementById('budgetBar');
+  if (!budget || !budget.total) { container.innerHTML = ''; return; }
+  container.innerHTML =
+    '<div class="budget-item">Flights<strong>$' + (budget.flights || 0) + '</strong></div>' +
+    '<div class="budget-item">Hotels<strong>$' + (budget.hotels || 0) + '</strong></div>' +
+    '<div class="budget-item">Food<strong>$' + (budget.food || 0) + '</strong></div>' +
+    '<div class="budget-item">Activities<strong>$' + (budget.activities || 0) + '</strong></div>' +
+    '<div class="budget-total">Estimated Total<strong>$' + (budget.total || 0) + '</strong></div>';
+}
+
+// ==================== TRIP CONTROL ====================
 async function startNewTrip() {
   if (creditBalance <= 0) { window.location.href = 'voyagepilot.html'; return; }
   var result = await sb.auth.getSession();
@@ -137,16 +266,16 @@ async function startNewTrip() {
   conversationHistory = [];
   genCount = 0;
   genLimit = GENS_PER_CREDIT;
-  lastTripHtml = '';
   conversationStarted = true;
+  lastTripData = null;
+  clearMap();
+  document.getElementById('mapEmpty').classList.remove('hidden');
+  document.getElementById('tripDetails').classList.remove('open');
+  document.getElementById('tripToggle').classList.remove('visible');
   document.getElementById('chatMessages').innerHTML = '';
-  document.getElementById('previewEmpty').style.display = 'flex';
-  document.getElementById('previewFrame').style.display = 'none';
-  document.getElementById('expandBtn').style.display = 'none';
-  document.getElementById('downloadBtn').style.display = 'none';
   enableInput();
   updateGenCounter();
-  addBotMessage("New trip started! You have 5 generations. Tell me where you want to go — include your starting city, destinations, how long at each, dates, and budget preference.");
+  addBotMessage("New trip started! You have 5 plans. Tell me where you want to go.");
   await refreshCredits();
 }
 
@@ -158,19 +287,14 @@ async function continueTrip() {
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     body: JSON.stringify({ action: 'start_conversation' })
   });
-  if (!res.ok) {
-    var err = await res.json().catch(function() { return {}; });
-    addBotMessage(err.error || 'Failed to add generations.');
-    return;
-  }
+  if (!res.ok) { addBotMessage('Failed to add plans.'); return; }
   genLimit += GENS_PER_CREDIT;
   enableInput();
   updateGenCounter();
-  addBotMessage("5 more generations added! Keep refining your trip.");
+  addBotMessage("5 more plans added! Keep refining your trip.");
   await refreshCredits();
 }
 
-// SEND MESSAGE
 async function sendMessage() {
   var textarea = document.getElementById('chatTextarea');
   var message = textarea.value.trim();
@@ -179,17 +303,12 @@ async function sendMessage() {
   if (!conversationStarted) {
     if (creditBalance <= 0) { window.location.href = 'voyagepilot.html'; return; }
     var authResult = await sb.auth.getSession();
-    var authSession = authResult.data.session;
     var res = await fetch('/api/voyagepilot-generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authSession.access_token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authResult.data.session.access_token },
       body: JSON.stringify({ action: 'start_conversation' })
     });
-    if (!res.ok) {
-      var err = await res.json().catch(function() { return {}; });
-      addBotMessage(err.error || 'Failed to start.');
-      return;
-    }
+    if (!res.ok) { addBotMessage('Failed to start.'); return; }
     conversationStarted = true;
     await refreshCredits();
   }
@@ -199,18 +318,17 @@ async function sendMessage() {
   addUserMessage(message);
   textarea.value = '';
   textarea.style.height = 'auto';
-
   conversationHistory.push({ role: 'user', content: message });
 
   document.getElementById('sendBtn').disabled = true;
-  addBotMessage('Planning your trip... this may take up to a minute.');
+  addBotMessage('Planning your trip...');
   addTyping();
 
   try {
     var sessionResult = await sb.auth.getSession();
     var session = sessionResult.data.session;
     var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 300000);
+    var timeout = setTimeout(function() { controller.abort(); }, 120000);
     var res = await fetch('/api/voyagepilot-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -218,100 +336,53 @@ async function sendMessage() {
       signal: controller.signal
     });
     clearTimeout(timeout);
-
     removeTyping();
     document.getElementById('sendBtn').disabled = false;
 
     var responseText = await res.text();
     var data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      addBotMessage('Server timed out or returned an error. Please try again.');
+    try { data = JSON.parse(responseText); } catch (e) {
+      addBotMessage('Server error. Please try again.');
       return;
     }
 
-    if (!res.ok) {
-      addBotMessage(data.error || 'Something went wrong.');
-      return;
-    }
+    if (!res.ok) { addBotMessage(data.error || 'Something went wrong.'); return; }
 
-    lastTripHtml = data.html;
+    var trip = data.trip;
     genCount++;
     updateGenCounter();
-    var configStr = data.config ? JSON.stringify(data.config).substring(0, 3000) : '';
-    conversationHistory.push({ role: 'assistant', content: 'Current trip config: ' + configStr });
+    conversationHistory.push({ role: 'assistant', content: 'Trip plan: ' + JSON.stringify(trip).substring(0, 3000) });
 
-    document.getElementById('previewEmpty').style.display = 'none';
-    document.getElementById('previewFrame').style.display = 'block';
-    document.getElementById('expandBtn').style.display = 'inline-flex';
-    document.getElementById('downloadBtn').style.display = 'inline-flex';
-    var blob = new Blob([lastTripHtml], { type: 'text/html' });
-    var blobUrl = URL.createObjectURL(blob);
-    document.getElementById('tripIframe').src = blobUrl;
+    // Render the trip on the map and panels
+    renderTrip(trip);
 
     var remaining = genLimit - genCount;
-    if (remaining > 0) {
-      addBotMessage("Trip itinerary ready! You have " + remaining + " generation" + (remaining === 1 ? '' : 's') + " left. Tell me what to change — different dates, add a city, adjust the budget.");
-    } else {
-      addBotMessage("Trip itinerary ready! That was your last generation for this credit.");
-    }
+    var summary = 'Trip planned: ' + (trip.title || '') + '. ';
+    if (trip.flights) summary += trip.flights.length + ' flights. ';
+    if (trip.budget) summary += 'Estimated total: $' + trip.budget.total + '. ';
+    if (remaining > 0) summary += remaining + ' plan' + (remaining === 1 ? '' : 's') + ' left. Tell me what to change.';
+    else summary += 'That was your last plan for this credit.';
+    addBotMessage(summary);
 
-    if (genCount >= genLimit) {
-      await refreshCredits();
-      showLimitBar();
-    }
+    if (genCount >= genLimit) { await refreshCredits(); showLimitBar(); }
   } catch (err) {
     removeTyping();
     document.getElementById('sendBtn').disabled = false;
-    addBotMessage('Connection error. Please try again.');
+    if (err.name === 'AbortError') addBotMessage('Request timed out. Please try again.');
+    else addBotMessage('Connection error. Please try again.');
   }
 }
 
-function expandPreview() {
-  var win = window.open('', '_blank');
-  win.document.write(lastTripHtml);
-  win.document.close();
-}
-
-function downloadTrip() {
-  var blob = new Blob([lastTripHtml], { type: 'text/html' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'voyagepilot-itinerary.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// Bind everything immediately
+// ==================== EVENT BINDINGS ====================
 (function() {
-  var newTripBtn = document.getElementById('newTripBtn');
-  if (newTripBtn) newTripBtn.addEventListener('click', startNewTrip);
-
-  var logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.addEventListener('click', logout);
-
-  var chatTextarea = document.getElementById('chatTextarea');
-  if (chatTextarea) {
-    chatTextarea.addEventListener('keydown', handleKey);
-    chatTextarea.addEventListener('input', function() { autoResize(this); });
-  }
-
-  var sendBtn = document.getElementById('sendBtn');
-  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
-  var continueBtn = document.getElementById('continueBtn');
-  if (continueBtn) continueBtn.addEventListener('click', continueTrip);
-
-  var newTripLimitBtn = document.getElementById('newTripLimitBtn');
-  if (newTripLimitBtn) newTripLimitBtn.addEventListener('click', startNewTrip);
-
-  var expandBtn = document.getElementById('expandBtn');
-  if (expandBtn) expandBtn.addEventListener('click', expandPreview);
-
-  var downloadBtn = document.getElementById('downloadBtn');
-  if (downloadBtn) downloadBtn.addEventListener('click', downloadTrip);
+  document.getElementById('newTripBtn').addEventListener('click', startNewTrip);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('chatTextarea').addEventListener('keydown', handleKey);
+  document.getElementById('chatTextarea').addEventListener('input', function() { autoResize(this); });
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('continueBtn').addEventListener('click', continueTrip);
+  document.getElementById('newTripLimitBtn').addEventListener('click', startNewTrip);
+  document.getElementById('tripToggle').addEventListener('click', function() {
+    document.getElementById('tripDetails').classList.toggle('open');
+  });
 })();
