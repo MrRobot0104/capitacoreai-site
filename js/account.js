@@ -145,6 +145,17 @@ async function showDashboard(user) {
     html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
   }
   html += '</div></div>';
+
+  // VoyagePilot
+  html += '<div class="agent-card-dash"><div class="agent-info"><h3>VoyagePilot</h3><p>AI-powered travel planner</p></div><div class="agent-actions">';
+  if (hasAccess) {
+    html += '<span class="credits-badge">' + (isAdmin ? '\u221E' : balance) + ' credits</span>';
+    html += '<a href="voyagepilot-app.html" class="btn-launch">Launch \u2192</a>';
+  } else {
+    html += '<span class="credits-badge">No credits</span>';
+    html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
+  }
+  html += '</div></div>';
   html += '<div class="agent-card-dash" style="border-style:dashed;opacity:0.6;"><div class="agent-info"><h3>More agents coming soon</h3><p>Stay tuned for new AI agents</p></div><div class="agent-actions"><a href="agents.html" class="btn-buy-small">Browse \u2192</a></div></div>';
 
   list.innerHTML = html;
