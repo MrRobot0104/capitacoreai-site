@@ -172,6 +172,31 @@ window.addEventListener('pageshow', function() {
     });
   });
 
+  // Auto-scroll gallery — slow continuous scroll, pauses on hover
+  var track = document.getElementById('galleryTrack');
+  if (track) {
+    var autoScrollSpeed = 0.5; // pixels per frame
+    var autoScrollId = null;
+    var paused = false;
+
+    function autoScroll() {
+      if (!paused && track.scrollWidth > track.clientWidth) {
+        track.scrollLeft += autoScrollSpeed;
+        // Loop back to start when reaching the end
+        if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) {
+          track.scrollLeft = 0;
+        }
+      }
+      autoScrollId = requestAnimationFrame(autoScroll);
+    }
+    autoScrollId = requestAnimationFrame(autoScroll);
+
+    track.addEventListener('mouseenter', function() { paused = true; });
+    track.addEventListener('mouseleave', function() { paused = false; });
+    track.addEventListener('touchstart', function() { paused = true; }, { passive: true });
+    track.addEventListener('touchend', function() { setTimeout(function() { paused = false; }, 3000); });
+  }
+
   // Prebuilt buy buttons
   document.querySelectorAll('.btn-get[data-file]').forEach(function(btn) {
     btn.addEventListener('click', function() {
