@@ -266,28 +266,46 @@
     async function buyPackage(pkg) {
       const btns = document.querySelectorAll('.btn-buy');
       btns.forEach(b => { b.disabled = true; b.textContent = 'Redirecting...'; });
+
+      function resetButtons() {
+        btns.forEach(b => { b.disabled = false; });
+        document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
+        document.querySelector('[onclick*="growth"]').textContent = 'Buy Growth';
+        document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
+        document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
+      }
+
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = 'account.html'; return; }
+      if (!session) {
+        alert('Session expired. Please log in again.');
+        window.location.href = 'account.html';
+        return;
+      }
+
       try {
         const res = await fetch('/api/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
           body: JSON.stringify({ package: pkg }),
         });
-        const data = await res.json();
+
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) {
+          alert('Server error (status ' + res.status + '): ' + text.substring(0, 200));
+          resetButtons();
+          return;
+        }
+
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert(data.error || 'Failed to create checkout session');
-          btns.forEach(b => { b.disabled = false; });
-          document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
-          document.querySelector('[onclick*="growth"]').textContent = 'Buy Growth';
-          document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
-          document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
+          alert('Checkout error: ' + (data.error || 'No checkout URL returned. Status: ' + res.status));
+          resetButtons();
         }
       } catch (err) {
-        alert('Connection error. Please try again.');
-        location.reload();
+        alert('Network error: ' + err.message);
+        resetButtons();
       }
     }
 
