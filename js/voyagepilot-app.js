@@ -19,15 +19,28 @@ function cityGradient(city) {
   return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
 }
 
-// Fetch city photo — use Unsplash source (always returns a photo, no API key)
+// Fetch city photo via Wikipedia MediaWiki API (reliable, free, CORS-enabled)
 var cityPhotoCache = {};
 function fetchCityPhoto(city, callback) {
   if (!city) return;
   if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
-  var url = 'https://source.unsplash.com/800x400/?' + encodeURIComponent(city + ' city skyline travel');
-  // Unsplash source redirects to an actual image URL — just use it directly
-  cityPhotoCache[city] = url;
-  callback(url);
+
+  var encodedCity = encodeURIComponent(city);
+  var apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&titles=' + encodedCity +
+    '&prop=pageimages&format=json&pithumbsize=800&origin=*';
+
+  fetch(apiUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var pages = data.query && data.query.pages;
+      if (!pages) return;
+      var page = Object.values(pages)[0];
+      if (page && page.thumbnail && page.thumbnail.source) {
+        cityPhotoCache[city] = page.thumbnail.source;
+        callback(page.thumbnail.source);
+      }
+    })
+    .catch(function() {});
 }
 
 // ==================== MAP ====================
