@@ -237,7 +237,7 @@
       }
     }
 
-    async function logout() { await sb.auth.signOut(); window.location.href = '/'; }
+    async function logout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
 
     // FILE HANDLING
     function handleFile(e) {

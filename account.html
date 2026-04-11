@@ -268,7 +268,7 @@
       const { error } = await sb.auth.updateUser({ password: pass });
       btn.disabled = false; btn.textContent = 'Update Password';
       if (error) { showError(error.message); return; }
-      await sb.auth.signOut();
+      await sb.auth.signOut(); localStorage.clear();
       document.getElementById('newPasswordForm').style.display = 'none';
       document.getElementById('passwordUpdated').style.display = 'block';
       window.history.replaceState(null, '', 'account.html');
@@ -365,8 +365,8 @@
       list.innerHTML = html;
     }
 
-    function handleLogout() {
-      sb.auth.signOut();
+    async function handleLogout() {
+      await sb.auth.signOut(); localStorage.clear();
       setTimeout(function(){ window.location.href = '/'; }, 300);
     }
 
@@ -381,7 +381,7 @@
       if (mw) mw.style.display = loggedIn ? 'block' : 'none';
     }
 
-    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
+    async function menuLogout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
   </script>
 </body>
 </html>

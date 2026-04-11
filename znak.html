@@ -305,7 +305,7 @@
       btn.disabled = false;
       btn.textContent = 'Update Password';
       if (error) { showError(error.message); return; }
-      await sb.auth.signOut();
+      await sb.auth.signOut(); localStorage.clear();
       document.getElementById('newPasswordForm').style.display = 'none';
       document.getElementById('passwordUpdated').style.display = 'block';
       window.history.replaceState(null, '', 'znak.html');
@@ -427,8 +427,8 @@
       showLoggedIn(data.user);
     }
 
-    function handleLogout() {
-      sb.auth.signOut();
+    async function handleLogout() {
+      await sb.auth.signOut(); localStorage.clear();
       setTimeout(function(){ window.location.href = '/'; }, 300);
     }
 
@@ -486,7 +486,7 @@
       document.body.style.overflow = open ? '' : 'hidden';
     }
 
-    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
+    async function menuLogout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
 
     // Keep hamburger menu in sync with auth state
     async function updateMenu(session) {

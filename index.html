@@ -895,7 +895,7 @@
     // Use onAuthStateChange as PRIMARY auth mechanism (fires INITIAL_SESSION on load)
     sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
 
-    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
+    async function menuLogout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
 
     // ============ ACTIVE NAV HIGHLIGHT ============
     function updateActiveNav() {
