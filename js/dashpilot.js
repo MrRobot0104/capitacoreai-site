@@ -31,19 +31,27 @@ function scrollGallery(dir) {
 
 // Prebuilt dashboard purchase
 async function buyPrebuilt(btn) {
-  if (!currentSession) {
-    window.location.href = 'account.html';
-    return;
-  }
-
   var file = btn.getAttribute('data-file');
   var origText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Checking credits...';
 
   try {
-    // Check credit balance first
-    var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', currentSession.user.id).single();
+    // Always get a fresh session
+    var sessionResult = await sb.auth.getSession();
+    var session = sessionResult.data.session;
+
+    if (!session) {
+      btn.disabled = false;
+      btn.textContent = origText;
+      if (confirm('You need to log in first. Go to login page?')) {
+        window.location.href = 'account.html';
+      }
+      return;
+    }
+
+    // Check credit balance
+    var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
     var data = result.data;
     var isAdmin = data && data.is_admin === true;
     var balance = isAdmin ? 9999 : (data ? data.token_balance : 0);
@@ -62,7 +70,7 @@ async function buyPrebuilt(btn) {
     // Deduct 1 credit
     var res = await fetch('/api/dashpilot-generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ action: 'start_conversation' })
     });
 
