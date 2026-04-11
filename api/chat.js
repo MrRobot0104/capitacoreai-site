@@ -3,7 +3,7 @@ const SYSTEM_PROMPT = `You are a friendly, helpful AI assistant for CapitaCoreAI
 About CapitaCoreAI:
 - We build specialized AI solutions and digital products for businesses
 - Services: AI Consulting, Custom AI Products, Data & Analytics
-- Products: AI agents like "znak" (an AI-powered dashboard builder)
+- Products: AI agents like "DashPilot" (an AI-powered dashboard builder)
 - Contact email: capitacoreai@gmail.com
 - Website: capitacoreai.io
 

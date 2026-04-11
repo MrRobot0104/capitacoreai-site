@@ -136,10 +136,10 @@ async function showDashboard(user) {
   var hasAccess = isAdmin || balance > 0;
 
   var html = '';
-  html += '<div class="agent-card-dash"><div class="agent-info"><h3>znak</h3><p>AI-powered dashboard builder</p></div><div class="agent-actions">';
+  html += '<div class="agent-card-dash"><div class="agent-info"><h3>DashPilot</h3><p>AI-powered dashboard builder</p></div><div class="agent-actions">';
   if (hasAccess) {
     html += '<span class="credits-badge">' + (isAdmin ? '\u221E' : balance) + ' credits</span>';
-    html += '<a href="znak-app.html" class="btn-launch">Launch \u2192</a>';
+    html += '<a href="dashpilot-app.html" class="btn-launch">Launch \u2192</a>';
   } else {
     html += '<span class="credits-badge">No credits</span>';
     html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';

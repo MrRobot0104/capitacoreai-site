@@ -16,8 +16,8 @@ async function checkMenuAuth(session) {
     var isAdmin = data && data.is_admin === true;
     var hasAccess = isAdmin || bal > 0;
     document.getElementById('menuAgentsList').innerHTML = hasAccess
-      ? '<a href="znak-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">' + (isAdmin ? '\u221E' : bal) + ' credits</span></a>'
-      : '<a href="pricing.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">znak <span style="font-size:12px;color:#999999;">Buy credits \u2192</span></a>';
+      ? '<a href="dashpilot-app.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">DashPilot<span style="font-size:12px;color:#999999;">' + (isAdmin ? '\u221E' : bal) + ' credits</span></a>'
+      : '<a href="pricing.html" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;color:#111111;font-weight:500;">DashPilot<span style="font-size:12px;color:#999999;">Buy credits \u2192</span></a>';
   } else {
     if (navMyAgents) navMyAgents.style.display = 'none';
     if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
