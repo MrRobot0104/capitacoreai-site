@@ -104,6 +104,17 @@ async function buyPackage(pkg) {
   }
 }
 
+// Reset state when page is restored from bfcache (e.g. user hits Back from Stripe)
+window.addEventListener('pageshow', function(event) {
+  buyInProgress = false;
+  document.querySelectorAll('.btn-buy').forEach(function(b) { b.disabled = false; });
+  document.querySelectorAll('.btn-buy[data-package]').forEach(function(b) {
+    b.textContent = 'Buy ' + b.getAttribute('data-package').charAt(0).toUpperCase() + b.getAttribute('data-package').slice(1);
+  });
+  var errDiv = document.getElementById('buyError');
+  if (errDiv) errDiv.remove();
+});
+
 // Bind buy buttons immediately (scripts are at end of body, DOM is ready)
 (function() {
   var buttons = document.querySelectorAll('.btn-buy[data-package]');
