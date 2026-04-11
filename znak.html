@@ -428,7 +428,6 @@
     }
 
     async function handleLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
-    }
 
     async function showLoggedIn(user) {
       document.getElementById('authSection').style.display = 'none';

@@ -366,7 +366,6 @@
     }
 
     async function handleLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
-    }
 
     function updateNav(loggedIn) {
       const n = document.getElementById('navMyAgents');
