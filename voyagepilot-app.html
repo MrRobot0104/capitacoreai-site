@@ -29,7 +29,7 @@
     .app-layout { display: flex; height: calc(100vh - 56px); }
 
     /* CHAT */
-    .chat-panel { width: 400px; min-width: 360px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: #fff; }
+    .chat-panel { width: 360px; min-width: 360px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: #fff; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
@@ -63,136 +63,112 @@
     .limit-btn.primary:hover { background: #1d4ed8; }
     .limit-btn.secondary { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
-    /* MAP */
-    .map-panel { flex: 1; display: flex; flex-direction: column; position: relative; background: #f0f4f8; }
-    #map { flex: 1; z-index: 1; min-height: 400px; }
-    .map-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
-    .map-empty-inner { text-align: center; }
-    .map-empty-inner svg { width: 64px; height: 64px; opacity: 0.12; margin-bottom: 16px; stroke: #64748b; }
-    .map-empty-inner p { font-size: 14px; color: #94a3b8; }
-    .map-empty-inner p.sub { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
-    .map-empty.hidden { display: none; }
+    /* TRIP PANEL */
+    .trip-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc; }
+    .trip-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .trip-empty-inner { text-align: center; }
+    .trip-empty-inner svg { opacity: 0.15; margin-bottom: 16px; }
+    .trip-empty-inner p { font-size: 14px; color: #94a3b8; }
+    .trip-empty-inner p.sub { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
+    .trip-scroll { flex: 1; overflow-y: auto; }
+    .trip-scroll::-webkit-scrollbar { width: 4px; }
+    .trip-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
-    /* TRIP DETAILS */
-    .trip-details { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid #e2e8f0; max-height: 50%; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -4px 24px rgba(0,0,0,0.06); }
-    .trip-details.open { transform: translateY(0); }
-    .trip-details::-webkit-scrollbar { width: 4px; }
-    .trip-details::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-    .trip-toggle { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 11; background: #fff; border: 1px solid #e2e8f0; border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px 20px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer; font-family: inherit; display: none; transition: bottom 0.3s ease; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
-    .trip-toggle:hover { color: #1e293b; }
-    .trip-toggle.visible { display: block; }
-    .trip-details.open ~ .trip-toggle { bottom: 50%; }
+    /* TRIP HERO */
+    .trip-hero { padding: 32px 28px; color: #fff; position: relative; min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .trip-hero .hero-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .trip-hero .hero-meta { font-size: 13px; opacity: 0.85; }
+    .trip-hero .hero-stats { display: flex; gap: 24px; margin-top: 16px; }
+    .trip-hero .hero-stat { text-align: center; }
+    .trip-hero .hero-stat .val { font-size: 22px; font-weight: 800; }
+    .trip-hero .hero-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+
+    /* MAP SECTION */
+    .map-section { padding: 0 20px; margin-bottom: 8px; }
+    .map-toggle-btn { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: #2563eb; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .map-toggle-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
+    .map-container { position: relative; margin-top: 8px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+    #map { width: 100%; height: 360px; }
+    .map-close { position: absolute; top: 10px; right: 10px; z-index: 1000; width: 32px; height: 32px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+    /* TRIP SECTIONS */
+    .trip-section { padding: 0 20px 8px; }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; padding: 16px 0 10px; }
 
     /* FLIGHT CARDS */
-    .flight-cards { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; align-items: center; }
-    .flight-cards::-webkit-scrollbar { height: 3px; }
-    .flight-cards::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-    .flight-card { flex: 0 0 220px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; transition: box-shadow 0.2s, border-color 0.2s; }
+    .flight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .flight-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; transition: box-shadow 0.2s, border-color 0.2s; opacity: 1; transform: none; animation: none; }
     .flight-card:hover { border-color: #2563eb; box-shadow: 0 2px 12px rgba(37,99,235,0.08); }
     .flight-card .route { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .flight-card .times { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+    .flight-card .time-point { text-align: center; }
+    .flight-card .time-point .time { font-size: 16px; font-weight: 700; color: #1e293b; }
+    .flight-card .time-point .airport { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+    .flight-card .time-line { flex: 1; text-align: center; padding: 0 8px; }
+    .flight-card .time-line .stops-label { font-size: 9px; color: #94a3b8; }
     .flight-card .price { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
-    .flight-card .duration { font-size: 12px; color: #94a3b8; }
     .flight-card .airline { font-size: 11px; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid #f1f5f9; }
-    .flight-card .book-link { display: block; margin-top: 10px; text-align: center; padding: 8px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 600; text-decoration: none; transition: background 0.15s; }
+    .flight-card .book-link { display: block; margin-top: 10px; text-align: center; padding: 8px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 600; text-decoration: none; }
     .flight-card .book-link:hover { background: #dbeafe; }
-    .live-badge { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; font-size: 11px; color: #16a34a; font-weight: 600; white-space: nowrap; }
-    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; animation: livePulse 2s infinite; }
-    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .live-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; font-size: 11px; color: #a16207; font-weight: 600; margin-bottom: 10px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #a16207; }
+    .est-label { font-size: 9px; color: #f59e0b; font-weight: 600; text-transform: uppercase; }
 
     /* ITINERARY */
-    .itinerary { padding: 0 20px 12px; }
-    .itin-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; padding: 12px 0 8px; }
-    .itin-day { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
-    .itin-day-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1e293b; user-select: none; }
+    .itin-day { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+    .itin-day-header { padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: #1e293b; user-select: none; }
     .itin-day-header:hover { background: #f8fafc; }
     .itin-day-header .day-num { color: #2563eb; margin-right: 8px; }
     .itin-day-header .arrow { color: #94a3b8; font-size: 10px; transition: transform 0.2s; }
     .itin-day.open .arrow { transform: rotate(180deg); }
-    .itin-day-body { display: none; padding: 0 14px 12px; font-size: 13px; color: #64748b; line-height: 1.7; }
+    .itin-day-body { display: none; padding: 0 16px 14px; font-size: 13px; color: #64748b; line-height: 1.7; }
     .itin-day.open .itin-day-body { display: block; }
-    .itin-activity { padding: 4px 0; }
-    .itin-time { font-size: 11px; color: #2563eb; font-weight: 600; }
+    .itin-activity { padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+    .itin-activity:last-child { border-bottom: none; }
+    .itin-time { font-size: 11px; color: #2563eb; font-weight: 600; margin-bottom: 2px; }
+    .city-photo { width: 100%; height: 140px; border-radius: 10px; margin-bottom: 12px; display: flex; align-items: flex-end; padding: 12px 14px; color: #fff; font-size: 18px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
 
     /* BUDGET */
-    .budget-bar { display: flex; gap: 16px; padding: 14px 20px; border-top: 1px solid #e2e8f0; flex-wrap: wrap; align-items: flex-end; background: #f8fafc; }
-    .budget-item { font-size: 11px; color: #94a3b8; }
-    .budget-item strong { color: #1e293b; font-size: 13px; display: block; margin-top: 2px; }
-    .budget-total { margin-left: auto; font-size: 11px; color: #2563eb; font-weight: 600; }
-    .budget-total strong { color: #1e293b; font-size: 18px; display: block; margin-top: 2px; }
-
-    /* TRIP SUMMARY */
-    .trip-summary { display: flex; align-items: center; gap: 20px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
-    .trip-summary .summary-title { font-size: 16px; font-weight: 700; color: #1e293b; flex: 1; }
-    .trip-summary .summary-stat { text-align: center; }
-    .trip-summary .summary-stat .stat-val { font-size: 18px; font-weight: 700; color: #2563eb; }
-    .trip-summary .summary-stat .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-top: 2px; }
-
-    /* FLIGHT TIME DISPLAY */
-    .flight-card .times { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
-    .flight-card .time-point { text-align: center; }
-    .flight-card .time-point .time { font-size: 16px; font-weight: 700; color: #1e293b; }
-    .flight-card .time-point .airport { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
-    .flight-card .time-line { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 8px; }
-    .flight-card .time-line .line { width: 100%; height: 2px; background: #e2e8f0; position: relative; }
-    .flight-card .time-line .line::after { content: ''; position: absolute; right: -2px; top: -3px; border: solid #2563eb; border-width: 0 2px 2px 0; padding: 3px; transform: rotate(-45deg); }
-    .flight-card .time-line .stops-label { font-size: 9px; color: #94a3b8; margin-top: 2px; }
-
-    /* BUDGET VISUAL */
-    .budget-section { padding: 16px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
-    .budget-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .budget-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+    .budget-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
     .budget-header .budget-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; }
-    .budget-header .budget-total-val { font-size: 20px; font-weight: 800; color: #1e293b; }
-    .budget-visual { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 10px; background: #e2e8f0; }
-    .budget-visual .seg { height: 100%; transition: width 0.6s ease; }
+    .budget-header .budget-total-val { font-size: 22px; font-weight: 800; color: #1e293b; }
+    .budget-visual { height: 10px; border-radius: 5px; overflow: hidden; display: flex; margin-bottom: 12px; background: #e2e8f0; }
+    .budget-visual .seg { height: 100%; }
     .budget-items { display: flex; gap: 16px; flex-wrap: wrap; }
     .budget-items .b-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
-    .budget-items .b-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .budget-items .b-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .budget-items .b-item strong { color: #1e293b; }
+
+    /* TIPS */
+    .tip-card { background: #eff6ff; border-radius: 10px; padding: 12px 16px; margin-bottom: 6px; font-size: 13px; color: #1e40af; line-height: 1.6; }
+
+    /* FOOTER */
+    .trip-footer { text-align: center; padding: 32px 20px; font-size: 11px; color: #cbd5e1; }
+    .trip-footer span { color: #2563eb; font-weight: 600; }
 
     /* LOADING */
     .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .skeleton-card { flex: 0 0 220px; height: 180px; border-radius: 12px; }
-    .skeleton-map-msg { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 999px; font-size: 13px; color: #64748b; font-weight: 500; border: 1px solid #e2e8f0; display: none; }
-
-    /* CARD ANIMATIONS */
-    .flight-card { opacity: 0; transform: translateY(12px); animation: cardIn 0.4s ease forwards; }
-    .flight-card:nth-child(2) { animation-delay: 0.1s; }
-    .flight-card:nth-child(3) { animation-delay: 0.2s; }
-    .flight-card:nth-child(4) { animation-delay: 0.3s; }
-    @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
-
-    /* DESTINATION PHOTOS */
-    .dest-photo { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-    .itin-day-photo { width: 100%; height: 120px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -0px -0px 10px -0px; }
-
-    /* ESTIMATED LABEL */
-    .est-label { font-size: 9px; color: #f59e0b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* SHARE TOAST */
     .share-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     .share-toast.show { opacity: 1; }
 
-    /* MAP OVERVIEW BTN */
-    .map-overview-btn { position: absolute; top: 12px; right: 12px; z-index: 5; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 600; color: #2563eb; cursor: pointer; font-family: inherit; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .map-overview-btn:hover { background: #eff6ff; }
-
-    /* PRINT STYLES */
     @media print {
-      .topbar, .chat-panel, .trip-toggle, .map-empty, .skeleton-map-msg, .map-overview-btn, .book-link, .chat-input-area, .chat-limit-bar { display: none !important; }
+      .topbar, .chat-panel, .map-section { display: none !important; }
       .app-layout { flex-direction: column !important; height: auto !important; overflow: visible !important; }
-      .map-panel { height: 400px !important; position: relative !important; }
-      #map { height: 400px !important; min-height: 400px !important; }
-      .trip-details { position: relative !important; transform: none !important; max-height: none !important; overflow: visible !important; }
-      .flight-card { break-inside: avoid; opacity: 1 !important; transform: none !important; animation: none !important; }
+      .trip-panel { overflow: visible !important; }
+      .trip-scroll { overflow: visible !important; }
       .itin-day-body { display: block !important; }
       body { height: auto !important; overflow: visible !important; }
     }
 
     @media (max-width: 900px) {
       .app-layout { flex-direction: column; }
-      .chat-panel { width: 100%; min-width: auto; height: 50vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
-      .map-panel { height: 50vh; }
+      .chat-panel { width: 100%; min-width: auto; height: 45vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
+      .trip-panel { height: 55vh; }
+      .flight-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -249,23 +225,47 @@ Each credit gives you 5 trip plans. Ready when you are.</div></div>
       </div>
     </div>
 
-    <div class="map-panel">
-      <div id="map"></div>
-      <div class="map-empty" id="mapEmpty">
-        <div class="map-empty-inner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <div class="trip-panel">
+      <!-- EMPTY STATE -->
+      <div class="trip-empty" id="tripEmpty">
+        <div class="trip-empty-inner">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <p>Your trip will appear here</p>
           <p class="sub">Describe your trip to get started</p>
         </div>
       </div>
-      <div class="skeleton-map-msg" id="mapLoadingMsg">Mapping your route...</div>
-      <button class="map-overview-btn" id="mapOverviewBtn">Overview</button>
-      <button class="trip-toggle" id="tripToggle">Trip Details</button>
-      <div class="trip-details" id="tripDetails">
-        <div class="trip-summary" id="tripSummary"></div>
-        <div class="flight-cards" id="flightCards"></div>
-        <div class="itinerary" id="itinerary"></div>
-        <div class="budget-section" id="budgetBar"></div>
+
+      <!-- TRIP CONTENT (scrollable) -->
+      <div class="trip-scroll" id="tripScroll" style="display:none;">
+        <!-- Trip header with gradient background -->
+        <div class="trip-hero" id="tripHero"></div>
+
+        <!-- Map section (collapsible) -->
+        <div class="map-section">
+          <button class="map-toggle-btn" id="mapToggleBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            View Route Map
+          </button>
+          <div class="map-container" id="mapContainer" style="display:none;">
+            <div id="map"></div>
+            <button class="map-close" id="mapCloseBtn">&times;</button>
+          </div>
+        </div>
+
+        <!-- Flights -->
+        <div class="trip-section" id="flightsSection"></div>
+
+        <!-- Itinerary -->
+        <div class="trip-section" id="itinerarySection"></div>
+
+        <!-- Budget -->
+        <div class="trip-section" id="budgetSection"></div>
+
+        <!-- Tips -->
+        <div class="trip-section" id="tipsSection"></div>
+
+        <!-- Footer -->
+        <div class="trip-footer">Built with <span>VoyagePilot</span> by CapitaCoreAI</div>
       </div>
     </div>
   </div>

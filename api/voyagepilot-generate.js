@@ -13,8 +13,8 @@ Use the REAL flight prices and airlines provided — do NOT make up prices. Pick
 Structure:
 {
   "title": "Miami to London to Tirana",
-  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19,"photoUrl":"https://source.unsplash.com/800x400/?Miami+travel+city"},
-  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3,"photoUrl":"https://source.unsplash.com/800x400/?London+travel+city"}],
+  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19,"photoQuery":"miami skyline biscayne bay"},
+  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3,"photoQuery":"london tower bridge skyline"}],
   "flights": [
     {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208","date":"2026-06-15","isReturn":false},
     {"from":"Tirana","fromCode":"TIA","to":"Miami","toCode":"MIA","price":"$580","duration":"14h 30m","airlines":["Turkish Airlines"],"stops":"1 stop","departureTime":"10:00 AM","arrivalTime":"6:30 PM","flightNumber":"TK1078","date":"2026-06-23","isReturn":true}
@@ -42,8 +42,8 @@ Rules:
 - Real neighborhoods, landmarks, restaurants
 - Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
 - Real visa, currency, weather info
-- For each destination, include a photoUrl using this format: https://source.unsplash.com/800x400/?{CityName}+travel+city
-- For the origin, also include a photoUrl
+- For each destination, include a "photoQuery" field with a good search term for that city (e.g. "london skyline", "tirana city center", "paris eiffel tower")
+- For the origin, also include a "photoQuery" field
 - Label all flight prices as estimates (prefix with "~" e.g. "~$423")
 Start with { end with }.`;
 

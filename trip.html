@@ -63,6 +63,7 @@
     .tips { margin-top: 24px; }
     .tip { background: #eff6ff; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; font-size: 13px; color: #1e40af; }
 
+    .city-banner { width: 100%; height: 120px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: flex-end; padding: 14px 16px; color: #fff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
     .loading { text-align: center; padding: 80px 20px; color: #94a3b8; font-size: 14px; }
     .error-msg { text-align: center; padding: 80px 20px; color: #ef4444; font-size: 14px; }
     .powered { text-align: center; margin-top: 48px; font-size: 11px; color: #cbd5e1; }
@@ -113,6 +114,13 @@
 
     function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
+    function cityGradient(city) {
+      var hash = 0;
+      for (var i = 0; i < (city||'').length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
+      var h = Math.abs(hash) % 360;
+      return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
+    }
+
     function renderSharedTrip(trip) {
       var el = document.getElementById('content');
       var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' → ');
@@ -143,10 +151,13 @@
       // Itinerary
       if (trip.itinerary && trip.itinerary.length) {
         html += '<div class="section-title">Day-by-Day Itinerary</div>';
+        var lastCity = '';
         trip.itinerary.forEach(function(day) {
-          var photoUrl = day.city ? 'https://source.unsplash.com/800x200/?' + encodeURIComponent(day.city) + '+travel+city' : '';
+          if (day.city && day.city !== lastCity) {
+            html += '<div class="city-banner" style="background:' + cityGradient(day.city) + ';">' + esc(day.city) + '</div>';
+            lastCity = day.city;
+          }
           html += '<div class="day-card">';
-          if (photoUrl) html += '<img src="' + photoUrl + '" loading="lazy" onerror="this.style.display=\'none\'">';
           html += '<div class="day-body"><div class="day-head"><span class="day-num">Day ' + (day.day || '') + '</span>' + esc(day.title || '') + (day.city ? '<span class="city-tag">' + esc(day.city) + '</span>' : '') + '</div>';
           (day.activities || []).forEach(function(a) {
             html += '<div class="activity">' + (a.time ? '<div class="act-time">' + esc(a.time) + '</div>' : '') + '<div>' + esc(a.description || a) + '</div></div>';
@@ -184,7 +195,7 @@
       (trip.destinations || []).forEach(function(d) { if (d.lat) points.push(d); });
       if (points.length > 0) {
         var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);
         var colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
         points.forEach(function(p, i) {
           var icon = L.divIcon({ className: '', html: '<div style="background:' + colors[i%colors.length] + ';color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' + (i+1) + '</div>', iconSize: [28,28], iconAnchor: [14,14] });
