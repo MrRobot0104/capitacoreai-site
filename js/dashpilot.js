@@ -39,9 +39,26 @@ async function buyPrebuilt(btn) {
   var file = btn.getAttribute('data-file');
   var origText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Processing...';
+  btn.textContent = 'Checking credits...';
 
   try {
+    // Check credit balance first
+    var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', currentSession.user.id).single();
+    var data = result.data;
+    var isAdmin = data && data.is_admin === true;
+    var balance = isAdmin ? 9999 : (data ? data.token_balance : 0);
+
+    if (balance <= 0) {
+      btn.disabled = false;
+      btn.textContent = origText;
+      if (confirm('You don\'t have any credits. Would you like to buy some?')) {
+        window.location.href = 'pricing.html';
+      }
+      return;
+    }
+
+    btn.textContent = 'Processing...';
+
     // Deduct 1 credit
     var res = await fetch('/api/dashpilot-generate', {
       method: 'POST',
@@ -51,6 +68,14 @@ async function buyPrebuilt(btn) {
 
     if (!res.ok) {
       var err = await res.json().catch(function() { return {}; });
+      if (res.status === 402) {
+        btn.disabled = false;
+        btn.textContent = origText;
+        if (confirm('No credits remaining. Would you like to buy more?')) {
+          window.location.href = 'pricing.html';
+        }
+        return;
+      }
       alert(err.error || 'Failed to purchase. Please try again.');
       btn.disabled = false;
       btn.textContent = origText;
