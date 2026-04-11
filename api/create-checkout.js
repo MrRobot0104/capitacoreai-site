@@ -48,8 +48,8 @@ module.exports = async (req, res) => {
     params.append('line_items[0][price_data][product_data][name]', plan.name);
     params.append('line_items[0][price_data][unit_amount]', plan.price.toString());
     params.append('line_items[0][quantity]', '1');
-    params.append('success_url', (req.headers.origin || 'https://capitacoreai.io') + '/znak.html?payment=success');
-    params.append('cancel_url', (req.headers.origin || 'https://capitacoreai.io') + '/znak.html?payment=cancelled');
+    params.append('success_url', (req.headers.origin || 'https://capitacoreai.io') + '/pricing.html?payment=success');
+    params.append('cancel_url', (req.headers.origin || 'https://capitacoreai.io') + '/pricing.html?payment=cancelled');
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

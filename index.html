@@ -430,7 +430,7 @@
       <div id="menuMyAgents" style="display:none;">
         <div class="menu-section">My Agents</div>
         <div id="menuAgentsList"></div>
-        <a href="znak.html" class="menu-btn outline" style="margin-top:8px;">Buy More Credits</a>
+        <a href="pricing.html" class="menu-btn outline" style="margin-top:8px;">Buy More Credits</a>
         <button class="menu-btn outline" style="margin-top:8px;" onclick="menuLogout()">Log Out</button>
       </div>
     </div>
@@ -883,7 +883,7 @@
         if (hasAccess) {
           list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">' + (isAdmin ? '∞' : balance) + ' credits remaining</span></div><a href="znak-app.html" class="agent-link">Launch →</a></div>';
         } else {
-          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="znak.html" class="agent-link">Buy →</a></div>';
+          list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="pricing.html" class="agent-link">Buy →</a></div>';
         }
       } else {
         authDiv.style.display = 'block';
