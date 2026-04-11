@@ -121,6 +121,18 @@
       return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
     }
 
+    var cityPhotoCache = {};
+    function fetchCityPhoto(city, callback) {
+      if (!city) return;
+      if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
+      fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var url = (data.originalimage && data.originalimage.source) || (data.thumbnail && data.thumbnail.source) || '';
+          if (url) { url = url.replace(/\/\d+px-/, '/800px-'); cityPhotoCache[city] = url; callback(url); }
+        }).catch(function() {});
+    }
+
     function renderSharedTrip(trip) {
       var el = document.getElementById('content');
       var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' → ');
@@ -154,7 +166,7 @@
         var lastCity = '';
         trip.itinerary.forEach(function(day) {
           if (day.city && day.city !== lastCity) {
-            html += '<div class="city-banner" style="background:' + cityGradient(day.city) + ';">' + esc(day.city) + '</div>';
+            html += '<div class="city-banner" data-city="' + esc(day.city) + '" style="background:' + cityGradient(day.city) + ';">' + esc(day.city) + '</div>';
             lastCity = day.city;
           }
           html += '<div class="day-card">';
@@ -189,10 +201,21 @@
       html += '<div class="powered">Built with <a href="/voyagepilot.html">VoyagePilot</a> by CapitaCoreAI</div>';
       el.innerHTML = html;
 
+      // Fetch real photos for city banners
+      document.querySelectorAll('.city-banner[data-city]').forEach(function(b) {
+        fetchCityPhoto(b.dataset.city, function(url) {
+          b.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(' + url + ')';
+          b.style.backgroundSize = 'cover';
+          b.style.backgroundPosition = 'center';
+        });
+      });
+
       // Init map
       var points = [];
       if (trip.origin && trip.origin.lat) points.push(trip.origin);
       (trip.destinations || []).forEach(function(d) { if (d.lat) points.push(d); });
+      // Add return to origin
+      if (trip.origin && trip.origin.lat && points.length > 1) points.push(trip.origin);
       if (points.length > 0) {
         var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);

@@ -19,6 +19,25 @@ function cityGradient(city) {
   return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
 }
 
+// Fetch city photo from Wikipedia (free, no API key)
+var cityPhotoCache = {};
+function fetchCityPhoto(city, callback) {
+  if (!city) return;
+  if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
+  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var url = (data.originalimage && data.originalimage.source) || (data.thumbnail && data.thumbnail.source) || '';
+      if (url) {
+        // Get a wider version by modifying the thumb URL
+        url = url.replace(/\/\d+px-/, '/800px-');
+        cityPhotoCache[city] = url;
+        callback(url);
+      }
+    })
+    .catch(function() {});
+}
+
 // ==================== MAP ====================
 function initMap() {
   if (map) return;
@@ -57,10 +76,16 @@ function drawRoute(trip) {
   var points = [];
   if (trip.origin && trip.origin.lat) points.push(trip.origin);
   (trip.destinations || []).forEach(function(d) { if (d.lat) points.push(d); });
+  // Add origin at the end to show return flight path
+  if (trip.origin && trip.origin.lat && points.length > 1) {
+    points.push({ city: trip.origin.city, country: trip.origin.country, code: trip.origin.code, lat: trip.origin.lat, lng: trip.origin.lng, isReturn: true });
+  }
   if (points.length === 0) return;
 
   var colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4'];
   points.forEach(function(p, i) {
+    // Skip duplicate marker for return point (origin is already drawn)
+    if (p.isReturn) return;
     var isOrigin = i === 0;
     var iconSvg = isOrigin
       ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + colors[i % colors.length] + '" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white"/></svg>'
@@ -109,6 +134,15 @@ function renderTripHero(trip) {
   var originCity = trip.origin ? trip.origin.city : '';
   var gradient = cityGradient(cities);
   el.style.background = gradient;
+  // Fetch hero photo from first destination
+  var heroCity = (trip.destinations && trip.destinations[0]) ? trip.destinations[0].city : '';
+  if (heroCity) {
+    fetchCityPhoto(heroCity, function(url) {
+      el.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.6)), url(' + url + ')';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+    });
+  }
   el.innerHTML =
     '<div class="hero-title">' + escapeHtml(trip.title || originCity + ' → ' + cities) + '</div>' +
     '<div class="hero-meta">' + (trip.dates ? escapeHtml(trip.dates.departure) + ' → ' + escapeHtml(trip.dates.return) : '') + ' · ' + (trip.travelers || 1) + ' traveler' + ((trip.travelers || 1) > 1 ? 's' : '') + ' · ' + escapeHtml(trip.budgetLevel || 'mid-range') + '</div>' +
@@ -158,7 +192,8 @@ function renderItinerary(days) {
   var lastCity = '';
   days.forEach(function(day, i) {
     if (day.city && day.city !== lastCity) {
-      html += '<div class="city-photo" style="background:' + cityGradient(day.city) + ';">' + escapeHtml(day.city) + '</div>';
+      var cid = 'city-banner-' + i;
+      html += '<div class="city-photo" id="' + cid + '" style="background:' + cityGradient(day.city) + ';" data-city="' + escapeHtml(day.city) + '">' + escapeHtml(day.city) + '</div>';
       lastCity = day.city;
     }
     var cityTag = day.city ? '<span style="font-size:11px;color:#64748b;font-weight:400;margin-left:8px;">' + escapeHtml(day.city) + '</span>' : '';
@@ -175,6 +210,14 @@ function renderItinerary(days) {
   container.innerHTML = html;
   container.querySelectorAll('.itin-day-header').forEach(function(h) {
     h.addEventListener('click', function() { this.parentElement.classList.toggle('open'); });
+  });
+  // Fetch real photos for city banners
+  container.querySelectorAll('.city-photo[data-city]').forEach(function(el) {
+    fetchCityPhoto(el.dataset.city, function(url) {
+      el.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(' + url + ')';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+    });
   });
 }
 
