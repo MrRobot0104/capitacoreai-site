@@ -265,9 +265,9 @@
 
     async function buyPackage(pkg) {
       const btns = document.querySelectorAll('.btn-buy');
-      btns.forEach(b => { b.disabled = true; b.textContent = 'Redirecting...'; });
+      btns.forEach(b => { b.disabled = true; b.textContent = 'Processing...'; });
 
-      function resetButtons() {
+      function showError(msg) {
         btns.forEach(b => { b.disabled = false; });
         try {
           document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
@@ -275,39 +275,55 @@
           document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
           document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
         } catch(e) {}
+        // Show error visually on page
+        var errDiv = document.getElementById('buyError');
+        if (!errDiv) {
+          errDiv = document.createElement('div');
+          errDiv.id = 'buyError';
+          errDiv.style.cssText = 'background:#fef2f2;color:#dc2626;padding:14px 20px;border-radius:10px;margin:16px auto;max-width:600px;font-size:14px;text-align:center;';
+          document.querySelector('.pricing-grid').after(errDiv);
+        }
+        errDiv.textContent = msg;
+        console.error('buyPackage error:', msg);
+      }
+
+      var session;
+      try {
+        var result = await sb.auth.getSession();
+        session = result.data.session;
+      } catch(e) {
+        showError('Auth error: ' + e.message);
+        return;
+      }
+
+      if (!session) {
+        showError('Not logged in. Redirecting to login...');
+        setTimeout(function(){ window.location.href = 'account.html'; }, 1500);
+        return;
       }
 
       try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) {
-          resetButtons();
-          window.location.href = 'account.html';
-          return;
-        }
-
-        const res = await fetch('/api/create-checkout', {
+        var res = await fetch('/api/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
           body: JSON.stringify({ package: pkg }),
         });
 
-        const text = await res.text();
-        let data;
+        var text = await res.text();
+        console.log('Checkout response:', res.status, text);
+        var data;
         try { data = JSON.parse(text); } catch (e) {
-          resetButtons();
-          alert('Server error: ' + text.substring(0, 200));
+          showError('Server returned invalid response (status ' + res.status + ')');
           return;
         }
 
         if (data.url) {
           window.location.href = data.url;
         } else {
-          resetButtons();
-          alert('Error: ' + (data.error || 'No checkout URL'));
+          showError(data.error || 'No checkout URL returned (status ' + res.status + ')');
         }
       } catch (err) {
-        resetButtons();
-        alert('Error: ' + err.message);
+        showError('Network error: ' + err.message);
       }
     }
 
