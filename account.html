@@ -360,9 +360,14 @@
     }
 
     async function handleLogout() {
-      await sb.auth.signOut();
+      try {
+        await sb.auth.signOut();
+      } catch (e) {
+        console.error('Logout error:', e);
+      }
       document.getElementById('dashboard').classList.remove('active');
       document.getElementById('authSection').style.display = 'block';
+      updateNav(false);
       switchTab('login');
     }
 

@@ -260,6 +260,12 @@
     async function init() {
       sb.auth.onAuthStateChange((event, session) => {
         if (event === 'PASSWORD_RECOVERY') { showResetForm(); return; }
+        if (event === 'SIGNED_OUT') {
+          document.getElementById('authSection').style.display = 'block';
+          document.getElementById('loggedInSection').classList.remove('active');
+          updateMenu(null);
+          return;
+        }
         if (event === 'SIGNED_IN' && session && !IS_RECOVERY) showLoggedIn(session.user);
       });
 
@@ -422,10 +428,16 @@
     }
 
     async function handleLogout() {
-      await sb.auth.signOut();
+      try {
+        await sb.auth.signOut();
+      } catch (e) {
+        console.error('Logout error:', e);
+      }
+      // Force UI reset even if signOut fails
       document.getElementById('authSection').style.display = 'block';
       document.getElementById('loggedInSection').classList.remove('active');
       updateMenu(null);
+      switchTab('login');
     }
 
     async function showLoggedIn(user) {
