@@ -2,6 +2,17 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "framework": null,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fonts.googleapis.com https://api.anthropic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.anthropic.com; img-src 'self' data: blob:; frame-src 'self' https://js.stripe.com blob:;"
+        }
+      ]
+    }
+  ],
   "functions": {
     "api/znak-generate.js": {
       "memory": 1024,
