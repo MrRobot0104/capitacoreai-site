@@ -427,9 +427,7 @@
       showLoggedIn(data.user);
     }
 
-    async function handleLogout() {
-      await sb.auth.signOut(); localStorage.clear();
-      setTimeout(function(){ window.location.href = '/'; }, 300);
+    async function handleLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
     }
 
     async function showLoggedIn(user) {
@@ -486,7 +484,7 @@
       document.body.style.overflow = open ? '' : 'hidden';
     }
 
-    async function menuLogout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
+    async function menuLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
 
     // Keep hamburger menu in sync with auth state
     async function updateMenu(session) {

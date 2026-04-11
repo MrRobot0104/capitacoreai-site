@@ -365,9 +365,7 @@
       list.innerHTML = html;
     }
 
-    async function handleLogout() {
-      await sb.auth.signOut(); localStorage.clear();
-      setTimeout(function(){ window.location.href = '/'; }, 300);
+    async function handleLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
     }
 
     function updateNav(loggedIn) {
@@ -381,7 +379,7 @@
       if (mw) mw.style.display = loggedIn ? 'block' : 'none';
     }
 
-    async function menuLogout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
+    async function menuLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
   </script>
 </body>
 </html>
