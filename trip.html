@@ -174,15 +174,25 @@
     }
 
     var cityPhotoCache = {};
-    function fetchCityPhoto(city, callback) {
+    var cityPhotoFailed = {};
+    function fetchCityPhoto(city, callback, fallbackCity) {
       if (!city) return;
       if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
+      if (cityPhotoFailed[city]) {
+        if (fallbackCity && cityPhotoCache[fallbackCity]) callback(cityPhotoCache[fallbackCity]);
+        return;
+      }
       fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city))
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          var url = (data.originalimage && data.originalimage.source) || (data.thumbnail && data.thumbnail.source) || '';
-          if (url) { url = url.replace(/\/\d+px-/, '/800px-'); cityPhotoCache[city] = url; callback(url); }
-        }).catch(function() {});
+          var thumb = data.thumbnail && data.thumbnail.source;
+          var orig = data.originalimage && data.originalimage.source;
+          var url = '';
+          if (thumb) url = thumb.replace(/\/\d+px-/, '/800px-');
+          else if (orig && !orig.endsWith('.svg')) url = orig;
+          if (url) { cityPhotoCache[city] = url; callback(url); }
+          else { cityPhotoFailed[city] = true; if (fallbackCity && fallbackCity !== city) fetchCityPhoto(fallbackCity, callback); }
+        }).catch(function() { cityPhotoFailed[city] = true; if (fallbackCity && fallbackCity !== city) fetchCityPhoto(fallbackCity, callback); });
     }
 
     var planeSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>';
@@ -357,15 +367,16 @@
           var g = document.getElementById('gallery-' + di);
           if (!g) return;
           g.querySelectorAll('.gallery-photo[data-query="' + lm.replace(/"/g, '\\"') + '"]').forEach(function(el) {
-            fetchCityPhoto(lm, function(url) { el.style.background = 'url(' + url + ') center/cover'; });
+            fetchCityPhoto(lm, function(url) { el.style.background = 'url(' + url + ') center/cover'; }, dest.city);
           });
         });
         var hp = document.getElementById('hotel-photo-' + di);
-        if (hp) fetchCityPhoto(dest.city + ' skyline', function(url) { hp.style.background = 'url(' + url + ') center/cover'; });
+        if (hp) fetchCityPhoto(dest.city, function(url) { hp.style.background = 'url(' + url + ') center/cover'; });
         var cityDays = (trip.itinerary || []).filter(function(d) { return d.city === dest.city; });
         cityDays.forEach(function(day, dayIdx) {
           var t = document.getElementById('day-thumb-' + di + '-' + dayIdx);
-          if (t && day.dayPhoto) fetchCityPhoto(day.dayPhoto, function(url) { t.style.background = 'url(' + url + ') center/cover'; });
+          if (t && day.dayPhoto) fetchCityPhoto(day.dayPhoto, function(url) { t.style.background = 'url(' + url + ') center/cover'; }, dest.city);
+          else if (t) fetchCityPhoto(dest.city, function(url) { t.style.background = 'url(' + url + ') center/cover'; });
         });
       });
 

@@ -21,26 +21,48 @@ function cityGradient(city) {
 
 // Fetch city photo via Wikipedia MediaWiki API (reliable, free, CORS-enabled)
 var cityPhotoCache = {};
-function fetchCityPhoto(city, callback) {
+var cityPhotoFailed = {};
+
+function fetchCityPhoto(city, callback, fallbackCity) {
   if (!city) return;
   if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
+  if (cityPhotoFailed[city]) {
+    // Already failed — try fallback if provided
+    if (fallbackCity && cityPhotoCache[fallbackCity]) { callback(cityPhotoCache[fallbackCity]); }
+    return;
+  }
 
-  var encodedCity = encodeURIComponent(city);
-  var apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&titles=' + encodedCity +
-    '&prop=pageimages&format=json&pithumbsize=800&origin=*';
+  var apiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city);
 
   fetch(apiUrl)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var pages = data.query && data.query.pages;
-      if (!pages) return;
-      var page = Object.values(pages)[0];
-      if (page && page.thumbnail && page.thumbnail.source) {
-        cityPhotoCache[city] = page.thumbnail.source;
-        callback(page.thumbnail.source);
+      var thumb = data.thumbnail && data.thumbnail.source;
+      var orig = data.originalimage && data.originalimage.source;
+      var url = '';
+      if (thumb) {
+        // Scale thumbnail up to 800px
+        url = thumb.replace(/\/\d+px-/, '/800px-');
+      } else if (orig && !orig.endsWith('.svg')) {
+        url = orig;
+      }
+      if (url) {
+        cityPhotoCache[city] = url;
+        callback(url);
+      } else {
+        // No image on this page — try fallback
+        cityPhotoFailed[city] = true;
+        if (fallbackCity && fallbackCity !== city) {
+          fetchCityPhoto(fallbackCity, callback);
+        }
       }
     })
-    .catch(function() {});
+    .catch(function() {
+      cityPhotoFailed[city] = true;
+      if (fallbackCity && fallbackCity !== city) {
+        fetchCityPhoto(fallbackCity, callback);
+      }
+    });
 }
 
 // ==================== MAP ====================
@@ -394,39 +416,38 @@ function renderTimeline(trip) {
       });
     }
 
-    // Gallery landmark photos
+    // Gallery landmark photos — fallback to city photo if landmark not found
     (dest.landmarks || []).forEach(function(lm) {
       var galleryEl = document.getElementById('gallery-' + di);
       if (!galleryEl) return;
       var photos = galleryEl.querySelectorAll('.gallery-photo[data-query="' + lm.replace(/"/g, '\\"') + '"]');
       photos.forEach(function(el) {
         fetchCityPhoto(lm, function(url) {
-          el.style.backgroundImage = 'url(' + url + ')';
           el.style.background = 'url(' + url + ') center/cover';
-        });
+        }, dest.city);
       });
     });
 
-    // Hotel photo
+    // Hotel photo — use the city photo (reliable) not "city skyline"
     var hotelPhotoEl = document.getElementById('hotel-photo-' + di);
     if (hotelPhotoEl) {
-      // Use city name for hotel area photo
-      fetchCityPhoto(dest.city + ' skyline', function(url) {
-        hotelPhotoEl.style.backgroundImage = 'url(' + url + ')';
-        hotelPhotoEl.style.backgroundSize = 'cover';
-        hotelPhotoEl.style.backgroundPosition = 'center';
+      fetchCityPhoto(dest.city, function(url) {
+        hotelPhotoEl.style.background = 'url(' + url + ') center/cover';
       });
     }
 
-    // Day card thumbnail photos
+    // Day card thumbnail photos — fallback to city photo if landmark not found
     var cityDays = days.filter(function(d) { return d.city === dest.city; });
     cityDays.forEach(function(day, dayIdx) {
       var thumbEl = document.getElementById('day-thumb-' + di + '-' + dayIdx);
       if (thumbEl && day.dayPhoto) {
         fetchCityPhoto(day.dayPhoto, function(url) {
-          thumbEl.style.backgroundImage = 'url(' + url + ')';
-          thumbEl.style.backgroundSize = 'cover';
-          thumbEl.style.backgroundPosition = 'center';
+          thumbEl.style.background = 'url(' + url + ') center/cover';
+        }, dest.city);
+      } else if (thumbEl) {
+        // No dayPhoto field — use city photo
+        fetchCityPhoto(dest.city, function(url) {
+          thumbEl.style.background = 'url(' + url + ') center/cover';
         });
       }
     });
