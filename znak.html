@@ -483,7 +483,7 @@
       document.body.style.overflow = open ? '' : 'hidden';
     }
 
-    async function menuLogout(){try{await sb.auth.signOut();}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("/");}
+    function menuLogout(){localStorage.clear();sessionStorage.clear();window.location.href='/';}
 
     // Keep hamburger menu in sync with auth state
     async function updateMenu(session) {
