@@ -425,6 +425,7 @@
       await sb.auth.signOut();
       document.getElementById('authSection').style.display = 'block';
       document.getElementById('loggedInSection').classList.remove('active');
+      updateMenu(null);
     }
 
     async function showLoggedIn(user) {
@@ -459,8 +460,9 @@
           alert(data.error || 'Failed to create checkout session');
           btns.forEach(b => { b.disabled = false; });
           document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
+          document.querySelector('[onclick*="growth"]').textContent = 'Buy Growth';
           document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
-          document.querySelector('[onclick*="business"]').textContent = 'Buy Business';
+          document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
         }
       } catch (err) {
         alert('Connection error. Please try again.');
