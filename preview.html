@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Preview — CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #111111; color: #e0e0e0; height: 100vh; overflow: hidden; }
+    .topbar { height: 56px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #e0e0e0; font-weight: 600; font-size: 14px; }
+    .topbar-left a img { width: 24px; height: 24px; }
+    .topbar-left .sep { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
+    .topbar-left .label { font-size: 13px; font-weight: 500; color: #999999; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn { font-size: 12px; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #aaaaaa; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .topbar-btn:hover { background: rgba(255,255,255,0.05); color: #e0e0e0; }
+    .topbar-btn.primary { background: #ffffff; color: #111111; border-color: #ffffff; }
+    .topbar-btn.primary:hover { background: #e0e0e0; }
+    .preview-wrap { position: relative; height: calc(100vh - 56px); }
+    .preview-wrap iframe { width: 100%; height: 100%; border: none; }
+    .preview-overlay { position: absolute; inset: 0; z-index: 10; cursor: default; }
+    .badge-readonly { position: absolute; top: 16px; right: 16px; z-index: 20; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); color: #999; font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 20px; letter-spacing: 0.04em; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/"><img src="logo.svg" alt="CapitaCoreAI">CapitaCoreAI</a>
+      <div class="sep"></div>
+      <span class="label" id="previewTitle">Dashboard Preview</span>
+    </div>
+    <div class="topbar-right">
+      <a href="dashpilot.html" class="topbar-btn">Back to DashPilot</a>
+      <a href="pricing.html" class="topbar-btn primary">Get This Dashboard — 1 Credit</a>
+    </div>
+  </div>
+  <div class="preview-wrap">
+    <div class="preview-overlay"></div>
+    <span class="badge-readonly">READ-ONLY PREVIEW</span>
+    <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+  </div>
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var file = params.get('file');
+    if (file && /^[a-zA-Z0-9_\-]+\.html$/.test(file)) {
+      document.getElementById('previewFrame').src = '/dashboards/' + file;
+      var title = file.replace(/_/g, ' ').replace('.html', '').replace('CapitaCoreAI', '').trim();
+      document.getElementById('previewTitle').textContent = title;
+      document.title = title + ' — Preview — CapitaCoreAI';
+    } else {
+      document.getElementById('previewTitle').textContent = 'Invalid preview';
+    }
+  </script>
+</body>
+</html>
