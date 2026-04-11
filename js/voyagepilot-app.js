@@ -19,50 +19,36 @@ function cityGradient(city) {
   return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
 }
 
-// Fetch city photo via Wikipedia MediaWiki API (reliable, free, CORS-enabled)
+// Fetch photo via Wikipedia MediaWiki pageimages API (reliable, CORS-enabled)
 var cityPhotoCache = {};
-var cityPhotoFailed = {};
 
-function fetchCityPhoto(city, callback, fallbackCity) {
-  if (!city) return;
-  if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
-  if (cityPhotoFailed[city]) {
-    // Already failed — try fallback if provided
-    if (fallbackCity && cityPhotoCache[fallbackCity]) { callback(cityPhotoCache[fallbackCity]); }
-    return;
-  }
+function fetchCityPhoto(query, callback, fallbackQuery) {
+  if (!query) { if (fallbackQuery) fetchCityPhoto(fallbackQuery, callback); return; }
+  if (cityPhotoCache[query]) { callback(cityPhotoCache[query]); return; }
 
-  var apiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city);
+  var apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&titles=' +
+    encodeURIComponent(query) + '&prop=pageimages&format=json&pithumbsize=800&origin=*';
 
   fetch(apiUrl)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var thumb = data.thumbnail && data.thumbnail.source;
-      var orig = data.originalimage && data.originalimage.source;
-      var url = '';
-      if (thumb) {
-        // Scale thumbnail up to 800px
-        url = thumb.replace(/\/\d+px-/, '/800px-');
-      } else if (orig && !orig.endsWith('.svg')) {
-        url = orig;
-      }
-      if (url) {
-        cityPhotoCache[city] = url;
-        callback(url);
+      var pages = data.query && data.query.pages;
+      if (!pages) { tryFallback(); return; }
+      var page = Object.values(pages)[0];
+      if (page && page.thumbnail && page.thumbnail.source) {
+        cityPhotoCache[query] = page.thumbnail.source;
+        callback(page.thumbnail.source);
       } else {
-        // No image on this page — try fallback
-        cityPhotoFailed[city] = true;
-        if (fallbackCity && fallbackCity !== city) {
-          fetchCityPhoto(fallbackCity, callback);
-        }
+        tryFallback();
       }
     })
-    .catch(function() {
-      cityPhotoFailed[city] = true;
-      if (fallbackCity && fallbackCity !== city) {
-        fetchCityPhoto(fallbackCity, callback);
-      }
-    });
+    .catch(function() { tryFallback(); });
+
+  function tryFallback() {
+    if (fallbackQuery && fallbackQuery !== query) {
+      fetchCityPhoto(fallbackQuery, callback);
+    }
+  }
 }
 
 // ==================== MAP ====================
