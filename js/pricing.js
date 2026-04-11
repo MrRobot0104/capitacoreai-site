@@ -52,14 +52,8 @@ async function buyPackage(pkg) {
 
   var session;
   try {
-    // Force token refresh to avoid expired session issues
-    var result = await sb.auth.refreshSession();
+    var result = await sb.auth.getSession();
     session = result.data.session;
-    // Fall back to getSession if refresh fails
-    if (!session) {
-      var fallback = await sb.auth.getSession();
-      session = fallback.data.session;
-    }
   } catch(e) {
     showError('Auth error: ' + e.message);
     return;
@@ -105,10 +99,26 @@ async function buyPackage(pkg) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.btn-buy[data-package]').forEach(function(btn) {
+// Bind buy buttons immediately (scripts are at end of body, DOM is ready)
+(function() {
+  var buttons = document.querySelectorAll('.btn-buy[data-package]');
+  console.log('[DashPilot] Found ' + buttons.length + ' buy buttons');
+  buttons.forEach(function(btn) {
     btn.addEventListener('click', function() {
+      console.log('[DashPilot] Buy clicked:', this.getAttribute('data-package'));
       buyPackage(this.getAttribute('data-package'));
     });
   });
-});
+
+  // Event delegation fallback — catches clicks even if direct binding failed
+  var grid = document.querySelector('.pricing-grid');
+  if (grid) {
+    grid.addEventListener('click', function(e) {
+      var btn = e.target.closest('.btn-buy[data-package]');
+      if (btn && !btn.disabled) {
+        console.log('[DashPilot] Buy clicked (delegation):', btn.getAttribute('data-package'));
+        buyPackage(btn.getAttribute('data-package'));
+      }
+    });
+  }
+})();
