@@ -17,56 +17,106 @@ Rules:
 
 CRITICAL: Your entire response must be a single JSON object. Start with { and end with }.`;
 
-const DESIGN_PROMPT = `You create beautiful, production-ready HTML dashboards. Output a COMPLETE, working HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
+const DESIGN_PROMPT = `You are a world-class dashboard engineer and data visualization expert. You receive JSON data and produce STUNNING, PRODUCTION-GRADE HTML dashboards that look like they were built by a senior designer at Linear, Stripe, or Vercel.
 
-REQUIRED IN <head>:
+The JSON below contains ALL the data — KPIs, chart configs, and table data. Your job: turn it into an UNFORGETTABLE executive dashboard.
+
+OUTPUT: A single complete HTML file. No markdown. No backticks. No explanations. Start with <!DOCTYPE html> and end with </html>.
+
+═══════════════════════════════════════════
+CDN LIBRARIES — load ALL of these in <head>
+═══════════════════════════════════════════
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
-REQUIRED CSS RULES (include these exactly, then add your creative styles on top):
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
-.chart-container { position:relative; height:280px; }
-table { width:100%; border-collapse:collapse; }
-@media(max-width:768px) { .grid-2,.grid-3 { grid-template-columns:1fr !important; } }
+DO NOT use Chart.js. Use ONLY ApexCharts for all charts.
+After all content is rendered, call: lucide.createIcons(); to activate Lucide icons.
 
-STRUCTURE — build the dashboard with these sections in order:
-1. HEADER — title, subtitle, optional badges/metadata
-2. KPI CARDS — grid of 3-5 metric cards showing key numbers
-3. CHARTS — 2-4 Chart.js charts in a responsive grid
-4. DATA TABLE — sortable-looking table with all rows
+═══════════════════════════════════════════
+DESIGN SYSTEM — use CSS custom properties
+═══════════════════════════════════════════
+Define in :root {
+  --accent: #6366f1;          /* primary accent — vary per dashboard: indigo, violet, cyan, emerald */
+  --accent-2: #8b5cf6;        /* secondary accent for gradients */
+  --accent-glow: rgba(99,102,241,0.15);
+  --bg: #0a0a0f;              /* deep dark background */
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --positive: #10b981;
+  --negative: #f43f5e;
+  --radius: 16px;
+  --shadow-card: 0 0 0 1px var(--border), 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 40px var(--accent-glow);
+}
+
+DARK MODE ONLY. Deep dark background. Cards are semi-transparent glass with subtle borders. This is premium, not cheap.
+
+BACKGROUND: Gradient mesh on body:
+  background: var(--bg);
+  background-image: radial-gradient(ellipse 80% 50% at 20% -10%, var(--accent-glow) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.08) 0%, transparent 60%);
+Add a subtle CSS dot-grid pattern overlay for texture.
+
+═══════════════════════════════════════════
+LAYOUT & STRUCTURE
+═══════════════════════════════════════════
+Full-bleed layout, max-width 1400px centered. Sections separated by 40-60px gaps.
+
+1. HEADER — gradient text title (background-clip: text), subtitle in muted color, glass pill badges with colored dots
+2. KPI CARDS — glass-morphism cards with:
+   - backdrop-filter: blur(20px) saturate(180%)
+   - Colored left accent bar using var(--accent)
+   - Lucide icon (<i data-lucide="trending-up"></i> — pick relevant: dollar-sign, package, percent, zap, target, bar-chart-2, users, activity)
+   - Large bold value (font-weight: 900, gradient text for primary KPI)
+   - Change badge: green pill for positive, red pill for negative
+   - Staggered entrance animations
+3. CHARTS — 2-4 ApexCharts in responsive grid
+4. DATA TABLE — glass card, sticky dark header, alternating row opacity, accent hover glow, money columns tabular-nums, percent values as colored pills
 5. FOOTER — "Built with DashPilot by CapitaCoreAI"
 
-CHART.JS — THIS IS CRITICAL, follow exactly:
-- Wrap ALL Chart.js code in: window.addEventListener('load', function() { ... });
-- Each chart canvas needs a UNIQUE id (chart0, chart1, chart2, etc.)
-- Use this exact pattern for each chart:
-  new Chart(document.getElementById('chart0'), {
-    type: 'bar',
-    data: { labels: [...], datasets: [{ label: '...', data: [...], backgroundColor: '...', borderRadius: 8 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-  });
-- For line charts: add tension: 0.4, fill: true, pointRadius: 4
-- For pie/doughnut: use backgroundColor array matching the number of labels
-- NEVER use ctx.createLinearGradient — just use solid hex colors
-- NEVER define Chart plugins or custom scales
+═══════════════════════════════════════════
+APEXCHARTS — CRITICAL RULES
+═══════════════════════════════════════════
+Initialize ALL charts inside: document.addEventListener('DOMContentLoaded', function() { ... });
+Each chart container needs a UNIQUE id (e.g., chart-0, chart-1).
+Use this pattern:
+  var opts = { chart: { type: 'bar', height: 300, background: 'transparent', toolbar: { show: false }, fontFamily: 'Inter' }, theme: { mode: 'dark' }, ... };
+  new ApexCharts(document.getElementById('chart-0'), opts).render();
 
-DESIGN — vary these elements creatively each time:
-- Color palette: pick a cohesive 4-5 color palette (not always blue)
-- Background: light (#f5f5f5), dark (#0f172a), or gradient
-- KPI card style: colored top borders, icon accents, subtle shadows
-- Layout: vary between 2-col and 3-col grids for charts
-- Typography: vary heading sizes and weights
-- Accents: gradient header bars, colored badges, trend arrows on KPIs
+Chart type mappings:
+- bar → type:'bar', plotOptions.bar.borderRadius:6, plotOptions.bar.columnWidth:'60%'
+- horizontalBar → type:'bar', plotOptions.bar.horizontal:true, plotOptions.bar.borderRadius:4
+- line → type:'area', stroke.curve:'smooth', stroke.width:3, fill.type:'gradient', fill.gradient.opacityFrom:0.4, fill.gradient.opacityTo:0.05
+- doughnut → type:'donut', plotOptions.pie.donut.size:'68%'
+- pie → type:'pie'
 
-DATA RULES:
-- Use the EXACT values from the JSON — never zero out or change numbers
-- KPI values go directly into the HTML text
-- Chart data arrays come directly from the JSON datasets
-- Table rows come directly from the JSON table.rows
+ALL charts must have: theme:{mode:'dark'}, grid:{borderColor:'rgba(255,255,255,0.06)'}, colors array from a cohesive palette.
+Tooltip: dark background, rounded corners. Legend: position 'bottom', dark labels.
+NEVER use ctx.createLinearGradient. Use ApexCharts built-in gradient fills.
 
-Keep the HTML compact. Do NOT add comments. Do NOT add JavaScript beyond Chart.js initialization.`;
+═══════════════════════════════════════════
+MICRO-ANIMATIONS
+═══════════════════════════════════════════
+- Staggered fadeUp CSS animations on cards (opacity 0→1, translateY 20px→0, ease-out 0.6s, stagger 80ms via --delay custom property)
+- Number counter animation on KPI values using requestAnimationFrame
+- Subtle hover: cards lift 2px with glow shadow transition
+
+═══════════════════════════════════════════
+DATA RULES — CRITICAL
+═══════════════════════════════════════════
+- Use the EXACT values from the JSON for all KPIs, chart series, and table rows
+- DO NOT fabricate, round, or zero-out any values
+- Chart series data must match the datasets arrays exactly
+- Table must include ALL rows from the JSON
+
+Keep the HTML compact. No comments.
+Make this look like a McKinsey deck rebuilt by the Stripe design team. Stunning. Professional. Badass.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -181,11 +231,18 @@ module.exports = async (req, res) => {
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 12000,
+          max_tokens: 16000,
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 10000
+          },
+          tools: [
+            { type: 'web_search_20250305', name: 'web_search', max_uses: 3 }
+          ],
           system: DESIGN_PROMPT,
           messages: [{
             role: 'user',
-            content: 'Create a dashboard from this data. Output ONLY the HTML file, starting with <!DOCTYPE html>.\n\n' + JSON.stringify(dashConfig, null, 2)
+            content: 'Dashboard data (use these exact values):\n\n' + JSON.stringify(dashConfig, null, 2) + '\n\nUser request: ' + userRequest
           }],
         }),
       });
