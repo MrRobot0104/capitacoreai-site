@@ -30,11 +30,16 @@ sb.auth.onAuthStateChange(async function(event, session) {
   }
 });
 
+var buyInProgress = false;
 async function buyPackage(pkg) {
+  if (buyInProgress) return;
+  buyInProgress = true;
+
   var btns = document.querySelectorAll('.btn-buy');
   btns.forEach(function(b) { b.disabled = true; b.textContent = 'Processing...'; });
 
   function showError(msg) {
+    buyInProgress = false;
     btns.forEach(function(b) { b.disabled = false; });
     document.querySelectorAll('.btn-buy[data-package]').forEach(function(b) {
       b.textContent = 'Buy ' + b.getAttribute('data-package').charAt(0).toUpperCase() + b.getAttribute('data-package').slice(1);
@@ -109,16 +114,4 @@ async function buyPackage(pkg) {
       buyPackage(this.getAttribute('data-package'));
     });
   });
-
-  // Event delegation fallback — catches clicks even if direct binding failed
-  var grid = document.querySelector('.pricing-grid');
-  if (grid) {
-    grid.addEventListener('click', function(e) {
-      var btn = e.target.closest('.btn-buy[data-package]');
-      if (btn && !btn.disabled) {
-        console.log('[DashPilot] Buy clicked (delegation):', btn.getAttribute('data-package'));
-        buyPackage(btn.getAttribute('data-package'));
-      }
-    });
-  }
 })();
