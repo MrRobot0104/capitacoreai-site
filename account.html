@@ -12,7 +12,10 @@
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
     .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
     .nav-brand img { width: 38px; height: 38px; }
-    .nav-brand span { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
+    .nav-brand .wordmark .w-capita { font-weight: 300; }
+    .nav-brand .wordmark .w-core { font-weight: 700; }
+    .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
     .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
     .nav-links a:hover { color: #111111; }
@@ -87,7 +90,7 @@
 <body>
   <header class="nav">
     <div class="nav-inner">
-      <a href="/" class="nav-brand"><img src="capitacoreai_logo_v2.png" alt="CapitaCoreAI"><span>CapitaCoreAI</span></a>
+      <a href="/" class="nav-brand"><img src="logo.svg" alt="CapitaCoreAI"><span class="wordmark"><span class="w-capita">Capita</span><span class="w-core">Core</span><span class="w-ai">AI</span></span></a>
       <div class="nav-links">
         <a href="/#services">Services</a>
         <a href="agents.html">Agents</a>

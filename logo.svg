@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes strandPulse {
+      0%, 100% { stroke-opacity: 1; }
+      50% { stroke-opacity: 0.6; }
+    }
+    @keyframes nodePulse {
+      0%, 100% { r: 3.5; opacity: 0.7; }
+      50% { r: 5; opacity: 1; }
+    }
+    .rung { animation: pulse 3s ease-in-out infinite; }
+    .rung:nth-child(1) { animation-delay: 0s; }
+    .rung:nth-child(2) { animation-delay: 0.2s; }
+    .rung:nth-child(3) { animation-delay: 0.4s; }
+    .rung:nth-child(4) { animation-delay: 0.6s; }
+    .rung:nth-child(5) { animation-delay: 0.8s; }
+    .rung:nth-child(6) { animation-delay: 1.0s; }
+    .rung:nth-child(7) { animation-delay: 1.2s; }
+    .rung:nth-child(8) { animation-delay: 1.4s; }
+    .rung:nth-child(9) { animation-delay: 1.6s; }
+    .strand { animation: strandPulse 4s ease-in-out infinite; }
+    .strand-alt { animation: strandPulse 4s ease-in-out infinite; animation-delay: 2s; }
+    .node { animation: nodePulse 3s ease-in-out infinite; }
+    .node:nth-child(odd) { animation-delay: 0.5s; }
+  </style>
+
+  <defs>
+    <linearGradient id="s1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#111111" stop-opacity="0.15"/>
+      <stop offset="30%" stop-color="#111111" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#111111" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#111111" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#111111" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="s2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#666666" stop-opacity="0.15"/>
+      <stop offset="30%" stop-color="#444444" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#333333" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#444444" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#666666" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- DNA Double Helix - Strand A -->
+  <path class="strand"
+        d="M 55 10 C 55 10, 140 38, 140 55 C 140 72, 55 78, 55 100 C 55 122, 140 128, 140 145 C 140 162, 55 172, 55 190"
+        stroke="url(#s1)" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- DNA Double Helix - Strand B -->
+  <path class="strand-alt"
+        d="M 145 10 C 145 10, 60 38, 60 55 C 60 72, 145 78, 145 100 C 145 122, 60 128, 60 145 C 60 162, 145 172, 145 190"
+        stroke="url(#s2)" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Base pair rungs with cascading pulse -->
+  <g>
+    <line class="rung" x1="68" y1="32" x2="132" y2="32" stroke="#111111" stroke-width="1.2" stroke-opacity="0.12" stroke-linecap="round"/>
+    <line class="rung" x1="58" y1="47" x2="142" y2="47" stroke="#111111" stroke-width="1.2" stroke-opacity="0.2" stroke-linecap="round"/>
+    <line class="rung" x1="60" y1="63" x2="140" y2="63" stroke="#111111" stroke-width="1.2" stroke-opacity="0.35" stroke-linecap="round"/>
+    <line class="rung" x1="70" y1="80" x2="130" y2="80" stroke="#111111" stroke-width="1.4" stroke-opacity="0.55" stroke-linecap="round"/>
+    <line class="rung" x1="57" y1="100" x2="143" y2="100" stroke="#111111" stroke-width="1.6" stroke-opacity="0.85" stroke-linecap="round"/>
+    <line class="rung" x1="70" y1="120" x2="130" y2="120" stroke="#111111" stroke-width="1.4" stroke-opacity="0.55" stroke-linecap="round"/>
+    <line class="rung" x1="60" y1="137" x2="140" y2="137" stroke="#111111" stroke-width="1.2" stroke-opacity="0.35" stroke-linecap="round"/>
+    <line class="rung" x1="58" y1="153" x2="142" y2="153" stroke="#111111" stroke-width="1.2" stroke-opacity="0.2" stroke-linecap="round"/>
+    <line class="rung" x1="68" y1="168" x2="132" y2="168" stroke="#111111" stroke-width="1.2" stroke-opacity="0.12" stroke-linecap="round"/>
+  </g>
+
+  <!-- Nodes at strand intersections -->
+  <circle class="node" cx="97" cy="24" r="2.5" fill="#111111" opacity="0.3"/>
+  <circle class="node" cx="140" cy="55" r="3.5" fill="#111111" opacity="0.8"/>
+  <circle class="node" cx="60" cy="55" r="3.5" fill="#333333" opacity="0.8"/>
+  <circle class="node" cx="100" cy="78" r="3" fill="#111111" opacity="0.5"/>
+  <circle class="node" cx="55" cy="100" r="4" fill="#111111" opacity="1"/>
+  <circle class="node" cx="145" cy="100" r="4" fill="#111111" opacity="1"/>
+  <circle class="node" cx="100" cy="122" r="3" fill="#111111" opacity="0.5"/>
+  <circle class="node" cx="60" cy="145" r="3.5" fill="#111111" opacity="0.8"/>
+  <circle class="node" cx="140" cy="145" r="3.5" fill="#333333" opacity="0.8"/>
+  <circle class="node" cx="103" cy="176" r="2.5" fill="#111111" opacity="0.3"/>
+</svg>
