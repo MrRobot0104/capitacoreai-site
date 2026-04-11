@@ -78,7 +78,7 @@ async function searchPlaces(city, type, budget) {
     const data = await res.json();
     if (!data.local_results || data.local_results.length === 0) return null;
 
-    return data.local_results.slice(0, 8).map(function(p) {
+    return data.local_results.slice(0, 5).map(function(p) {
       return {
         name: p.title || '',
         rating: p.rating || null,
@@ -389,11 +389,10 @@ module.exports = async (req, res) => {
 
       const planRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'interleaved-thinking-2025-05-14' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
-          thinking: { type: 'enabled', budget_tokens: 2000 },
+          max_tokens: 16000,
           system: PLAN_PROMPT,
           messages: [{
             role: 'user',
