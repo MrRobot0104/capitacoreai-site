@@ -147,6 +147,16 @@ async function buyPrebuilt(btn) {
   }
 }
 
+// Reset state when page is restored from bfcache
+window.addEventListener('pageshow', function() {
+  prebuiltInProgress = false;
+  document.querySelectorAll('.btn-get').forEach(function(b) {
+    b.disabled = false;
+    b.textContent = 'Get Dashboard';
+  });
+  document.querySelectorAll('.btn-msg').forEach(function(m) { m.remove(); });
+});
+
 // Bind everything immediately (scripts at end of body)
 (function() {
   // Gallery nav
