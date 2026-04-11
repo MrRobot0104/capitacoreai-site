@@ -10,10 +10,17 @@ var mapLayers = [];
 var lastTripData = null;
 
 // MAP INIT
-map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19
-}).addTo(map);
+try {
+  map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(map);
+  // Fix map size after layout renders
+  setTimeout(function() { map.invalidateSize(); }, 200);
+  window.addEventListener('resize', function() { map.invalidateSize(); });
+} catch(e) {
+  console.error('Map init error:', e);
+}
 
 // AUTH
 var initDone = false;
@@ -121,6 +128,7 @@ function clearMap() {
 function renderTrip(trip) {
   lastTripData = trip;
   clearMap();
+  if (map) map.invalidateSize();
 
   // Hide empty state
   document.getElementById('mapEmpty').classList.add('hidden');
@@ -213,9 +221,12 @@ function renderFlightCards(flights, liveData) {
     var dateParam = f.date ? '+on+' + encodeURIComponent(f.date) : '';
     var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
     var dateLabel = f.date ? '<div style="font-size:11px;color:#64748b;margin-top:4px;">' + escapeHtml(f.date) + '</div>' : '';
+    var returnTag = f.isReturn ? '<div style="font-size:10px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Return Flight</div>' : '';
     var card = document.createElement('div');
     card.className = 'flight-card';
+    if (f.isReturn) card.style.borderColor = '#fbbf24';
     card.innerHTML =
+      returnTag +
       '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' + escapeHtml(f.fromCode || f.from) + ' &rarr; ' + escapeHtml(f.toCode || f.to) + '</div>' +
       '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
       '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' &middot; ' + escapeHtml(f.stops) : '') + '</div>' +

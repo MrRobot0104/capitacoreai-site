@@ -16,7 +16,8 @@ Structure:
   "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19},
   "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3}],
   "flights": [
-    {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208"}
+    {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208","date":"2026-06-15","isReturn":false},
+    {"from":"Tirana","fromCode":"TIA","to":"Miami","toCode":"MIA","price":"$580","duration":"14h 30m","airlines":["Turkish Airlines"],"stops":"1 stop","departureTime":"10:00 AM","arrivalTime":"6:30 PM","flightNumber":"TK1078","date":"2026-06-23","isReturn":true}
   ],
   "itinerary": [
     {"day":1,"title":"Arrive in London","city":"London","activities":[
@@ -34,9 +35,12 @@ Structure:
 
 Rules:
 - Use the REAL flight data provided (prices, airlines, times, stops)
+- Include ALL flights shown in the data including the RETURN flight home
+- Mark the return flight with "isReturn":true
+- Include a "date" field on every flight with the actual date
 - Generate FULL day-by-day itinerary for every day
 - Real neighborhoods, landmarks, restaurants
-- Realistic hotel and daily budget estimates
+- Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
 - Real visa, currency, weather info
 Start with { end with }.`;
 
@@ -195,27 +199,37 @@ module.exports = async (req, res) => {
       // ===== STEP 2: Fetch real flights from Google via SerpAPI =====
       const flightDate = intent.departure_date || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
       const travelers = intent.travelers || 1;
-      const allLegs = [intent.origin, ...intent.destinations];
-      const realFlights = {};
+      const destinations = intent.destinations || [];
+      const allStops = [intent.origin, ...destinations];
+
+      // Build all legs including RETURN flight (last dest → origin)
+      const legs = [];
       let currentDate = flightDate;
+      for (let i = 0; i < allStops.length - 1; i++) {
+        legs.push({ from: allStops[i], to: allStops[i + 1], date: currentDate });
+        // Advance date by days at the destination
+        var daysHere = allStops[i + 1].days || 0;
+        if (daysHere > 0) {
+          var d = new Date(currentDate);
+          d.setDate(d.getDate() + daysHere);
+          currentDate = d.toISOString().split('T')[0];
+        }
+      }
+      // Add return leg: last destination → origin
+      var lastDest = destinations[destinations.length - 1];
+      if (lastDest) {
+        legs.push({ from: lastDest, to: intent.origin, date: currentDate, isReturn: true });
+      }
 
+      // Fetch flights for each leg
+      const realFlights = {};
       const legDates = {};
-      for (let i = 0; i < allLegs.length - 1; i++) {
-        const from = allLegs[i];
-        const to = allLegs[i + 1];
-        const key = from.code + '-' + to.code;
-        legDates[key] = currentDate;
-
-        const results = await searchFlights(from.code, to.code, currentDate, travelers);
+      for (const leg of legs) {
+        const key = leg.from.code + '-' + leg.to.code;
+        legDates[key] = leg.date;
+        const results = await searchFlights(leg.from.code, leg.to.code, leg.date, travelers);
         if (results) {
           realFlights[key] = results;
-        }
-
-        // Advance date by the number of days at this destination
-        if (from.days) {
-          const d = new Date(currentDate);
-          d.setDate(d.getDate() + from.days);
-          currentDate = d.toISOString().split('T')[0];
         }
       }
 
