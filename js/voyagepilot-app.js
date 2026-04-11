@@ -144,34 +144,26 @@ function drawRoute(trip) {
 // ==================== RENDERING ====================
 function renderTrip(trip) {
   lastTripData = trip;
-
-  // Show trip content, hide empty state
   document.getElementById('tripEmpty').style.display = 'none';
   document.getElementById('tripScroll').style.display = 'block';
 
   renderTripHero(trip);
-  renderFlightCards(trip.flights || [], trip.liveFlights);
-  renderItinerary(trip.itinerary || []);
+  renderTimeline(trip);
   renderBudget(trip.budget || {});
   renderTips(trip.tips || []);
 
-  // Map data stored for when user opens it
   lastTripData = trip;
-
   document.getElementById('shareBtn').style.display = 'inline-flex';
   document.getElementById('printBtn').style.display = 'inline-flex';
-
   document.getElementById('tripScroll').scrollTop = 0;
 }
 
 function renderTripHero(trip) {
   var el = document.getElementById('tripHero');
-  var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' → ');
+  var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' \u2192 ');
   var totalDays = (trip.destinations || []).reduce(function(s, d) { return s + (d.days || 0); }, 0);
   var originCity = trip.origin ? trip.origin.city : '';
-  var gradient = cityGradient(cities);
-  el.style.background = gradient;
-  // Fetch hero photo from first destination
+  el.style.background = cityGradient(cities);
   var heroCity = (trip.destinations && trip.destinations[0]) ? trip.destinations[0].city : '';
   if (heroCity) {
     fetchCityPhoto(heroCity, function(url) {
@@ -181,8 +173,8 @@ function renderTripHero(trip) {
     });
   }
   el.innerHTML =
-    '<div class="hero-title">' + escapeHtml(trip.title || originCity + ' → ' + cities) + '</div>' +
-    '<div class="hero-meta">' + (trip.dates ? escapeHtml(trip.dates.departure) + ' → ' + escapeHtml(trip.dates.return) : '') + ' · ' + (trip.travelers || 1) + ' traveler' + ((trip.travelers || 1) > 1 ? 's' : '') + ' · ' + escapeHtml(trip.budgetLevel || 'mid-range') + '</div>' +
+    '<div class="hero-title">' + escapeHtml(trip.title || originCity + ' \u2192 ' + cities) + '</div>' +
+    '<div class="hero-meta">' + (trip.dates ? escapeHtml(trip.dates.departure) + ' \u2192 ' + escapeHtml(trip.dates.return) : '') + ' \u00b7 ' + (trip.travelers || 1) + ' traveler' + ((trip.travelers || 1) > 1 ? 's' : '') + ' \u00b7 ' + escapeHtml(trip.budgetLevel || 'mid-range') + '</div>' +
     '<div class="hero-stats">' +
       '<div class="hero-stat"><div class="val">' + totalDays + '</div><div class="label">Days</div></div>' +
       '<div class="hero-stat"><div class="val">' + (trip.flights || []).length + '</div><div class="label">Flights</div></div>' +
@@ -190,74 +182,253 @@ function renderTripHero(trip) {
     '</div>';
 }
 
-function renderFlightCards(flights, liveData) {
-  var container = document.getElementById('flightsSection');
-  if (!flights || flights.length === 0) { container.innerHTML = ''; return; }
-  var html = '<div class="section-title">Flights</div>';
-  if (liveData) {
-    html += '<div class="live-badge"><span class="live-dot"></span> Estimated Google Flights Data</div>';
-  }
-  html += '<div class="flight-grid">';
-  flights.forEach(function(f) {
-    var from = encodeURIComponent(f.fromCode || f.from || '');
-    var to = encodeURIComponent(f.toCode || f.to || '');
-    var dateParam = f.date ? '+on+' + encodeURIComponent(f.date) : '';
-    var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
-    html += '<div class="flight-card">' +
-      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' +
-      escapeHtml(f.fromCode || f.from) + ' \u2192 ' + escapeHtml(f.toCode || f.to) +
-      (f.date ? '<span style="margin-left:auto;font-size:10px;color:#94a3b8;font-weight:400;">' + escapeHtml(f.date) + '</span>' : '') +
-      '</div>' +
-      '<div class="times">' +
-        '<div class="time-point"><div class="time">' + escapeHtml(f.departureTime || '--') + '</div><div class="airport">' + escapeHtml(f.fromCode || '') + '</div></div>' +
-        '<div class="time-line"><div class="stops-label">' + escapeHtml(f.duration || '') + ' · ' + escapeHtml(f.stops || '') + '</div></div>' +
-        '<div class="time-point"><div class="time">' + escapeHtml(f.arrivalTime || '--') + '</div><div class="airport">' + escapeHtml(f.toCode || '') + '</div></div>' +
-      '</div>' +
-      '<div class="price">' + escapeHtml(f.price || 'TBD') + ' <span class="est-label">est.</span></div>' +
-      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + '</div>' +
-      '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights \u2192</a>' +
-      '</div>';
-  });
-  html += '</div>';
-  container.innerHTML = html;
+// ==================== TIMELINE ====================
+var planeSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>';
+var pinSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>';
+var homeSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
+
+function formatShortDate(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr + 'T00:00:00');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[d.getMonth()] + ' ' + d.getDate();
 }
 
-function renderItinerary(days) {
-  var container = document.getElementById('itinerarySection');
-  if (!days || days.length === 0) { container.innerHTML = ''; return; }
-  var html = '<div class="section-title">Day-by-Day Itinerary</div>';
-  var lastCity = '';
-  days.forEach(function(day, i) {
-    if (day.city && day.city !== lastCity) {
-      var cid = 'city-banner-' + i;
-      html += '<div class="city-photo" id="' + cid + '" style="background:' + cityGradient(day.city) + ';" data-city="' + escapeHtml(day.city) + '">' + escapeHtml(day.city) + '</div>';
-      lastCity = day.city;
-    }
-    var cityTag = day.city ? '<span style="font-size:11px;color:#64748b;font-weight:400;margin-left:8px;">' + escapeHtml(day.city) + '</span>' : '';
-    html += '<div class="itin-day' + (i === 0 ? ' open' : '') + '">' +
-      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i+1) + '</span>' + escapeHtml(day.title || '') + cityTag + '</span><span class="arrow">\u25bc</span></div>' +
-      '<div class="itin-day-body">';
+function renderFlightNode(flight, isReturn) {
+  var from = encodeURIComponent(flight.fromCode || flight.from || '');
+  var to = encodeURIComponent(flight.toCode || flight.to || '');
+  var dateParam = flight.date ? '+on+' + encodeURIComponent(flight.date) : '';
+  var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
+  var iconClass = isReturn ? 'return' : 'flight';
+  var label = isReturn ? 'Return Home' : 'Depart';
+
+  return '<div class="timeline-node">' +
+    '<div class="timeline-marker">' +
+      '<div class="timeline-icon ' + iconClass + '">' + (isReturn ? homeSvg : planeSvg) + '</div>' +
+      '<div class="timeline-dates">' + formatShortDate(flight.date) + '</div>' +
+    '</div>' +
+    '<div class="timeline-content">' +
+      '<div class="flight-node-card">' +
+        '<div class="flight-arrive-label">' + label + '</div>' +
+        '<div class="flight-route-viz">' +
+          '<div class="flight-endpoint"><div class="code">' + escapeHtml(flight.fromCode || flight.from) + '</div><div class="ftime">' + escapeHtml(flight.departureTime || '') + '</div></div>' +
+          '<div class="flight-line"><div class="flight-line-bar"></div><div class="flight-line-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg></div><div class="flight-line-bar"></div></div>' +
+          '<div class="flight-endpoint"><div class="code">' + escapeHtml(flight.toCode || flight.to) + '</div><div class="ftime">' + escapeHtml(flight.arrivalTime || '') + '</div></div>' +
+        '</div>' +
+        '<div class="flight-meta">' +
+          '<div class="flight-meta-left"><div class="flight-price">' + escapeHtml(flight.price || 'TBD') + '<span class="est">est.</span></div><div class="flight-airline">' + escapeHtml((flight.airlines || []).join(', ') || flight.airline || '') + '</div></div>' +
+          '<div class="flight-duration-label">' + escapeHtml(flight.duration || '') + ' \u00b7 ' + escapeHtml(flight.stops || '') + '</div>' +
+        '</div>' +
+        '<a class="flight-book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights \u2192</a>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderDestinationNode(dest, cityDays, hotel, startDay, endDay, startDate, endDate, idx) {
+  var dateRange = formatShortDate(startDate.toISOString().split('T')[0]) + ' - ' + formatShortDate(endDate.toISOString().split('T')[0]);
+  var dayRange = 'Days ' + startDay + '-' + endDay;
+
+  var html = '<div class="timeline-node">' +
+    '<div class="timeline-marker">' +
+      '<div class="timeline-icon destination">' + pinSvg + '</div>' +
+      '<div class="timeline-dates">' + dayRange + '<br>' + dateRange + '</div>' +
+    '</div>' +
+    '<div class="timeline-content">';
+
+  // Destination hero
+  html += '<div class="dest-hero" id="dest-hero-' + idx + '" style="background:' + cityGradient(dest.city) + ';">' +
+    '<div class="dest-hero-text">' +
+      '<div class="dest-hero-city">' + escapeHtml(dest.city) + '</div>' +
+      '<div class="dest-hero-meta">' + escapeHtml(dest.country || '') + ' \u00b7 ' + (dest.days || cityDays.length) + ' days</div>' +
+    '</div>' +
+  '</div>';
+
+  // City description with bold keywords (markdown **bold** to <strong>)
+  if (dest.cityDescription) {
+    var descHtml = escapeHtml(dest.cityDescription).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html += '<div class="dest-description">' + descHtml + '</div>';
+  }
+
+  // Photo gallery (landmarks)
+  var landmarks = dest.landmarks || [];
+  if (landmarks.length >= 2) {
+    var galleryClass = landmarks.length >= 3 ? 'three' : 'two';
+    html += '<div class="photo-gallery ' + galleryClass + '" id="gallery-' + idx + '">';
+    landmarks.forEach(function(lm) {
+      html += '<div class="gallery-photo" data-query="' + escapeHtml(lm) + '" style="background:' + cityGradient(lm) + ';"></div>';
+    });
+    html += '</div>';
+  }
+
+  // Hotel card
+  if (hotel) {
+    var starsHtml = '';
+    var starCount = hotel.stars || 3;
+    for (var s = 0; s < starCount; s++) starsHtml += '\u2605';
+    html += '<div class="hotel-card">' +
+      '<div class="hotel-photo" id="hotel-photo-' + idx + '" style="background:' + cityGradient(dest.city + ' hotel') + ';"></div>' +
+      '<div class="hotel-info">' +
+        '<div class="hotel-name">' + escapeHtml(hotel.name) + '</div>' +
+        '<div class="hotel-meta">' +
+          '<span class="hotel-stars">' + starsHtml + '</span>' +
+          (hotel.reviewCount ? '<span class="hotel-reviews">' + hotel.reviewCount.toLocaleString() + ' reviews</span>' : '') +
+        '</div>' +
+        '<div class="hotel-pricing">' +
+          '<span class="hotel-price">' + escapeHtml(hotel.pricePerNight || '') + '</span>' +
+          '<span class="hotel-price-sub">/ night</span>' +
+        '</div>' +
+        (hotel.totalPrice ? '<div class="hotel-total">' + escapeHtml(hotel.totalPrice) + ' total \u00b7 ' + (hotel.nights || dest.days || '') + ' nights</div>' : '') +
+        (hotel.hotelReason ? '<div class="hotel-reason">' + escapeHtml(hotel.hotelReason) + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  // Day cards
+  cityDays.forEach(function(day, di) {
+    var actCount = (day.activities || []).length;
+    var isFirst = (idx === 0 && di === 0);
+    html += '<div class="day-card' + (isFirst ? ' open' : '') + '">' +
+      '<div class="day-card-header">' +
+        '<div class="day-card-thumb" id="day-thumb-' + idx + '-' + di + '" style="background:' + cityGradient((day.dayPhoto || day.title || '') + di) + ';"></div>' +
+        '<div class="day-card-info">' +
+          '<div class="day-badge">Day ' + (day.day || di+1) +
+            '<span class="act-count">' + actCount + ' activit' + (actCount === 1 ? 'y' : 'ies') + '</span>' +
+            (day.weather ? '<span class="day-date">' + escapeHtml(day.weather) + '</span>' : '') +
+          '</div>' +
+          '<div class="day-card-title">' + escapeHtml(day.title || '') + '</div>' +
+        '</div>' +
+        '<span class="day-card-arrow">\u25bc</span>' +
+      '</div>' +
+      '<div class="day-card-body">';
     (day.activities || []).forEach(function(a) {
       var desc = a.description || a;
-      var ratingHtml = a.rating ? '<span class="act-rating">★ ' + a.rating + (a.reviews ? ' <span class="act-reviews">(' + a.reviews.toLocaleString() + ')</span>' : '') + '</span>' : '';
+      var ratingHtml = a.rating ? '<span class="act-rating">\u2605 ' + a.rating + (a.reviews ? ' <span class="act-reviews">(' + a.reviews.toLocaleString() + ')</span>' : '') + '</span>' : '';
       var linkOpen = a.mapsUrl ? '<a href="' + a.mapsUrl + '" target="_blank" rel="noopener" class="act-link">' : '';
-      var linkClose = a.mapsUrl ? ' <span class="act-maps-icon">📍</span></a>' : '';
+      var linkClose = a.mapsUrl ? ' <span class="act-maps-icon">\ud83d\udccd</span></a>' : '';
       html += '<div class="itin-activity">' +
         (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
         '<div>' + linkOpen + escapeHtml(desc) + linkClose + ' ' + ratingHtml + '</div></div>';
     });
     html += '</div></div>';
   });
+
+  html += '</div></div>';
+  return html;
+}
+
+function renderTimeline(trip) {
+  var container = document.getElementById('timelineSection');
+  if (!container) return;
+  var html = '<div class="timeline-line"></div>';
+
+  var flights = (trip.flights || []).slice();
+  var days = trip.itinerary || [];
+  var hotels = trip.hotels || [];
+  var destinations = trip.destinations || [];
+  var departureDate = trip.dates && trip.dates.departure ? new Date(trip.dates.departure + 'T00:00:00') : new Date();
+  var dayOffset = 0;
+
+  // Mark flights as used to avoid double-matching
+  flights.forEach(function(f) { f._used = false; });
+
+  destinations.forEach(function(dest, di) {
+    // Find flight TO this destination
+    var flightTo = null;
+    for (var fi = 0; fi < flights.length; fi++) {
+      var f = flights[fi];
+      if (f._used || f.isReturn) continue;
+      if (f.toCode === dest.code || f.to === dest.city) { flightTo = f; f._used = true; break; }
+    }
+    // Fallback: first unused non-return flight
+    if (!flightTo) {
+      for (var fi2 = 0; fi2 < flights.length; fi2++) {
+        if (!flights[fi2]._used && !flights[fi2].isReturn) { flightTo = flights[fi2]; flights[fi2]._used = true; break; }
+      }
+    }
+
+    if (flightTo) html += renderFlightNode(flightTo, false);
+
+    // Get days for this city
+    var cityDays = days.filter(function(d) { return d.city === dest.city; });
+
+    // Get hotel for this city
+    var hotel = null;
+    for (var hi = 0; hi < hotels.length; hi++) {
+      if (hotels[hi].city === dest.city) { hotel = hotels[hi]; break; }
+    }
+
+    // Calculate date range
+    var numDays = dest.days || cityDays.length || 1;
+    var startDay = dayOffset + 1;
+    var endDay = dayOffset + numDays;
+    var startDate = new Date(departureDate);
+    startDate.setDate(startDate.getDate() + dayOffset);
+    var endDate = new Date(departureDate);
+    endDate.setDate(endDate.getDate() + dayOffset + numDays - 1);
+
+    html += renderDestinationNode(dest, cityDays, hotel, startDay, endDay, startDate, endDate, di);
+    dayOffset += numDays;
+  });
+
+  // Return flight
+  var returnFlight = flights.find(function(f) { return f.isReturn; });
+  if (returnFlight) html += renderFlightNode(returnFlight, true);
+
   container.innerHTML = html;
-  container.querySelectorAll('.itin-day-header').forEach(function(h) {
+
+  // Bind day card toggles
+  container.querySelectorAll('.day-card-header').forEach(function(h) {
     h.addEventListener('click', function() { this.parentElement.classList.toggle('open'); });
   });
-  // Fetch real photos for city banners
-  container.querySelectorAll('.city-photo[data-city]').forEach(function(el) {
-    fetchCityPhoto(el.dataset.city, function(url) {
-      el.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(' + url + ')';
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
+
+  // Fetch photos asynchronously
+  destinations.forEach(function(dest, di) {
+    // Destination hero photo
+    var heroEl = document.getElementById('dest-hero-' + di);
+    if (heroEl) {
+      fetchCityPhoto(dest.city, function(url) {
+        heroEl.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.55)), url(' + url + ')';
+        heroEl.style.backgroundSize = 'cover';
+        heroEl.style.backgroundPosition = 'center';
+      });
+    }
+
+    // Gallery landmark photos
+    (dest.landmarks || []).forEach(function(lm) {
+      var galleryEl = document.getElementById('gallery-' + di);
+      if (!galleryEl) return;
+      var photos = galleryEl.querySelectorAll('.gallery-photo[data-query="' + lm.replace(/"/g, '\\"') + '"]');
+      photos.forEach(function(el) {
+        fetchCityPhoto(lm, function(url) {
+          el.style.backgroundImage = 'url(' + url + ')';
+          el.style.background = 'url(' + url + ') center/cover';
+        });
+      });
+    });
+
+    // Hotel photo
+    var hotelPhotoEl = document.getElementById('hotel-photo-' + di);
+    if (hotelPhotoEl) {
+      // Use city name for hotel area photo
+      fetchCityPhoto(dest.city + ' skyline', function(url) {
+        hotelPhotoEl.style.backgroundImage = 'url(' + url + ')';
+        hotelPhotoEl.style.backgroundSize = 'cover';
+        hotelPhotoEl.style.backgroundPosition = 'center';
+      });
+    }
+
+    // Day card thumbnail photos
+    var cityDays = days.filter(function(d) { return d.city === dest.city; });
+    cityDays.forEach(function(day, dayIdx) {
+      var thumbEl = document.getElementById('day-thumb-' + di + '-' + dayIdx);
+      if (thumbEl && day.dayPhoto) {
+        fetchCityPhoto(day.dayPhoto, function(url) {
+          thumbEl.style.backgroundImage = 'url(' + url + ')';
+          thumbEl.style.backgroundSize = 'cover';
+          thumbEl.style.backgroundPosition = 'center';
+        });
+      }
     });
   });
 }
@@ -296,8 +467,10 @@ function showLoading() {
   var scroll = document.getElementById('tripScroll');
   scroll.style.display = 'block';
   document.getElementById('tripHero').innerHTML = '<div class="skeleton" style="height:160px;border-radius:0;"></div>';
-  document.getElementById('flightsSection').innerHTML = '<div class="section-title">Flights</div><div class="flight-grid"><div class="skeleton" style="height:160px;"></div><div class="skeleton" style="height:160px;"></div></div>';
-  document.getElementById('itinerarySection').innerHTML = '';
+  document.getElementById('timelineSection').innerHTML =
+    '<div class="timeline-line"></div>' +
+    '<div class="timeline-node"><div class="timeline-marker"><div class="skeleton" style="width:36px;height:36px;border-radius:50%;"></div></div><div class="timeline-content"><div class="skeleton" style="height:120px;border-radius:14px;"></div></div></div>' +
+    '<div class="timeline-node"><div class="timeline-marker"><div class="skeleton" style="width:36px;height:36px;border-radius:50%;"></div></div><div class="timeline-content"><div class="skeleton" style="height:220px;border-radius:16px;margin-bottom:12px;"></div><div class="skeleton" style="height:130px;border-radius:14px;margin-bottom:12px;"></div><div class="skeleton" style="height:70px;border-radius:14px;"></div></div></div>';
   document.getElementById('budgetSection').innerHTML = '';
   document.getElementById('tipsSection').innerHTML = '';
 }
@@ -483,7 +656,7 @@ async function sendMessage() {
     var sessionResult = await sb.auth.getSession();
     var session = sessionResult.data.session;
     var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 120000);
+    var timeout = setTimeout(function() { controller.abort(); }, 240000);
     var res = await fetch('/api/voyagepilot-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -565,7 +738,7 @@ async function shareTrip() {
 
 function printTrip() {
   if (!lastTripData) { alert('No trip to print yet.'); return; }
-  document.querySelectorAll('.itin-day').forEach(function(d) { d.classList.add('open'); });
+  document.querySelectorAll('.day-card').forEach(function(d) { d.classList.add('open'); });
   setTimeout(function() { window.print(); }, 300);
 }
 

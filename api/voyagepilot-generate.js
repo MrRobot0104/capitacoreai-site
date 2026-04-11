@@ -13,19 +13,19 @@ Use the REAL flight prices and airlines provided — do NOT make up prices. Pick
 Structure:
 {
   "title": "Miami to London to Tirana",
-  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19,"photoQuery":"miami skyline biscayne bay"},
-  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3,"photoQuery":"london tower bridge skyline"}],
+  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19},
+  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3,"cityDescription":"Discover the **iconic landmarks** of London, from the **mighty Tower Bridge** spanning the Thames to the **regal Buckingham Palace**. This vibrant metropolis blends **centuries of history** with a **cutting-edge cultural scene**, offering world-class museums, legendary pubs, and the charm of cobblestone streets winding through neighborhoods like **Covent Garden** and **South Kensington**.","landmarks":["Tower Bridge","Buckingham Palace","Big Ben"]}],
   "flights": [
     {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208","date":"2026-06-15","isReturn":false},
     {"from":"Tirana","fromCode":"TIA","to":"Miami","toCode":"MIA","price":"$580","duration":"14h 30m","airlines":["Turkish Airlines"],"stops":"1 stop","departureTime":"10:00 AM","arrivalTime":"6:30 PM","flightNumber":"TK1078","date":"2026-06-23","isReturn":true}
   ],
   "itinerary": [
-    {"day":1,"title":"Arrive in London","city":"London","activities":[
+    {"day":1,"title":"Arrival and Iconic London Squares","city":"London","dayPhoto":"Trafalgar Square","weather":"68°F / 20°C","activities":[
       {"time":"Afternoon","description":"Check into hotel. Walk along the Thames.","mapsUrl":"https://www.google.com/maps/search/?api=1&query=Thames+River+Walk+London"},
       {"time":"Evening","description":"Dinner at Dishoom in Covent Garden.","rating":4.5,"reviews":12000,"mapsUrl":"https://www.google.com/maps/search/?api=1&query=Dishoom+Covent+Garden+London"}
     ]}
   ],
-  "hotels": [{"city":"London","name":"Mid-range hotel in South Kensington","pricePerNight":"$120-180","nights":3}],
+  "hotels": [{"city":"London","name":"The Kensington Hotel","stars":4,"reviewCount":2840,"pricePerNight":"$155","totalPrice":"$465","nights":3,"hotelReason":"Perfect South Kensington location steps from the Tube, with elegant rooms that match your mid-range budget beautifully."}],
   "budget": {"flights":500,"hotels":850,"food":400,"activities":200,"transport":100,"total":2050,"currency":"USD","perDay":256},
   "tips": ["UK requires no visa for US citizens.","London weather in June: 15-22C."],
   "dates": {"departure":"2026-06-15","return":"2026-06-23"},
@@ -44,9 +44,11 @@ Rules:
 - Include "rating" and "reviews" fields on activities when available from the Google Maps data
 - Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
 - Real visa, currency, weather info
-- For each destination, include a "photoQuery" field with a good search term for that city (e.g. "london skyline", "tirana city center", "paris eiffel tower")
-- For the origin, also include a "photoQuery" field
 - Label all flight prices as estimates (prefix with "~" e.g. "~$423")
+- For EACH destination: include a "cityDescription" field — a vivid 2-3 sentence paragraph with **bold keywords** using markdown (e.g. "Discover the **iconic landmarks** of London..."). Make it sound like a travel magazine. Use bold on 3-5 key phrases per description.
+- For EACH destination: include a "landmarks" array with 2-3 famous landmark names (used to fetch photos). Use well-known landmarks that will have Wikipedia articles.
+- For EACH hotel: include "stars" (1-5 integer), "reviewCount" (integer), "totalPrice" (string like "$465"), and "hotelReason" (one sentence explaining why this hotel fits the traveler's needs)
+- For EACH itinerary day: include "dayPhoto" (the name of the main attraction/landmark visited that day — used to fetch a photo, e.g. "Colosseum" or "Tower Bridge"), and "weather" (estimated temperature like "72°F / 22°C")
 Start with { end with }.`;
 
 // ============ SerpAPI Google Maps (real places) ============
