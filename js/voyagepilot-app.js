@@ -19,29 +19,15 @@ function cityGradient(city) {
   return 'linear-gradient(135deg, hsl(' + h + ',65%,45%), hsl(' + ((h+40)%360) + ',55%,35%))';
 }
 
-// Fetch city photo from Wikipedia (free, no API key)
+// Fetch city photo — use Unsplash source (always returns a photo, no API key)
 var cityPhotoCache = {};
 function fetchCityPhoto(city, callback) {
   if (!city) return;
   if (cityPhotoCache[city]) { callback(cityPhotoCache[city]); return; }
-  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      // Prefer thumbnail (reliable JPEG), scale up to 800px
-      var thumb = data.thumbnail && data.thumbnail.source;
-      var orig = data.originalimage && data.originalimage.source;
-      var url = '';
-      if (thumb) {
-        url = thumb.replace(/\/\d+px-/, '/800px-');
-      } else if (orig && !orig.endsWith('.svg')) {
-        url = orig;
-      }
-      if (url) {
-        cityPhotoCache[city] = url;
-        callback(url);
-      }
-    })
-    .catch(function(e) { console.log('Photo fetch failed for', city, e); });
+  var url = 'https://source.unsplash.com/800x400/?' + encodeURIComponent(city + ' city skyline travel');
+  // Unsplash source redirects to an actual image URL — just use it directly
+  cityPhotoCache[city] = url;
+  callback(url);
 }
 
 // ==================== MAP ====================
@@ -106,14 +92,37 @@ function drawRoute(trip) {
 
   for (var i = 0; i < points.length - 1; i++) {
     var isReturnLeg = points[i + 1].isReturn;
+    // Create curved arc
+    var from = points[i], to = points[i + 1];
+    var arcPts = [];
+    var steps = 40;
+    for (var s = 0; s <= steps; s++) {
+      var t = s / steps;
+      var lat = from.lat + (to.lat - from.lat) * t;
+      var lng = from.lng + (to.lng - from.lng) * t;
+      var d = Math.sqrt(Math.pow(to.lat - from.lat, 2) + Math.pow(to.lng - from.lng, 2));
+      lat += Math.sin(t * Math.PI) * d * 0.1;
+      arcPts.push([lat, lng]);
+    }
     var lineStyle = {
-      color: isReturnLeg ? '#94a3b8' : colors[i % colors.length],
-      weight: isReturnLeg ? 2 : 2.5,
-      opacity: 0.7,
-      dashArray: isReturnLeg ? '4,8' : '8,6'
+      color: isReturnLeg ? '#f59e0b' : colors[i % colors.length],
+      weight: isReturnLeg ? 2.5 : 3,
+      opacity: isReturnLeg ? 0.6 : 0.8,
+      dashArray: isReturnLeg ? '6,10' : null
     };
-    var line = L.polyline([[points[i].lat, points[i].lng], [points[i+1].lat, points[i+1].lng]], lineStyle).addTo(map);
+    var line = L.polyline(arcPts, lineStyle).addTo(map);
     mapLayers.push(line);
+
+    // Add plane icon at midpoint
+    var mid = arcPts[Math.floor(steps / 2)];
+    var angle = Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI;
+    var planeIcon = L.divIcon({
+      className: '',
+      html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="' + (isReturnLeg ? '#f59e0b' : colors[i % colors.length]) + '" style="transform:rotate(' + angle + 'deg);"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>',
+      iconSize: [18, 18], iconAnchor: [9, 9]
+    });
+    var plane = L.marker(mid, { icon: planeIcon, interactive: false }).addTo(map);
+    mapLayers.push(plane);
   }
 
   map.fitBounds(L.latLngBounds(points.map(function(p) { return [p.lat, p.lng]; })), { padding: [40, 40], maxZoom: 6 });
@@ -492,10 +501,28 @@ async function sendMessage() {
     var remaining = genLimit - genCount;
     var summary = 'Trip planned: ' + (trip.title || '') + '. ';
     if (trip.flights) summary += trip.flights.length + ' flights. ';
-    if (trip.budget) summary += 'Estimated total: $' + trip.budget.total + '. ';
-    if (remaining > 0) summary += remaining + ' plan' + (remaining === 1 ? '' : 's') + ' left. Tell me what to change.';
+    if (trip.budget) summary += 'Estimated total: ~$' + trip.budget.total + '. ';
+    if (remaining > 0) summary += remaining + ' plan' + (remaining === 1 ? '' : 's') + ' left.';
     else summary += 'That was your last plan for this credit.';
     addBotMessage(summary);
+
+    // Follow-up question to drive engagement
+    if (remaining > 0) {
+      var questions = [
+        'Any specific cuisine you want to try? I can find the best ' + ((trip.destinations||[])[0]||{}).city + ' restaurants for you.',
+        'What citizenship do you hold? I can give you accurate visa and entry requirements.',
+        'Want me to find direct flights only, or are layovers okay if they save money?',
+        'Any must-see attractions or experiences? I can build the itinerary around them.',
+        'Traveling with kids, partner, or solo? I can adjust the activities and hotels.',
+        'Want me to add a day trip or side excursion from ' + ((trip.destinations||[])[0]||{}).city + '?',
+        'Prefer boutique hotels, big chains, or Airbnb-style stays?',
+        'Morning person or night owl? I can shift the daily schedule.',
+        'Want me to factor in travel insurance or airport transfers?',
+        'Any dietary restrictions? I can recommend restaurants that accommodate them.',
+      ];
+      var q = questions[Math.floor(Math.random() * questions.length)];
+      setTimeout(function() { addBotMessage(q); }, 1500);
+    }
 
     if (genCount >= genLimit) { await refreshCredits(); showLimitBar(); }
   } catch (err) {
