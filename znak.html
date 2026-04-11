@@ -120,7 +120,7 @@
     <div id="menuMyAgents" style="display:none;padding-top:24px;">
       <div id="menuAgentsList"></div>
       <a href="account.html" style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;text-align:center;text-decoration:none;">My Agents</a>
-      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="handleLogout()">Log Out</button>
+      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="menuLogout()">Log Out</button>
     </div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
@@ -492,6 +492,15 @@
       const open = m.classList.contains('active');
       m.classList.toggle('active'); o.classList.toggle('active');
       document.body.style.overflow = open ? '' : 'hidden';
+    }
+
+    async function menuLogout() {
+      try { await sb.auth.signOut(); } catch (e) {}
+      toggleMobileMenu();
+      document.getElementById('authSection').style.display = 'block';
+      document.getElementById('loggedInSection').classList.remove('active');
+      updateMenu(null);
+      switchTab('login');
     }
 
     // Keep hamburger menu in sync with auth state

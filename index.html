@@ -896,7 +896,7 @@
     sb.auth.onAuthStateChange((event, session) => checkMenuAuth(session));
 
     async function menuLogout() {
-      await sb.auth.signOut();
+      try { await sb.auth.signOut(); } catch (e) {}
       toggleMobileMenu();
       checkMenuAuth();
     }
