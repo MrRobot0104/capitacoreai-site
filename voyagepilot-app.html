@@ -65,7 +65,7 @@
 
     /* MAP */
     .map-panel { flex: 1; display: flex; flex-direction: column; position: relative; background: #f0f4f8; }
-    #map { flex: 1; z-index: 1; }
+    #map { flex: 1; z-index: 1; min-height: 400px; }
     .map-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
     .map-empty-inner { text-align: center; }
     .map-empty-inner svg { width: 64px; height: 64px; opacity: 0.12; margin-bottom: 16px; stroke: #64748b; }
@@ -119,6 +119,48 @@
     .budget-item strong { color: #1e293b; font-size: 13px; display: block; margin-top: 2px; }
     .budget-total { margin-left: auto; font-size: 11px; color: #2563eb; font-weight: 600; }
     .budget-total strong { color: #1e293b; font-size: 18px; display: block; margin-top: 2px; }
+
+    /* TRIP SUMMARY */
+    .trip-summary { display: flex; align-items: center; gap: 20px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    .trip-summary .summary-title { font-size: 16px; font-weight: 700; color: #1e293b; flex: 1; }
+    .trip-summary .summary-stat { text-align: center; }
+    .trip-summary .summary-stat .stat-val { font-size: 18px; font-weight: 700; color: #2563eb; }
+    .trip-summary .summary-stat .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-top: 2px; }
+
+    /* FLIGHT TIME DISPLAY */
+    .flight-card .times { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+    .flight-card .time-point { text-align: center; }
+    .flight-card .time-point .time { font-size: 16px; font-weight: 700; color: #1e293b; }
+    .flight-card .time-point .airport { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+    .flight-card .time-line { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 8px; }
+    .flight-card .time-line .line { width: 100%; height: 2px; background: #e2e8f0; position: relative; }
+    .flight-card .time-line .line::after { content: ''; position: absolute; right: -2px; top: -3px; border: solid #2563eb; border-width: 0 2px 2px 0; padding: 3px; transform: rotate(-45deg); }
+    .flight-card .time-line .stops-label { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+
+    /* BUDGET VISUAL */
+    .budget-section { padding: 16px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+    .budget-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .budget-header .budget-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; }
+    .budget-header .budget-total-val { font-size: 20px; font-weight: 800; color: #1e293b; }
+    .budget-visual { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 10px; background: #e2e8f0; }
+    .budget-visual .seg { height: 100%; transition: width 0.6s ease; }
+    .budget-items { display: flex; gap: 16px; flex-wrap: wrap; }
+    .budget-items .b-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
+    .budget-items .b-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .budget-items .b-item strong { color: #1e293b; }
+
+    /* LOADING */
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-card { flex: 0 0 220px; height: 180px; border-radius: 12px; }
+    .skeleton-map-msg { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 999px; font-size: 13px; color: #64748b; font-weight: 500; border: 1px solid #e2e8f0; display: none; }
+
+    /* CARD ANIMATIONS */
+    .flight-card { opacity: 0; transform: translateY(12px); animation: cardIn 0.4s ease forwards; }
+    .flight-card:nth-child(2) { animation-delay: 0.1s; }
+    .flight-card:nth-child(3) { animation-delay: 0.2s; }
+    .flight-card:nth-child(4) { animation-delay: 0.3s; }
+    @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
 
     @media (max-width: 900px) {
       .app-layout { flex-direction: column; }
@@ -187,11 +229,13 @@ Each credit gives you 5 trip plans. Ready when you are.</div></div>
           <p class="sub">Describe your trip to get started</p>
         </div>
       </div>
+      <div class="skeleton-map-msg" id="mapLoadingMsg">Mapping your route...</div>
       <button class="trip-toggle" id="tripToggle">Trip Details</button>
       <div class="trip-details" id="tripDetails">
+        <div class="trip-summary" id="tripSummary"></div>
         <div class="flight-cards" id="flightCards"></div>
         <div class="itinerary" id="itinerary"></div>
-        <div class="budget-bar" id="budgetBar"></div>
+        <div class="budget-section" id="budgetBar"></div>
       </div>
     </div>
   </div>

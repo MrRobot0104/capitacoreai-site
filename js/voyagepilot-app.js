@@ -6,20 +6,19 @@ var genLimit = GENS_PER_CREDIT;
 var creditBalance = 0;
 var conversationStarted = false;
 var map = null;
+var mapReady = false;
 var mapLayers = [];
 var lastTripData = null;
 
-// MAP INIT
-try {
+// MAP INIT (deferred)
+function initMap() {
+  if (map) return;
+  var el = document.getElementById('map');
+  if (!el) return;
   map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19
-  }).addTo(map);
-  // Fix map size after layout renders
-  setTimeout(function() { map.invalidateSize(); }, 200);
-  window.addEventListener('resize', function() { map.invalidateSize(); });
-} catch(e) {
-  console.error('Map init error:', e);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+  setTimeout(function() { map.invalidateSize(); mapReady = true; }, 200);
+  window.addEventListener('resize', function() { if (map) map.invalidateSize(); });
 }
 
 // AUTH
@@ -127,11 +126,14 @@ function clearMap() {
 
 function renderTrip(trip) {
   lastTripData = trip;
+  if (!map) initMap();
+  if (map) setTimeout(function() { map.invalidateSize(); }, 100);
   clearMap();
   if (map) map.invalidateSize();
 
   // Hide empty state
   document.getElementById('mapEmpty').classList.add('hidden');
+  renderTripSummary(trip);
 
   // Collect all points
   var points = [];
@@ -147,44 +149,68 @@ function renderTrip(trip) {
   // Add markers
   var colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4'];
   points.forEach(function(p, i) {
-    var isOrigin = i === 0 && trip.origin;
+    var isOrigin = i === 0;
+    var iconSvg = isOrigin
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + colors[i % colors.length] + '" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white"/></svg>'
+      : '<svg width="28" height="36" viewBox="0 0 28 36" fill="none"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.27 21.73 0 14 0z" fill="' + colors[i % colors.length] + '"/><circle cx="14" cy="14" r="6" fill="white"/><text x="14" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="' + colors[i % colors.length] + '">' + i + '</text></svg>';
     var icon = L.divIcon({
       className: '',
-      html: '<div style="background:' + colors[i % colors.length] + ';color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:3px solid rgba(255,255,255,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.4);">' + (i + 1) + '</div>',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      html: iconSvg,
+      iconSize: isOrigin ? [24, 24] : [28, 36],
+      iconAnchor: isOrigin ? [12, 12] : [14, 36],
+      popupAnchor: [0, isOrigin ? -12 : -36]
     });
     var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
-    marker.bindPopup('<div style="font-family:Inter,sans-serif;"><strong>' + (p.city || '') + '</strong><br><span style="color:#666;">' + (p.country || '') + ' (' + (p.code || '') + ')</span>' + (p.days ? '<br>' + p.days + ' days' : '') + '</div>');
+    var popupContent = '<div style="font-family:Inter,sans-serif;min-width:140px;">' +
+      '<strong style="font-size:14px;">' + escapeHtml(p.city || '') + '</strong>' +
+      '<div style="color:#64748b;font-size:12px;margin-top:2px;">' + escapeHtml(p.country || '') + ' (' + escapeHtml(p.code || '') + ')</div>' +
+      (p.days ? '<div style="margin-top:6px;font-size:12px;color:#2563eb;font-weight:600;">' + p.days + ' days</div>' : '') +
+      '</div>';
+    marker.bindPopup(popupContent);
     mapLayers.push(marker);
   });
 
-  // Draw flight paths
+  // Draw animated arc flight paths
   for (var i = 0; i < points.length - 1; i++) {
-    var from = points[i];
-    var to = points[i + 1];
-    // Create curved path using midpoint offset
-    var midLat = (from.lat + to.lat) / 2;
-    var midLng = (from.lng + to.lng) / 2;
-    var dist = Math.sqrt(Math.pow(to.lat - from.lat, 2) + Math.pow(to.lng - from.lng, 2));
-    var offset = dist * 0.15;
-    midLat += offset;
-
-    var curve = L.polyline(
-      [[from.lat, from.lng], [midLat, midLng], [to.lat, to.lng]],
-      { color: colors[i % colors.length], weight: 2.5, opacity: 0.8, dashArray: '8,8', smoothFactor: 3 }
-    ).addTo(map);
-    mapLayers.push(curve);
-
-    // Plane icon at midpoint
-    var planeIcon = L.divIcon({
-      className: '',
-      html: '<div style="color:' + colors[i % colors.length] + ';font-size:16px;transform:rotate(' + (Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI) + 'deg);">&#9992;</div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
-    });
-    var plane = L.marker([midLat, midLng], { icon: planeIcon, interactive: false }).addTo(map);
-    mapLayers.push(plane);
+    (function(idx) {
+      var from = points[idx];
+      var to = points[idx + 1];
+      var arcPoints = [];
+      var steps = 50;
+      for (var s = 0; s <= steps; s++) {
+        var t = s / steps;
+        var lat = from.lat + (to.lat - from.lat) * t;
+        var lng = from.lng + (to.lng - from.lng) * t;
+        var dist = Math.sqrt(Math.pow(to.lat - from.lat, 2) + Math.pow(to.lng - from.lng, 2));
+        var arc = Math.sin(t * Math.PI) * dist * 0.12;
+        lat += arc;
+        arcPoints.push([lat, lng]);
+      }
+      var animatedPoints = [];
+      var step = 0;
+      var line = L.polyline([], { color: colors[idx % colors.length], weight: 2.5, opacity: 0.8, smoothFactor: 1 }).addTo(map);
+      mapLayers.push(line);
+      function animateStep() {
+        if (step <= steps) {
+          animatedPoints.push(arcPoints[step]);
+          line.setLatLngs(animatedPoints);
+          step++;
+          requestAnimationFrame(animateStep);
+        } else {
+          var midIdx = Math.floor(steps / 2);
+          var midPoint = arcPoints[midIdx];
+          var angle = Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI;
+          var planeIcon = L.divIcon({
+            className: '',
+            html: '<svg width="20" height="20" viewBox="0 0 24 24" fill="' + colors[idx % colors.length] + '" style="transform:rotate(' + angle + 'deg);filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>',
+            iconSize: [20, 20], iconAnchor: [10, 10]
+          });
+          var plane = L.marker(midPoint, { icon: planeIcon, interactive: false }).addTo(map);
+          mapLayers.push(plane);
+        }
+      }
+      setTimeout(animateStep, idx * 800);
+    })(i);
   }
 
   // Fit map bounds
@@ -220,18 +246,20 @@ function renderFlightCards(flights, liveData) {
     var to = encodeURIComponent(f.toCode || f.to || '');
     var dateParam = f.date ? '+on+' + encodeURIComponent(f.date) : '';
     var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
-    var dateLabel = f.date ? '<div style="font-size:11px;color:#64748b;margin-top:4px;">' + escapeHtml(f.date) + '</div>' : '';
-    var returnTag = f.isReturn ? '<div style="font-size:10px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Return Flight</div>' : '';
     var card = document.createElement('div');
     card.className = 'flight-card';
-    if (f.isReturn) card.style.borderColor = '#fbbf24';
     card.innerHTML =
-      returnTag +
-      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' + escapeHtml(f.fromCode || f.from) + ' &rarr; ' + escapeHtml(f.toCode || f.to) + '</div>' +
+      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' +
+      escapeHtml(f.fromCode || f.from) + ' &rarr; ' + escapeHtml(f.toCode || f.to) +
+      (f.date ? '<span style="margin-left:auto;font-size:10px;color:#94a3b8;font-weight:400;letter-spacing:0;">' + escapeHtml(f.date) + '</span>' : '') +
+      '</div>' +
+      '<div class="times">' +
+        '<div class="time-point"><div class="time">' + escapeHtml(f.departureTime || '--') + '</div><div class="airport">' + escapeHtml(f.fromCode || '') + '</div></div>' +
+        '<div class="time-line"><div class="line"></div><div class="stops-label">' + escapeHtml(f.duration || '') + ' · ' + escapeHtml(f.stops || '') + '</div></div>' +
+        '<div class="time-point"><div class="time">' + escapeHtml(f.arrivalTime || '--') + '</div><div class="airport">' + escapeHtml(f.toCode || '') + '</div></div>' +
+      '</div>' +
       '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
-      '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' &middot; ' + escapeHtml(f.stops) : '') + '</div>' +
-      dateLabel +
-      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + '</div>' +
+      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + (f.flightNumber ? ' · ' + escapeHtml(f.flightNumber) : '') + '</div>' +
       '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights &rarr;</a>';
     container.appendChild(card);
   });
@@ -243,33 +271,75 @@ function renderItinerary(days) {
   days.forEach(function(day, i) {
     var div = document.createElement('div');
     div.className = 'itin-day' + (i === 0 ? ' open' : '');
+    var cityTag = day.city ? '<span style="font-size:11px;color:#64748b;font-weight:400;margin-left:8px;">' + escapeHtml(day.city) + '</span>' : '';
     var activitiesHtml = (day.activities || []).map(function(a) {
       return '<div class="itin-activity">' +
         (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
         '<div>' + escapeHtml(a.description || a) + '</div></div>';
     }).join('');
     div.innerHTML =
-      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i + 1) + '</span>' + escapeHtml(day.title || '') + '</span><span class="arrow">&#9660;</span></div>' +
+      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i + 1) + '</span>' + escapeHtml(day.title || '') + cityTag + '</span><span class="arrow">&#9660;</span></div>' +
       '<div class="itin-day-body">' + activitiesHtml + '</div>';
     container.appendChild(div);
   });
-  // Bind accordion
   container.querySelectorAll('.itin-day-header').forEach(function(header) {
-    header.addEventListener('click', function() {
-      this.parentElement.classList.toggle('open');
-    });
+    header.addEventListener('click', function() { this.parentElement.classList.toggle('open'); });
   });
 }
 
 function renderBudget(budget) {
   var container = document.getElementById('budgetBar');
   if (!budget || !budget.total) { container.innerHTML = ''; return; }
+  var cats = [
+    { key: 'flights', label: 'Flights', color: '#3b82f6' },
+    { key: 'hotels', label: 'Hotels', color: '#8b5cf6' },
+    { key: 'food', label: 'Food', color: '#f59e0b' },
+    { key: 'activities', label: 'Activities', color: '#10b981' },
+    { key: 'transport', label: 'Transport', color: '#06b6d4' },
+  ];
+  var total = budget.total || 1;
+  var barHtml = cats.map(function(c) {
+    var val = budget[c.key] || 0;
+    var pct = Math.round((val / total) * 100);
+    return pct > 0 ? '<div class="seg" style="width:' + pct + '%;background:' + c.color + ';"></div>' : '';
+  }).join('');
+  var itemsHtml = cats.map(function(c) {
+    var val = budget[c.key] || 0;
+    if (val <= 0) return '';
+    return '<div class="b-item"><span class="b-dot" style="background:' + c.color + ';"></span>' + c.label + ': <strong>$' + val + '</strong></div>';
+  }).join('');
   container.innerHTML =
-    '<div class="budget-item">Flights<strong>$' + (budget.flights || 0) + '</strong></div>' +
-    '<div class="budget-item">Hotels<strong>$' + (budget.hotels || 0) + '</strong></div>' +
-    '<div class="budget-item">Food<strong>$' + (budget.food || 0) + '</strong></div>' +
-    '<div class="budget-item">Activities<strong>$' + (budget.activities || 0) + '</strong></div>' +
-    '<div class="budget-total">Estimated Total<strong>$' + (budget.total || 0) + '</strong></div>';
+    '<div class="budget-header"><span class="budget-title">Budget Breakdown</span><span class="budget-total-val">$' + total + '</span></div>' +
+    '<div class="budget-visual">' + barHtml + '</div>' +
+    '<div class="budget-items">' + itemsHtml + '</div>';
+}
+
+function renderTripSummary(trip) {
+  var el = document.getElementById('tripSummary');
+  if (!el) return;
+  var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' → ');
+  var totalDays = (trip.destinations || []).reduce(function(sum, d) { return sum + (d.days || 0); }, 0);
+  var flightCount = (trip.flights || []).length;
+  var totalCost = trip.budget ? '$' + trip.budget.total : '--';
+  el.innerHTML =
+    '<div class="summary-title">' + escapeHtml(trip.origin ? trip.origin.city + ' → ' : '') + escapeHtml(cities) + '</div>' +
+    '<div class="summary-stat"><div class="stat-val">' + totalDays + '</div><div class="stat-label">Days</div></div>' +
+    '<div class="summary-stat"><div class="stat-val">' + flightCount + '</div><div class="stat-label">Flights</div></div>' +
+    '<div class="summary-stat"><div class="stat-val">' + escapeHtml(totalCost) + '</div><div class="stat-label">Est. Total</div></div>';
+}
+
+function showLoadingSkeleton() {
+  var cards = document.getElementById('flightCards');
+  cards.innerHTML = '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+  document.getElementById('tripDetails').classList.add('open');
+  document.getElementById('tripToggle').classList.add('visible');
+  var mapMsg = document.getElementById('mapLoadingMsg');
+  if (mapMsg) mapMsg.style.display = 'block';
+}
+
+function hideLoadingSkeleton() {
+  var mapMsg = document.getElementById('mapLoadingMsg');
+  if (mapMsg) mapMsg.style.display = 'none';
 }
 
 // ==================== TRIP CONTROL ====================
@@ -347,6 +417,7 @@ async function sendMessage() {
   document.getElementById('sendBtn').disabled = true;
   addBotMessage('Planning your trip...');
   addTyping();
+  showLoadingSkeleton();
 
   try {
     var sessionResult = await sb.auth.getSession();
@@ -378,6 +449,7 @@ async function sendMessage() {
     conversationHistory.push({ role: 'assistant', content: 'Trip plan: ' + JSON.stringify(trip).substring(0, 3000) });
 
     // Render the trip on the map and panels
+    hideLoadingSkeleton();
     renderTrip(trip);
 
     var remaining = genLimit - genCount;
@@ -409,4 +481,5 @@ async function sendMessage() {
   document.getElementById('tripToggle').addEventListener('click', function() {
     document.getElementById('tripDetails').classList.toggle('open');
   });
+  initMap();
 })();

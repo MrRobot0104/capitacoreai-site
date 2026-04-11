@@ -63,7 +63,21 @@ async function searchFlights(from, to, date, travelers) {
   });
 
   try {
-    const res = await fetch('https://serpapi.com/search?' + params.toString());
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+    let res;
+    try {
+      res = await fetch('https://serpapi.com/search?' + params.toString(), { signal: controller.signal });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === 'AbortError') {
+        console.error('SerpAPI timeout for', from, '->', to);
+      } else {
+        console.error('SerpAPI fetch error:', fetchErr.message);
+      }
+      return null;
+    }
+    clearTimeout(timeoutId);
     if (!res.ok) {
       console.error('SerpAPI error:', res.status);
       return null;
@@ -191,9 +205,22 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Failed to understand your trip request. Try again.' });
       }
 
+      if (!intentData.content || !intentData.content[0]) {
+        return res.status(500).json({ error: 'Could not understand your trip request. Please try again.' });
+      }
       const intent = extractJson(intentData.content[0].text);
-      if (!intent || !intent.origin || !intent.destinations) {
+      if (!intent) {
         return res.status(500).json({ error: 'Could not parse trip details. Please be more specific about your cities and dates.' });
+      }
+      if (!intent.origin || !intent.origin.code) {
+        return res.status(400).json({ error: 'Could not identify your origin city or airport code. Please specify a departure city.' });
+      }
+      if (!intent.destinations || intent.destinations.length === 0) {
+        return res.status(400).json({ error: 'No destination cities found. Please specify where you want to travel.' });
+      }
+      const missingCodes = intent.destinations.filter(function(d) { return !d.code; });
+      if (missingCodes.length > 0) {
+        return res.status(400).json({ error: 'Could not find IATA codes for: ' + missingCodes.map(function(d) { return d.city || 'unknown'; }).join(', ') + '. Please use major city names.' });
       }
 
       // ===== STEP 2: Fetch real flights from Google via SerpAPI =====
@@ -221,19 +248,22 @@ module.exports = async (req, res) => {
         legs.push({ from: lastDest, to: intent.origin, date: currentDate, isReturn: true });
       }
 
-      // Fetch flights for each leg
+      // Fetch flights for all legs in parallel
       const realFlights = {};
       const legDates = {};
-      for (const leg of legs) {
+      const searchPromises = legs.map(function(leg) {
         const key = leg.from.code + '-' + leg.to.code;
         legDates[key] = leg.date;
-        const results = await searchFlights(leg.from.code, leg.to.code, leg.date, travelers);
-        if (results) {
-          realFlights[key] = results;
-        }
-      }
+        return searchFlights(leg.from.code, leg.to.code, leg.date, travelers)
+          .then(function(results) { if (results) realFlights[key] = results; });
+      });
+      await Promise.all(searchPromises);
 
       // ===== STEP 3: Build trip plan with Sonnet + real flight data =====
+      const noFlightRoutes = legs
+        .filter(function(leg) { return !realFlights[leg.from.code + '-' + leg.to.code]; })
+        .map(function(leg) { return leg.from.code + '-' + leg.to.code + ' (' + leg.date + ')'; });
+
       const flightContext = Object.keys(realFlights).length > 0
         ? '\n\nREAL FLIGHT DATA FROM GOOGLE FLIGHTS (use these exact prices, airlines, and dates):\n' +
           Object.entries(realFlights).map(([route, flights]) =>
@@ -241,17 +271,19 @@ module.exports = async (req, res) => {
               '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
             ).join('\n')
           ).join('\n\n') +
-          '\n\nIMPORTANT: Include a "date" field in each flight object with the flight date (e.g. "2026-06-15"). Use the dates shown above.'
-        : '';
+          '\n\nIMPORTANT: Include a "date" field in each flight object with the flight date (e.g. "2026-06-15"). Use the dates shown above.' +
+          (noFlightRoutes.length > 0 ? '\n\nROUTES WITH NO LIVE DATA (estimate prices for these): ' + noFlightRoutes.join(', ') : '')
+        : (noFlightRoutes.length > 0 ? '\n\nNo live flight data available. Estimate prices for all routes: ' + noFlightRoutes.join(', ') : '');
 
       const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 2000);
 
       const planRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'interleaved-thinking-2025-05-14' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
+          max_tokens: 12000,
+          thinking: { type: 'enabled', budget_tokens: 5000 },
           system: PLAN_PROMPT,
           messages: [{
             role: 'user',
@@ -265,7 +297,8 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Trip planning failed. Try again.' });
       }
 
-      const tripPlan = extractJson(planData.content[0].text);
+      const textBlocks = planData.content.filter(function(b) { return b.type === 'text'; });
+      const tripPlan = extractJson(textBlocks.map(function(b) { return b.text; }).join(''));
       if (!tripPlan) {
         return res.status(500).json({ error: 'Trip data invalid. Try again.' });
       }
