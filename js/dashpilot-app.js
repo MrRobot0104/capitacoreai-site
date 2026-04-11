@@ -1,8 +1,8 @@
-var MSGS_PER_CREDIT = 25;
+var GENS_PER_CREDIT = 5;
 var currentUser = null;
 var conversationHistory = [];
-var messageCount = 0;
-var messageLimit = MSGS_PER_CREDIT;
+var genCount = 0;
+var genLimit = GENS_PER_CREDIT;
 var lastDashboardHtml = '';
 var uploadedFileData = null;
 var uploadedFileName = '';
@@ -156,12 +156,18 @@ function showLimitBar() {
   var bar = document.getElementById('limitBar');
   bar.style.display = 'block';
   if (creditBalance > 0) {
-    document.getElementById('limitMsg').textContent = "You've reached the message limit for this dashboard.";
+    document.getElementById('limitMsg').textContent = "You've used all 5 dashboard generations for this credit. Add another credit to keep refining.";
     document.getElementById('continueBtn').style.display = 'inline-block';
   } else {
-    document.getElementById('limitMsg').textContent = "No credits remaining.";
+    document.getElementById('limitMsg').textContent = "No credits remaining. Purchase more to continue building dashboards.";
     document.getElementById('continueBtn').style.display = 'none';
   }
+}
+
+function updateGenCounter() {
+  var remaining = genLimit - genCount;
+  var el = document.getElementById('genCounter');
+  if (el) el.textContent = remaining + ' of ' + genLimit + ' generations left';
 }
 
 // CONVERSATION CONTROL
@@ -180,8 +186,8 @@ async function startNewDashboard() {
     return;
   }
   conversationHistory = [];
-  messageCount = 0;
-  messageLimit = MSGS_PER_CREDIT;
+  genCount = 0;
+  genLimit = GENS_PER_CREDIT;
   lastDashboardHtml = '';
   conversationStarted = true;
   uploadedFileData = null;
@@ -193,7 +199,8 @@ async function startNewDashboard() {
   document.getElementById('expandBtn').style.display = 'none';
   document.getElementById('downloadBtn').style.display = 'none';
   enableInput();
-  addBotMessage("New dashboard started! Describe what you need or upload a data file. You have 25 messages to build and refine your dashboard.");
+  updateGenCounter();
+  addBotMessage("New dashboard started! You have 5 generations. Be as descriptive as possible — tell me the data, metrics, chart types, colors, and style you want. Upload a CSV/Excel file or describe your dashboard to begin.");
   await refreshCredits();
 }
 
@@ -210,9 +217,10 @@ async function continueConversation() {
     addBotMessage(err.error || 'Failed to add messages.');
     return;
   }
-  messageLimit += MSGS_PER_CREDIT;
+  genLimit += GENS_PER_CREDIT;
   enableInput();
-  addBotMessage("25 more messages added! Keep refining your dashboard.");
+  updateGenCounter();
+  addBotMessage("5 more generations added! Keep refining your dashboard.");
   await refreshCredits();
 }
 
@@ -240,7 +248,7 @@ async function sendMessage() {
     await refreshCredits();
   }
 
-  if (messageCount >= messageLimit) { showLimitBar(); return; }
+  if (genCount >= genLimit) { showLimitBar(); return; }
 
   var userContent = message;
   var fileContext = '';
@@ -290,7 +298,6 @@ async function sendMessage() {
 
   var fullPrompt = (message || 'Build an interactive dashboard from this data') + fileContext;
   conversationHistory.push({ role: 'user', content: fullPrompt });
-  messageCount++;
 
   document.getElementById('sendBtn').disabled = true;
   addBotMessage('Building your dashboard... this may take up to a minute.');
@@ -318,17 +325,17 @@ async function sendMessage() {
       data = JSON.parse(responseText);
     } catch (e) {
       addBotMessage('Server timed out or returned an error. Please try again.');
-      messageCount--;
       return;
     }
 
     if (!res.ok) {
       addBotMessage(data.error || 'Something went wrong.');
-      messageCount--;
       return;
     }
 
     lastDashboardHtml = data.html;
+    genCount++;
+    updateGenCounter();
     var configStr = data.config ? JSON.stringify(data.config).substring(0, 3000) : '';
     conversationHistory.push({ role: 'assistant', content: 'Current dashboard config: ' + configStr });
 
@@ -340,10 +347,14 @@ async function sendMessage() {
     var blobUrl = URL.createObjectURL(blob);
     document.getElementById('dashboardIframe').src = blobUrl;
 
-    var remaining = messageLimit - messageCount;
-    addBotMessage("Dashboard ready! " + (remaining > 0 ? "You have " + remaining + " message" + (remaining === 1 ? '' : 's') + " left to refine it." : ""));
+    var remaining = genLimit - genCount;
+    if (remaining > 0) {
+      addBotMessage("Dashboard ready! You have " + remaining + " generation" + (remaining === 1 ? '' : 's') + " left. Tell me what to change or ask any questions.");
+    } else {
+      addBotMessage("Dashboard ready! That was your last generation for this credit.");
+    }
 
-    if (messageCount >= messageLimit) {
+    if (genCount >= genLimit) {
       await refreshCredits();
       showLimitBar();
     }
@@ -351,7 +362,6 @@ async function sendMessage() {
     removeTyping();
     document.getElementById('sendBtn').disabled = false;
     addBotMessage('Connection error. Please try again.');
-    messageCount--;
   }
 }
 

@@ -118,7 +118,17 @@
     <!-- CHAT -->
     <div class="chat-panel">
       <div class="chat-messages" id="chatMessages">
-        <div class="msg bot"><div class="msg-bubble">Hey! I'm DashPilot. Describe the dashboard you need, or upload a CSV/Excel file and tell me what to build. I'll handle the rest.</div></div>
+        <div class="msg bot"><div class="msg-bubble" style="white-space:pre-line">Welcome to DashPilot — your AI dashboard builder.
+
+Here's how it works:
+
+1. Upload a CSV or Excel file, or just describe the data you want visualized
+2. Be as descriptive as possible — tell me the metrics, charts, colors, layout, and style you want
+3. I'll generate a professional, interactive dashboard you can preview, refine, and download
+
+Each credit gives you 5 dashboard generations. You can ask me unlimited questions between generations — like "make the charts bigger" or "change the color scheme to blue" — and I'll rebuild your dashboard with those changes.
+
+The more detail you give upfront, the better your first result. Ready when you are.</div></div>
       </div>
       <div class="file-preview" id="filePreview">
         <div class="file-chip">
@@ -144,7 +154,7 @@
       <div class="chat-limit-bar" id="limitBar" style="display:none;">
         <p class="limit-msg" id="limitMsg"></p>
         <div class="limit-actions">
-          <button class="limit-btn primary" id="continueBtn">Add 25 more messages (1 credit)</button>
+          <button class="limit-btn primary" id="continueBtn">Add 5 more generations (1 credit)</button>
           <button class="limit-btn secondary" id="newDashLimitBtn">New Dashboard</button>
         </div>
       </div>
@@ -153,7 +163,7 @@
     <!-- DASHBOARD PREVIEW -->
     <div class="preview-panel">
       <div class="preview-header">
-        <span>Dashboard Preview</span>
+        <span>Dashboard Preview <span id="genCounter" style="font-size:11px;color:#555;margin-left:8px;"></span></span>
         <div class="preview-actions">
           <button class="topbar-btn" id="expandBtn" style="display:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
