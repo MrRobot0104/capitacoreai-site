@@ -13,8 +13,8 @@ Use the REAL flight prices and airlines provided — do NOT make up prices. Pick
 Structure:
 {
   "title": "Miami to London to Tirana",
-  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19},
-  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3}],
+  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19,"photoUrl":"https://source.unsplash.com/800x400/?Miami+travel+city"},
+  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3,"photoUrl":"https://source.unsplash.com/800x400/?London+travel+city"}],
   "flights": [
     {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208","date":"2026-06-15","isReturn":false},
     {"from":"Tirana","fromCode":"TIA","to":"Miami","toCode":"MIA","price":"$580","duration":"14h 30m","airlines":["Turkish Airlines"],"stops":"1 stop","departureTime":"10:00 AM","arrivalTime":"6:30 PM","flightNumber":"TK1078","date":"2026-06-23","isReturn":true}
@@ -42,6 +42,9 @@ Rules:
 - Real neighborhoods, landmarks, restaurants
 - Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
 - Real visa, currency, weather info
+- For each destination, include a photoUrl using this format: https://source.unsplash.com/800x400/?{CityName}+travel+city
+- For the origin, also include a photoUrl
+- Label all flight prices as estimates (prefix with "~" e.g. "~$423")
 Start with { end with }.`;
 
 // ============ SerpAPI Google Flights ============
@@ -109,6 +112,13 @@ async function searchFlights(from, to, date, travelers) {
       });
     });
 
+    // Sort by price ascending — cheapest first
+    flights.sort(function(a, b) {
+      var pa = a.price ? parseInt(a.price.replace(/[^0-9]/g, '')) : 99999;
+      var pb = b.price ? parseInt(b.price.replace(/[^0-9]/g, '')) : 99999;
+      return pa - pb;
+    });
+
     return flights.length > 0 ? flights : null;
   } catch (err) {
     console.error('SerpAPI fetch error:', err.message);
@@ -125,6 +135,20 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    // Public endpoint — no auth needed
+    if (req.body && req.body.action === 'get_trip') {
+      const { tripId } = req.body;
+      if (!tripId) return res.status(400).json({ error: 'No trip ID' });
+      const tripRes = await fetch(
+        process.env.SUPABASE_URL + '/rest/v1/trips?id=eq.' + tripId + '&select=*',
+        { headers: { 'apikey': process.env.SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY } }
+      );
+      if (!tripRes.ok) return res.status(500).json({ error: 'Failed to load trip' });
+      const trips = await tripRes.json();
+      if (!trips || trips.length === 0) return res.status(404).json({ error: 'Trip not found' });
+      return res.status(200).json({ trip: trips[0].trip_data });
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Not authenticated' });
     const token = authHeader.split(' ')[1];
@@ -265,7 +289,7 @@ module.exports = async (req, res) => {
         .map(function(leg) { return leg.from.code + '-' + leg.to.code + ' (' + leg.date + ')'; });
 
       const flightContext = Object.keys(realFlights).length > 0
-        ? '\n\nREAL FLIGHT DATA FROM GOOGLE FLIGHTS (use these exact prices, airlines, and dates):\n' +
+        ? '\n\nESTIMATED FLIGHT DATA FROM GOOGLE FLIGHTS (prices may vary — show as estimates):\n' +
           Object.entries(realFlights).map(([route, flights]) =>
             route + ' (date: ' + (legDates[route] || flightDate) + '):\n' + flights.slice(0, 5).map(f =>
               '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
@@ -282,8 +306,8 @@ module.exports = async (req, res) => {
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'interleaved-thinking-2025-05-14' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 12000,
-          thinking: { type: 'enabled', budget_tokens: 5000 },
+          max_tokens: 8000,
+          thinking: { type: 'enabled', budget_tokens: 2000 },
           system: PLAN_PROMPT,
           messages: [{
             role: 'user',
@@ -312,6 +336,32 @@ module.exports = async (req, res) => {
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({ user_id: user.id, prompt: userRequest.substring(0, 500) }),
       });
+
+      // Save trip for sharing
+      let shareId = null;
+      try {
+        const tripSaveRes = await fetch(supabaseUrl + '/rest/v1/trips', {
+          method: 'POST',
+          headers: {
+            'apikey': serviceKey,
+            'Authorization': 'Bearer ' + serviceKey,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            trip_data: tripPlan,
+            title: tripPlan.title || 'Trip'
+          }),
+        });
+        if (tripSaveRes.ok) {
+          const saved = await tripSaveRes.json();
+          if (saved && saved[0]) shareId = saved[0].id;
+        }
+      } catch (e) {
+        console.error('Failed to save trip:', e.message);
+      }
+      tripPlan.shareId = shareId;
 
       res.status(200).json({ trip: tripPlan });
     } else {

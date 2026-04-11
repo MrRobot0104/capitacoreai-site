@@ -161,7 +161,9 @@ function renderTrip(trip) {
       popupAnchor: [0, isOrigin ? -12 : -36]
     });
     var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
-    var popupContent = '<div style="font-family:Inter,sans-serif;min-width:140px;">' +
+    var photoUrl = p.photoUrl || 'https://source.unsplash.com/300x150/?' + encodeURIComponent(p.city || '') + '+travel';
+    var popupContent = '<div style="font-family:Inter,sans-serif;min-width:180px;">' +
+      '<img src="' + photoUrl + '" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:8px;" onerror="this.style.display=\'none\'" loading="lazy">' +
       '<strong style="font-size:14px;">' + escapeHtml(p.city || '') + '</strong>' +
       '<div style="color:#64748b;font-size:12px;margin-top:2px;">' + escapeHtml(p.country || '') + ' (' + escapeHtml(p.code || '') + ')</div>' +
       (p.days ? '<div style="margin-top:6px;font-size:12px;color:#2563eb;font-weight:600;">' + p.days + ' days</div>' : '') +
@@ -230,6 +232,9 @@ function renderTrip(trip) {
   var toggle = document.getElementById('tripToggle');
   toggle.classList.add('visible');
   document.getElementById('tripDetails').classList.add('open');
+
+  document.getElementById('shareBtn').style.display = 'inline-flex';
+  document.getElementById('printBtn').style.display = 'inline-flex';
 }
 
 function renderFlightCards(flights, liveData) {
@@ -238,7 +243,7 @@ function renderFlightCards(flights, liveData) {
   if (liveData) {
     var badge = document.createElement('div');
     badge.className = 'live-badge';
-    badge.innerHTML = '<span class="live-dot"></span> Live Google Flights';
+    badge.innerHTML = '<span class="live-dot"></span> <span class="est-label">Estimated</span> Google Flights Data';
     container.appendChild(badge);
   }
   flights.forEach(function(f) {
@@ -258,7 +263,7 @@ function renderFlightCards(flights, liveData) {
         '<div class="time-line"><div class="line"></div><div class="stops-label">' + escapeHtml(f.duration || '') + ' · ' + escapeHtml(f.stops || '') + '</div></div>' +
         '<div class="time-point"><div class="time">' + escapeHtml(f.arrivalTime || '--') + '</div><div class="airport">' + escapeHtml(f.toCode || '') + '</div></div>' +
       '</div>' +
-      '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
+      '<div class="price">' + escapeHtml(f.price || 'TBD') + ' <span class="est-label">est.</span></div>' +
       '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + (f.flightNumber ? ' · ' + escapeHtml(f.flightNumber) : '') + '</div>' +
       '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights &rarr;</a>';
     container.appendChild(card);
@@ -272,18 +277,23 @@ function renderItinerary(days) {
     var div = document.createElement('div');
     div.className = 'itin-day' + (i === 0 ? ' open' : '');
     var cityTag = day.city ? '<span style="font-size:11px;color:#64748b;font-weight:400;margin-left:8px;">' + escapeHtml(day.city) + '</span>' : '';
+    var photoHtml = day.city ? '<img class="itin-day-photo" src="https://source.unsplash.com/800x200/?' + encodeURIComponent(day.city) + '+travel+city" alt="' + escapeHtml(day.city) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+    var zoomBtn = day.city ? '<button class="itin-zoom-btn" data-city="' + escapeHtml(day.city) + '" title="Show on map" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:14px;padding:2px 4px;" onclick="zoomToCity(this.dataset.city)">📍</button>' : '';
     var activitiesHtml = (day.activities || []).map(function(a) {
       return '<div class="itin-activity">' +
         (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
         '<div>' + escapeHtml(a.description || a) + '</div></div>';
     }).join('');
     div.innerHTML =
-      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i + 1) + '</span>' + escapeHtml(day.title || '') + cityTag + '</span><span class="arrow">&#9660;</span></div>' +
-      '<div class="itin-day-body">' + activitiesHtml + '</div>';
+      '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i + 1) + '</span>' + escapeHtml(day.title || '') + cityTag + '</span><span>' + zoomBtn + '<span class="arrow">&#9660;</span></span></div>' +
+      '<div class="itin-day-body">' + photoHtml + activitiesHtml + '</div>';
     container.appendChild(div);
   });
   container.querySelectorAll('.itin-day-header').forEach(function(header) {
-    header.addEventListener('click', function() { this.parentElement.classList.toggle('open'); });
+    header.addEventListener('click', function(e) {
+      if (e.target.closest('.itin-zoom-btn')) return;
+      this.parentElement.classList.toggle('open');
+    });
   });
 }
 
@@ -367,6 +377,9 @@ async function startNewTrip() {
   document.getElementById('tripDetails').classList.remove('open');
   document.getElementById('tripToggle').classList.remove('visible');
   document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('shareBtn').style.display = 'none';
+  document.getElementById('printBtn').style.display = 'none';
+  document.getElementById('mapOverviewBtn').style.display = 'none';
   enableInput();
   updateGenCounter();
   addBotMessage("New trip started! You have 5 plans. Tell me where you want to go.");
@@ -469,6 +482,56 @@ async function sendMessage() {
   }
 }
 
+// ==================== INTERACTIVE MAP ====================
+function zoomToCity(cityName) {
+  if (!map || !lastTripData) return;
+  var allPoints = [];
+  if (lastTripData.origin) allPoints.push(lastTripData.origin);
+  (lastTripData.destinations || []).forEach(function(d) { allPoints.push(d); });
+  var found = allPoints.find(function(p) { return p.city && p.city.toLowerCase() === cityName.toLowerCase(); });
+  if (found && found.lat) {
+    map.flyTo([found.lat, found.lng], 13, { duration: 1.5 });
+    document.getElementById('mapOverviewBtn').style.display = 'block';
+  }
+}
+
+function showOverview() {
+  if (!map || !lastTripData) return;
+  var points = [];
+  if (lastTripData.origin && lastTripData.origin.lat) points.push([lastTripData.origin.lat, lastTripData.origin.lng]);
+  (lastTripData.destinations || []).forEach(function(d) { if (d.lat) points.push([d.lat, d.lng]); });
+  if (points.length > 0) {
+    map.flyToBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 6, duration: 1.5 });
+  }
+  document.getElementById('mapOverviewBtn').style.display = 'none';
+}
+
+// ==================== SHARE / PRINT ====================
+async function shareTrip() {
+  if (!lastTripData || !lastTripData.shareId) {
+    alert('No trip to share yet. Generate a trip first.');
+    return;
+  }
+  var shareUrl = window.location.origin + '/trip.html?id=' + lastTripData.shareId;
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    var toast = document.getElementById('shareToast');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2500);
+  } catch (e) {
+    prompt('Copy this link:', shareUrl);
+  }
+}
+
+function printTrip() {
+  if (!lastTripData) { alert('No trip to print yet.'); return; }
+  // Expand all itinerary days for print
+  document.querySelectorAll('.itin-day').forEach(function(d) { d.classList.add('open'); });
+  // Open trip details
+  document.getElementById('tripDetails').classList.add('open');
+  setTimeout(function() { window.print(); }, 300);
+}
+
 // ==================== EVENT BINDINGS ====================
 (function() {
   document.getElementById('newTripBtn').addEventListener('click', startNewTrip);
@@ -481,5 +544,8 @@ async function sendMessage() {
   document.getElementById('tripToggle').addEventListener('click', function() {
     document.getElementById('tripDetails').classList.toggle('open');
   });
+  document.getElementById('shareBtn').addEventListener('click', shareTrip);
+  document.getElementById('printBtn').addEventListener('click', printTrip);
+  document.getElementById('mapOverviewBtn').addEventListener('click', showOverview);
   initMap();
 })();

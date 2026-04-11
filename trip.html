@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trip Plan — VoyagePilot by CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="leaflet.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; -webkit-font-smoothing: antialiased; }
+    .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #1e293b; font-weight: 600; font-size: 14px; }
+    .topbar-left a img { width: 24px; height: 24px; }
+    .topbar-left .sep { width: 1px; height: 20px; background: #e2e8f0; }
+    .topbar-left .app-name { font-size: 14px; font-weight: 600; color: #2563eb; }
+    .topbar-right { display: flex; gap: 10px; }
+    .topbar-btn { font-size: 12px; padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .topbar-btn:hover { background: #f1f5f9; }
+    .topbar-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+    .trip-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
+    .trip-meta { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+    .trip-meta span { margin-right: 16px; }
+
+    #map { width: 100%; height: 360px; border-radius: 14px; margin-bottom: 32px; border: 1px solid #e2e8f0; }
+
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; margin: 32px 0 12px; }
+
+    .flight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .flight-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+    .flight-card .route { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; font-weight: 600; margin-bottom: 8px; }
+    .flight-card .times { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+    .flight-card .time-point { text-align: center; }
+    .flight-card .time-point .time { font-size: 16px; font-weight: 700; }
+    .flight-card .time-point .airport { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+    .flight-card .time-line { flex: 1; text-align: center; padding: 0 8px; }
+    .flight-card .time-line .stops-label { font-size: 9px; color: #94a3b8; }
+    .flight-card .price { font-size: 20px; font-weight: 700; }
+    .flight-card .airline { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .est-label { font-size: 9px; color: #f59e0b; font-weight: 600; text-transform: uppercase; }
+
+    .day-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .day-card img { width: 100%; height: 140px; object-fit: cover; }
+    .day-card .day-body { padding: 16px; }
+    .day-card .day-head { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .day-card .day-head .day-num { color: #2563eb; margin-right: 8px; }
+    .day-card .day-head .city-tag { font-size: 11px; color: #64748b; font-weight: 400; margin-left: 8px; }
+    .day-card .activity { padding: 4px 0; font-size: 13px; color: #64748b; line-height: 1.6; }
+    .day-card .act-time { font-size: 11px; color: #2563eb; font-weight: 600; }
+
+    .budget-bar { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-top: 16px; }
+    .budget-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .budget-header .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; }
+    .budget-header .total { font-size: 22px; font-weight: 800; }
+    .budget-visual { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 10px; background: #e2e8f0; }
+    .budget-visual .seg { height: 100%; }
+    .budget-items { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #64748b; }
+    .budget-items .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    .tips { margin-top: 24px; }
+    .tip { background: #eff6ff; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; font-size: 13px; color: #1e40af; }
+
+    .loading { text-align: center; padding: 80px 20px; color: #94a3b8; font-size: 14px; }
+    .error-msg { text-align: center; padding: 80px 20px; color: #ef4444; font-size: 14px; }
+    .powered { text-align: center; margin-top: 48px; font-size: 11px; color: #cbd5e1; }
+    .powered a { color: #2563eb; text-decoration: none; }
+
+    @media print { .topbar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/"><img src="logo.svg" alt="CapitaCoreAI">CapitaCoreAI</a>
+      <div class="sep"></div>
+      <span class="app-name">VoyagePilot</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" onclick="window.print()">Print / PDF</button>
+      <a href="voyagepilot.html" class="topbar-btn primary">Plan Your Own Trip</a>
+    </div>
+  </div>
+
+  <div class="page">
+    <div id="content"><div class="loading">Loading trip...</div></div>
+  </div>
+
+  <script src="leaflet.js"></script>
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var tripId = params.get('id');
+
+    if (!tripId) {
+      document.getElementById('content').innerHTML = '<div class="error-msg">No trip ID provided.</div>';
+    } else {
+      fetch('/api/voyagepilot-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_trip', tripId: tripId })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.error) throw new Error(data.error);
+        renderSharedTrip(data.trip);
+      })
+      .catch(function(err) {
+        document.getElementById('content').innerHTML = '<div class="error-msg">Could not load trip: ' + err.message + '</div>';
+      });
+    }
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    function renderSharedTrip(trip) {
+      var el = document.getElementById('content');
+      var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' → ');
+      var totalDays = (trip.destinations || []).reduce(function(s, d) { return s + (d.days || 0); }, 0);
+
+      var html = '<h1 class="trip-title">' + esc(trip.title || 'Trip Plan') + '</h1>';
+      html += '<div class="trip-meta"><span>' + totalDays + ' days</span><span>' + (trip.flights || []).length + ' flights</span>';
+      if (trip.dates) html += '<span>' + esc(trip.dates.departure) + ' → ' + esc(trip.dates.return) + '</span>';
+      if (trip.budget) html += '<span>Est. $' + trip.budget.total + '</span>';
+      html += '</div>';
+      html += '<div id="map"></div>';
+
+      // Flights
+      if (trip.flights && trip.flights.length) {
+        html += '<div class="section-title">Flights</div><div class="flight-grid">';
+        trip.flights.forEach(function(f) {
+          html += '<div class="flight-card">' +
+            '<div class="route">' + esc(f.fromCode || f.from) + ' → ' + esc(f.toCode || f.to) + (f.date ? ' · ' + esc(f.date) : '') + '</div>' +
+            '<div class="times"><div class="time-point"><div class="time">' + esc(f.departureTime || '--') + '</div><div class="airport">' + esc(f.fromCode || '') + '</div></div>' +
+            '<div class="time-line"><div class="stops-label">' + esc(f.duration || '') + ' · ' + esc(f.stops || '') + '</div></div>' +
+            '<div class="time-point"><div class="time">' + esc(f.arrivalTime || '--') + '</div><div class="airport">' + esc(f.toCode || '') + '</div></div></div>' +
+            '<div class="price">' + esc(f.price || 'TBD') + ' <span class="est-label">est.</span></div>' +
+            '<div class="airline">' + esc((f.airlines || []).join(', ') || f.airline || '') + '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      // Itinerary
+      if (trip.itinerary && trip.itinerary.length) {
+        html += '<div class="section-title">Day-by-Day Itinerary</div>';
+        trip.itinerary.forEach(function(day) {
+          var photoUrl = day.city ? 'https://source.unsplash.com/800x200/?' + encodeURIComponent(day.city) + '+travel+city' : '';
+          html += '<div class="day-card">';
+          if (photoUrl) html += '<img src="' + photoUrl + '" loading="lazy" onerror="this.style.display=\'none\'">';
+          html += '<div class="day-body"><div class="day-head"><span class="day-num">Day ' + (day.day || '') + '</span>' + esc(day.title || '') + (day.city ? '<span class="city-tag">' + esc(day.city) + '</span>' : '') + '</div>';
+          (day.activities || []).forEach(function(a) {
+            html += '<div class="activity">' + (a.time ? '<div class="act-time">' + esc(a.time) + '</div>' : '') + '<div>' + esc(a.description || a) + '</div></div>';
+          });
+          html += '</div></div>';
+        });
+      }
+
+      // Budget
+      if (trip.budget && trip.budget.total) {
+        var b = trip.budget;
+        var cats = [{k:'flights',l:'Flights',c:'#3b82f6'},{k:'hotels',l:'Hotels',c:'#8b5cf6'},{k:'food',l:'Food',c:'#f59e0b'},{k:'activities',l:'Activities',c:'#10b981'},{k:'transport',l:'Transport',c:'#06b6d4'}];
+        html += '<div class="section-title">Budget</div><div class="budget-bar">';
+        html += '<div class="budget-header"><span class="label">Estimated Total</span><span class="total">$' + b.total + '</span></div>';
+        html += '<div class="budget-visual">';
+        cats.forEach(function(c) { var v = b[c.k] || 0; if (v > 0) html += '<div class="seg" style="width:' + Math.round(v/b.total*100) + '%;background:' + c.c + ';"></div>'; });
+        html += '</div><div class="budget-items">';
+        cats.forEach(function(c) { var v = b[c.k] || 0; if (v > 0) html += '<span><span class="dot" style="background:' + c.c + ';"></span>' + c.l + ': <strong>$' + v + '</strong></span> '; });
+        html += '</div></div>';
+      }
+
+      // Tips
+      if (trip.tips && trip.tips.length) {
+        html += '<div class="section-title">Travel Tips</div><div class="tips">';
+        trip.tips.forEach(function(t) { html += '<div class="tip">' + esc(t) + '</div>'; });
+        html += '</div>';
+      }
+
+      html += '<div class="powered">Built with <a href="/voyagepilot.html">VoyagePilot</a> by CapitaCoreAI</div>';
+      el.innerHTML = html;
+
+      // Init map
+      var points = [];
+      if (trip.origin && trip.origin.lat) points.push(trip.origin);
+      (trip.destinations || []).forEach(function(d) { if (d.lat) points.push(d); });
+      if (points.length > 0) {
+        var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+        var colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+        points.forEach(function(p, i) {
+          var icon = L.divIcon({ className: '', html: '<div style="background:' + colors[i%colors.length] + ';color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' + (i+1) + '</div>', iconSize: [28,28], iconAnchor: [14,14] });
+          L.marker([p.lat, p.lng], { icon: icon }).addTo(map).bindPopup('<strong>' + esc(p.city) + '</strong><br>' + esc(p.country || '') + (p.days ? '<br>' + p.days + ' days' : ''));
+        });
+        for (var i = 0; i < points.length - 1; i++) {
+          L.polyline([[points[i].lat, points[i].lng], [points[i+1].lat, points[i+1].lng]], { color: colors[i%colors.length], weight: 2, dashArray: '6,6', opacity: 0.7 }).addTo(map);
+        }
+        map.fitBounds(L.latLngBounds(points.map(function(p) { return [p.lat, p.lng]; })), { padding: [40, 40], maxZoom: 6 });
+      } else {
+        document.getElementById('map').style.display = 'none';
+      }
+
+      document.title = (trip.title || 'Trip Plan') + ' — VoyagePilot by CapitaCoreAI';
+    }
+  </script>
+</body>
+</html>
