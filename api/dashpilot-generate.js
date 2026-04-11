@@ -1,34 +1,17 @@
-const EXTRACT_PROMPT = `You are a data extraction expert. Given CSV/Excel data, extract it into structured JSON. Output ONLY valid JSON.
+const EXTRACT_PROMPT = `You are a data extraction expert. You MUST output ONLY a valid JSON object — no text before or after, no markdown, no explanation.
 
-Read the DATA SUMMARY (pre-computed stats) and RAW DATA. Use the ACTUAL numbers.
+If the user provides CSV/Excel data, read the DATA SUMMARY and RAW DATA and use the ACTUAL numbers.
+If the user describes a dashboard without data, generate realistic sample data that matches their description.
 
-{
-  "title": "Descriptive Dashboard Title",
-  "subtitle": "Metadata like quote IDs, dates, company name",
-  "kpis": [
-    {"label": "TOTAL LIST PRICE", "value": "$98,622", "change": "Across all line items"}
-  ],
-  "charts": [
-    {
-      "title": "Chart Title",
-      "subtitle": "Description",
-      "type": "bar",
-      "labels": ["Item A", "Item B"],
-      "datasets": [{"label": "Series", "data": [23500, 7050]}]
-    }
-  ],
-  "table": {
-    "title": "Detailed Line Items",
-    "headers": ["Col1", "Col2"],
-    "rows": [["val1", "val2"]]
-  }
-}
+Output this exact JSON structure:
+{"title":"Dashboard Title","subtitle":"Description","kpis":[{"label":"METRIC","value":"$98.6K","change":"+12%"}],"charts":[{"title":"Chart","subtitle":"","type":"bar","labels":["A","B"],"datasets":[{"label":"Series","data":[100,200]}]}],"table":{"title":"Details","headers":["Col1","Col2"],"rows":[["val1","val2"]]}}
 
 Chart types: bar, horizontalBar, line, doughnut, pie.
-KPI values: Use pre-computed sums/averages. Format as $98.6K, 68.2%, 761 units.
-Charts: Put REAL numbers in data arrays.
-Table: Include ALL rows.
-Output ONLY JSON.`;
+KPI values: Use pre-computed sums/averages from data. Format as $98.6K, 68.2%, 761 units.
+Charts: Put REAL numbers from the data in arrays.
+Table: Include ALL data rows.
+
+CRITICAL: Your entire response must be a single JSON object. Do NOT include any text, explanation, or markdown. Start with { and end with }.`;
 
 const DESIGN_PROMPT = `You are an elite dashboard designer and data storyteller. You receive JSON data and create STUNNING, UNIQUE, executive-grade HTML dashboards.
 
@@ -155,8 +138,19 @@ module.exports = async (req, res) => {
       try {
         dashConfig = JSON.parse(jsonText);
       } catch (e) {
-        console.error('JSON parse error:', e.message, 'Raw:', jsonText.substring(0, 300));
-        return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
+        // Try to extract JSON object from surrounding text
+        var jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            dashConfig = JSON.parse(jsonMatch[0]);
+          } catch (e2) {
+            console.error('JSON parse error:', e2.message, 'Raw:', jsonText.substring(0, 500));
+            return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
+          }
+        } else {
+          console.error('No JSON found in response. Raw:', jsonText.substring(0, 500));
+          return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
+        }
       }
 
       // ========= STEP 2: Generate unique HTML with Sonnet + thinking + web search =========
