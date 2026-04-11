@@ -167,7 +167,7 @@
         if(ma)ma.style.display='block';if(ml)ml.style.display='none';
       }
     }
-    async function menuLogout(){try{await sb.auth.signOut();}catch(e){}toggleMobileMenu();checkNav(null);}
+    function menuLogout(){sb.auth.signOut();toggleMobileMenu();setTimeout(function(){window.location.href='/';},300);}
     sb.auth.onAuthStateChange((event,session)=>checkNav(session));
   </script>
 </body>

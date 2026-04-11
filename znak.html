@@ -427,17 +427,9 @@
       showLoggedIn(data.user);
     }
 
-    async function handleLogout() {
-      try {
-        await sb.auth.signOut();
-      } catch (e) {
-        console.error('Logout error:', e);
-      }
-      // Force UI reset even if signOut fails
-      document.getElementById('authSection').style.display = 'block';
-      document.getElementById('loggedInSection').classList.remove('active');
-      updateMenu(null);
-      switchTab('login');
+    function handleLogout() {
+      sb.auth.signOut();
+      setTimeout(function(){ window.location.href = '/'; }, 300);
     }
 
     async function showLoggedIn(user) {
@@ -494,14 +486,7 @@
       document.body.style.overflow = open ? '' : 'hidden';
     }
 
-    async function menuLogout() {
-      try { await sb.auth.signOut(); } catch (e) {}
-      toggleMobileMenu();
-      document.getElementById('authSection').style.display = 'block';
-      document.getElementById('loggedInSection').classList.remove('active');
-      updateMenu(null);
-      switchTab('login');
-    }
+    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
 
     // Keep hamburger menu in sync with auth state
     async function updateMenu(session) {

@@ -365,16 +365,9 @@
       list.innerHTML = html;
     }
 
-    async function handleLogout() {
-      try {
-        await sb.auth.signOut();
-      } catch (e) {
-        console.error('Logout error:', e);
-      }
-      document.getElementById('dashboard').classList.remove('active');
-      document.getElementById('authSection').style.display = 'block';
-      updateNav(false);
-      switchTab('login');
+    function handleLogout() {
+      sb.auth.signOut();
+      setTimeout(function(){ window.location.href = '/'; }, 300);
     }
 
     function updateNav(loggedIn) {
@@ -388,14 +381,7 @@
       if (mw) mw.style.display = loggedIn ? 'block' : 'none';
     }
 
-    async function menuLogout() {
-      try { await sb.auth.signOut(); } catch (e) {}
-      toggleMobileMenu();
-      document.getElementById('dashboard').classList.remove('active');
-      document.getElementById('authSection').style.display = 'block';
-      updateNav(false);
-      switchTab('login');
-    }
+    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
   </script>
 </body>
 </html>
