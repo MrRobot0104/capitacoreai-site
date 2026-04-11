@@ -13,7 +13,8 @@ function menuLogout() {
   localStorage.clear(); sessionStorage.clear(); window.location.href = '/';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+// Bind immediately — scripts are at end of body, DOM is ready
+(function() {
   var hamburger = document.querySelector('.hamburger');
   if (hamburger) hamburger.addEventListener('click', toggleMobileMenu);
 
@@ -30,4 +31,4 @@ document.addEventListener('DOMContentLoaded', function() {
       link.addEventListener('click', toggleMobileMenu);
     });
   }
-});
+})();
