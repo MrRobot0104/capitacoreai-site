@@ -51,6 +51,46 @@
     .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
     .feature p { font-size: 13px; color: #999999; line-height: 1.6; }
 
+    /* GALLERY */
+    .gallery-section { margin-bottom: 80px; }
+    .gallery-section h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
+    .gallery-section .gallery-sub { font-size: 14px; color: #999999; text-align: center; margin-bottom: 32px; }
+    .gallery-wrap { position: relative; overflow: hidden; }
+    .gallery-track { display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 0 16px; -ms-overflow-style: none; scrollbar-width: none; }
+    .gallery-track::-webkit-scrollbar { display: none; }
+    .gallery-item { flex: 0 0 360px; border-radius: 14px; overflow: hidden; border: 1px solid #eeeeee; background: #fafafa; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .gallery-item:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .gallery-item img { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .gallery-item .gallery-label { padding: 14px 18px; font-size: 14px; font-weight: 600; }
+    .gallery-item .gallery-label span { font-size: 12px; font-weight: 400; color: #999999; display: block; margin-top: 2px; }
+    .gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .gallery-nav:hover { background: #111111; color: #fff; border-color: #111111; }
+    .gallery-nav.prev { left: 8px; }
+    .gallery-nav.next { right: 8px; }
+
+    /* PREBUILT */
+    .prebuilt-section { margin-bottom: 80px; }
+    .prebuilt-section h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
+    .prebuilt-section .prebuilt-sub { font-size: 14px; color: #999999; text-align: center; margin-bottom: 32px; }
+    .prebuilt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .prebuilt-card { border: 1px solid #eeeeee; border-radius: 14px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .prebuilt-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .prebuilt-card .card-img { width: 100%; height: 180px; object-fit: cover; display: block; background: #f5f5f5; }
+    .prebuilt-card .card-placeholder { width: 100%; height: 180px; background: linear-gradient(135deg, #f5f5f5, #e8e8e8); display: flex; align-items: center; justify-content: center; font-size: 36px; opacity: 0.3; }
+    .prebuilt-card .card-body { padding: 20px; }
+    .prebuilt-card .card-body h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .prebuilt-card .card-body p { font-size: 13px; color: #999999; line-height: 1.55; margin-bottom: 16px; min-height: 40px; }
+    .prebuilt-card .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .prebuilt-card .card-price { font-size: 13px; font-weight: 600; color: #111111; }
+    .btn-get { padding: 8px 18px; border-radius: 8px; border: none; background: #111111; color: #fff; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.2s; }
+    .btn-get:hover { background: #333333; }
+    .btn-get:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+      .prebuilt-grid { grid-template-columns: 1fr; }
+      .gallery-item { flex: 0 0 280px; }
+    }
+
     .footer { background: #fff; border-top: 1px solid #eeeeee; margin-top: 80px; }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
     .footer-inner p { font-size: 12px; color: #999999; }
@@ -161,6 +201,109 @@
         <p>Export as a standalone HTML file. Open anywhere, share with anyone, no login needed.</p>
       </div>
     </div>
+
+    <!-- WHAT DASHPILOT CREATED -->
+    <div class="gallery-section">
+      <h2>What DashPilot Created</h2>
+      <p class="gallery-sub">Real dashboards and tools built with DashPilot by CapitaCoreAI users.</p>
+      <div class="gallery-wrap">
+        <button class="gallery-nav prev" onclick="scrollGallery(-1)">&#8249;</button>
+        <div class="gallery-track" id="galleryTrack">
+          <div class="gallery-item" onclick="window.open('dashboards/Ultimate_AI_Prompt_Vault_CapitaCoreAI.html','_blank')">
+            <img src="img/dash-prompt-vault.png" alt="AI Prompt Vault">
+            <div class="gallery-label">Ultimate AI Prompt Vault<span>500+ expert prompts across 12 categories</span></div>
+          </div>
+          <div class="gallery-item" onclick="window.open('dashboards/Freelancer_Hub_CapitaCoreAI.html','_blank')">
+            <img src="img/dash-freelancer.png" alt="Freelancer Hub">
+            <div class="gallery-label">Freelancer Hub<span>Project management & invoicing dashboard</span></div>
+          </div>
+          <div class="gallery-item" onclick="window.open('dashboards/Social_Media_Calendar_CapitaCoreAI.html','_blank')">
+            <img src="img/dash-listing.png" alt="Social Media Calendar">
+            <div class="gallery-label">Social Media Calendar<span>Plan, schedule & analyze content across platforms</span></div>
+          </div>
+          <div class="gallery-item" onclick="window.open('dashboards/Monthly_Budget_Planner_CapitaCoreAI.html','_blank')">
+            <img src="img/dash-listing-analytics.png" alt="Budget Planner">
+            <div class="gallery-label">Monthly Budget Planner<span>Track spending, set budgets & visualize finances</span></div>
+          </div>
+        </div>
+        <button class="gallery-nav next" onclick="scrollGallery(1)">&#8250;</button>
+      </div>
+    </div>
+
+    <!-- PREBUILT DASHBOARDS -->
+    <div class="prebuilt-section">
+      <h2>Prebuilt Dashboards</h2>
+      <p class="prebuilt-sub">Skip the prompt. Grab a ready-made dashboard instantly — 1 credit each.</p>
+      <div class="prebuilt-grid">
+        <div class="prebuilt-card">
+          <img class="card-img" src="img/dash-prompt-vault.png" alt="AI Prompt Vault">
+          <div class="card-body">
+            <h3>Ultimate AI Prompt Vault</h3>
+            <p>500+ expert prompts across 12 categories. Search, filter, favorite, and copy to clipboard instantly.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="Ultimate_AI_Prompt_Vault_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <img class="card-img" src="img/dash-freelancer.png" alt="Freelancer Hub">
+          <div class="card-body">
+            <h3>Freelancer Hub</h3>
+            <p>All-in-one project management and accounting dashboard. Track clients, invoices, time, and income.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="Freelancer_Hub_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder">📅</div>
+          <div class="card-body">
+            <h3>Social Media Calendar</h3>
+            <p>Plan, schedule, and analyze content across Instagram, TikTok, Twitter, and LinkedIn in one view.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="Social_Media_Calendar_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder">💰</div>
+          <div class="card-body">
+            <h3>Monthly Budget Planner</h3>
+            <p>Personal finance dashboard for tracking monthly budgets, spending categories, and financial goals.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="Monthly_Budget_Planner_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder">☕</div>
+          <div class="card-body">
+            <h3>Cafe Luna Website</h3>
+            <p>Complete restaurant website with menu, online ordering, and branding — ready to customize for any cafe.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="CafeLuna_Website_V2.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder">📊</div>
+          <div class="card-body">
+            <h3>DashForge Budget Template</h3>
+            <p>Clean financial dashboard template with interactive charts and expense tracking visualizations.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="dashforge-template.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer class="footer">
