@@ -201,9 +201,13 @@ function renderItinerary(days) {
       '<div class="itin-day-header"><span><span class="day-num">Day ' + (day.day || i+1) + '</span>' + escapeHtml(day.title || '') + cityTag + '</span><span class="arrow">\u25bc</span></div>' +
       '<div class="itin-day-body">';
     (day.activities || []).forEach(function(a) {
+      var desc = a.description || a;
+      var ratingHtml = a.rating ? '<span class="act-rating">★ ' + a.rating + (a.reviews ? ' <span class="act-reviews">(' + a.reviews.toLocaleString() + ')</span>' : '') + '</span>' : '';
+      var linkOpen = a.mapsUrl ? '<a href="' + a.mapsUrl + '" target="_blank" rel="noopener" class="act-link">' : '';
+      var linkClose = a.mapsUrl ? ' <span class="act-maps-icon">📍</span></a>' : '';
       html += '<div class="itin-activity">' +
         (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
-        '<div>' + escapeHtml(a.description || a) + '</div></div>';
+        '<div>' + linkOpen + escapeHtml(desc) + linkClose + ' ' + ratingHtml + '</div></div>';
     });
     html += '</div></div>';
   });

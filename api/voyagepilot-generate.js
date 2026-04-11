@@ -21,8 +21,8 @@ Structure:
   ],
   "itinerary": [
     {"day":1,"title":"Arrive in London","city":"London","activities":[
-      {"time":"Afternoon","description":"Check into hotel. Walk along the Thames."},
-      {"time":"Evening","description":"Dinner at Dishoom in Covent Garden."}
+      {"time":"Afternoon","description":"Check into hotel. Walk along the Thames.","mapsUrl":"https://www.google.com/maps/search/?api=1&query=Thames+River+Walk+London"},
+      {"time":"Evening","description":"Dinner at Dishoom in Covent Garden.","rating":4.5,"reviews":12000,"mapsUrl":"https://www.google.com/maps/search/?api=1&query=Dishoom+Covent+Garden+London"}
     ]}
   ],
   "hotels": [{"city":"London","name":"Mid-range hotel in South Kensington","pricePerNight":"$120-180","nights":3}],
@@ -39,13 +39,62 @@ Rules:
 - Mark the return flight with "isReturn":true
 - Include a "date" field on every flight with the actual date
 - Generate FULL day-by-day itinerary for every day
-- Real neighborhoods, landmarks, restaurants
+- Use REAL places from the Google Maps data provided — include exact names, ratings, review counts
+- Each activity MUST include a "mapsUrl" field: https://www.google.com/maps/search/?api=1&query={Place+Name}+{City}
+- Include "rating" and "reviews" fields on activities when available from the Google Maps data
 - Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
 - Real visa, currency, weather info
 - For each destination, include a "photoQuery" field with a good search term for that city (e.g. "london skyline", "tirana city center", "paris eiffel tower")
 - For the origin, also include a "photoQuery" field
 - Label all flight prices as estimates (prefix with "~" e.g. "~$423")
 Start with { end with }.`;
+
+// ============ SerpAPI Google Maps (real places) ============
+async function searchPlaces(city, type, budget) {
+  const serpKey = process.env.SERPAPI_KEY;
+  if (!serpKey) return null;
+
+  const budgetWord = budget === 'luxury' ? 'best' : budget === 'budget' ? 'cheap' : 'top rated';
+  const queryMap = {
+    attractions: budgetWord + ' things to do in ' + city,
+    restaurants: budgetWord + ' restaurants in ' + city,
+  };
+  const query = queryMap[type] || 'top places in ' + city;
+
+  const params = new URLSearchParams({
+    engine: 'google_maps',
+    q: query,
+    type: 'search',
+    hl: 'en',
+    api_key: serpKey,
+  });
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch('https://serpapi.com/search?' + params.toString(), { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.local_results || data.local_results.length === 0) return null;
+
+    return data.local_results.slice(0, 8).map(function(p) {
+      return {
+        name: p.title || '',
+        rating: p.rating || null,
+        reviews: p.reviews || null,
+        address: p.address || '',
+        type: (p.type || '').split(',')[0].trim(),
+        priceLevel: p.price || '',
+        gps: p.gps_coordinates || null,
+        mapsUrl: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.title + ' ' + city),
+      };
+    });
+  } catch (err) {
+    console.error('SerpAPI Maps error for', city, ':', err.message);
+    return null;
+  }
+}
 
 // ============ SerpAPI Google Flights ============
 async function searchFlights(from, to, date, travelers) {
@@ -283,7 +332,23 @@ module.exports = async (req, res) => {
       });
       await Promise.all(searchPromises);
 
-      // ===== STEP 3: Build trip plan with Sonnet + real flight data =====
+      // ===== STEP 2b: Fetch real places from Google Maps via SerpAPI =====
+      const placesData = {};
+      const budgetLevel = intent.budget || 'mid-range';
+      const placePromises = destinations.map(function(dest) {
+        return Promise.all([
+          searchPlaces(dest.city, 'attractions', budgetLevel),
+          searchPlaces(dest.city, 'restaurants', budgetLevel),
+        ]).then(function(results) {
+          placesData[dest.city] = {
+            attractions: results[0] || [],
+            restaurants: results[1] || [],
+          };
+        });
+      });
+      await Promise.all(placePromises);
+
+      // ===== STEP 3: Build trip plan with Sonnet + real flight + places data =====
       const noFlightRoutes = legs
         .filter(function(leg) { return !realFlights[leg.from.code + '-' + leg.to.code]; })
         .map(function(leg) { return leg.from.code + '-' + leg.to.code + ' (' + leg.date + ')'; });
@@ -299,6 +364,27 @@ module.exports = async (req, res) => {
           (noFlightRoutes.length > 0 ? '\n\nROUTES WITH NO LIVE DATA (estimate prices for these): ' + noFlightRoutes.join(', ') : '')
         : (noFlightRoutes.length > 0 ? '\n\nNo live flight data available. Estimate prices for all routes: ' + noFlightRoutes.join(', ') : '');
 
+      // Build places context for Sonnet
+      let placesContext = '';
+      if (Object.keys(placesData).length > 0) {
+        placesContext = '\n\nREAL PLACES FROM GOOGLE MAPS (use these actual places in the itinerary):\n';
+        Object.entries(placesData).forEach(function([city, data]) {
+          if (data.attractions.length > 0) {
+            placesContext += '\n' + city + ' — Top Attractions:\n';
+            data.attractions.forEach(function(p) {
+              placesContext += '  • ' + p.name + (p.rating ? ' (' + p.rating + '★, ' + (p.reviews || 0) + ' reviews)' : '') + (p.type ? ' [' + p.type + ']' : '') + (p.address ? ' — ' + p.address : '') + '\n';
+            });
+          }
+          if (data.restaurants.length > 0) {
+            placesContext += '\n' + city + ' — Top Restaurants:\n';
+            data.restaurants.forEach(function(p) {
+              placesContext += '  • ' + p.name + (p.rating ? ' (' + p.rating + '★, ' + (p.reviews || 0) + ' reviews)' : '') + (p.priceLevel ? ' ' + p.priceLevel : '') + (p.type ? ' [' + p.type + ']' : '') + '\n';
+            });
+          }
+        });
+        placesContext += '\nIMPORTANT: Use these REAL places in the itinerary. Include the place name exactly as shown. Add a "mapsUrl" field to each activity using format: https://www.google.com/maps/search/?api=1&query={Place Name}+{City}';
+      }
+
       const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 2000);
 
       const planRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -311,7 +397,7 @@ module.exports = async (req, res) => {
           system: PLAN_PROMPT,
           messages: [{
             role: 'user',
-            content: 'Trip request: ' + userRequest + '\n\nExtracted intent: ' + JSON.stringify(intent) + flightContext,
+            content: 'Trip request: ' + userRequest + '\n\nExtracted intent: ' + JSON.stringify(intent) + flightContext + placesContext,
           }],
         }),
       });
