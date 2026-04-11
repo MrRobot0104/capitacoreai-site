@@ -52,8 +52,14 @@ async function buyPackage(pkg) {
 
   var session;
   try {
-    var result = await sb.auth.getSession();
+    // Force token refresh to avoid expired session issues
+    var result = await sb.auth.refreshSession();
     session = result.data.session;
+    // Fall back to getSession if refresh fails
+    if (!session) {
+      var fallback = await sb.auth.getSession();
+      session = fallback.data.session;
+    }
   } catch(e) {
     showError('Auth error: ' + e.message);
     return;
@@ -66,17 +72,22 @@ async function buyPackage(pkg) {
   }
 
   try {
+    var controller = new AbortController();
+    var timeout = setTimeout(function() { controller.abort(); }, 30000);
+
     var res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ package: pkg }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     var text = await res.text();
     console.log('Checkout response:', res.status, text);
     var data;
     try { data = JSON.parse(text); } catch (e) {
-      showError('Server returned invalid response (status ' + res.status + ')');
+      showError('Server returned invalid response (status ' + res.status + '). Please try again.');
       return;
     }
 
@@ -86,7 +97,11 @@ async function buyPackage(pkg) {
       showError(data.error || 'No checkout URL returned (status ' + res.status + ')');
     }
   } catch (err) {
-    showError('Network error: ' + err.message);
+    if (err.name === 'AbortError') {
+      showError('Request timed out. Please try again.');
+    } else {
+      showError('Network error: ' + err.message);
+    }
   }
 }
 
