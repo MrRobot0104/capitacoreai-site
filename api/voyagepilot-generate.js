@@ -1,9 +1,17 @@
 // ============ STEP 1: Extract travel intent ============
 const INTENT_PROMPT = `Extract the travel request into JSON. Output ONLY JSON.
 
-{"origin":{"city":"Miami","code":"MIA","lat":25.76,"lng":-80.19},"destinations":[{"city":"London","code":"LHR","lat":51.51,"lng":-0.13,"days":3},{"city":"Tirana","code":"TIA","lat":41.33,"lng":19.82,"days":5}],"departure_date":"2026-06-15","travelers":1,"budget":"mid-range","flexible":false}
+Example 1 — multi-city with flights:
+{"origin":{"city":"Miami","code":"MIA","lat":25.76,"lng":-80.19},"destinations":[{"city":"London","code":"LHR","lat":51.51,"lng":-0.13,"days":3},{"city":"Tirana","code":"TIA","lat":41.33,"lng":19.82,"days":5}],"departure_date":"2026-06-15","travelers":1,"budget":"mid-range","flexible":false,"hasFlights":false,"accommodation":null}
 
-Rules: Use IATA codes. Real lat/lng. If no date, use 2 weeks from now (today is ${new Date().toISOString().split('T')[0]}). Default budget "mid-range", travelers 1. Start with { end with }.`;
+Example 2 — already at destination, no flights needed:
+{"origin":null,"destinations":[{"city":"Seoul","code":"ICN","lat":37.55,"lng":126.99,"days":15}],"departure_date":"2026-05-08","travelers":1,"budget":"mid-range","flexible":false,"hasFlights":true,"accommodation":"AirBnB at 22-31 Samcheong-Ro"}
+
+Rules: Use IATA codes. Real lat/lng. If no date, use 2 weeks from now (today is ${new Date().toISOString().split('T')[0]}). Default budget "mid-range", travelers 1.
+- If user says they already have flights or are already at the destination, set "hasFlights":true and "origin":null.
+- If user mentions specific accommodation (AirBnB, hotel name, address), put it in "accommodation" field.
+- Calculate "days" from date ranges if given (e.g. May 8-22 = 14 days).
+Start with { end with }.`;
 
 // ============ STEP 2: Build trip with real flight data ============
 const PLAN_PROMPT = `You are a travel planning AI. You receive REAL flight data from Google Flights plus the user's preferences. Build a complete trip plan as JSON. Output ONLY JSON.
@@ -42,9 +50,12 @@ Rules:
 - Use REAL places from the Google Maps data provided — include exact names, ratings, review counts
 - Each activity MUST include a "mapsUrl" field: https://www.google.com/maps/search/?api=1&query={Place+Name}+{City}
 - Include "rating" and "reviews" fields on activities when available from the Google Maps data
-- Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return)
+- Realistic hotel and daily budget estimates — budget total must include ALL flights (outbound + return) if flights are included
 - Real visa, currency, weather info
 - Label all flight prices as estimates (prefix with "~" e.g. "~$423")
+- If the user already has flights (hasFlights=true), do NOT include flights in the JSON — set "flights":[]
+- If the user has custom accommodation (AirBnB, specific hotel), use that in the hotels array with the actual name/address. Set "hotelReason" to describe the location advantages. Set budget.flights to 0 if no flights.
+- If origin is null, omit origin or set it to the first destination
 - For EACH destination: include a "cityDescription" field — a vivid 2-3 sentence paragraph with **bold keywords** using markdown (e.g. "Discover the **iconic landmarks** of London..."). Make it sound like a travel magazine. Use bold on 3-5 key phrases per description.
 - For EACH destination: include a "landmarks" array with 2-3 famous landmark names (used to fetch photos). Use well-known landmarks that will have Wikipedia articles.
 - For EACH hotel: include "stars" (1-5 integer), "reviewCount" (integer), "totalPrice" (string like "$465"), and "hotelReason" (one sentence explaining why this hotel fits the traveler's needs)
@@ -287,11 +298,15 @@ module.exports = async (req, res) => {
       if (!intent) {
         return res.status(500).json({ error: 'Could not parse trip details. Please be more specific about your cities and dates.' });
       }
-      if (!intent.origin || !intent.origin.code) {
-        return res.status(400).json({ error: 'Could not identify your origin city or airport code. Please specify a departure city.' });
-      }
       if (!intent.destinations || intent.destinations.length === 0) {
         return res.status(400).json({ error: 'No destination cities found. Please specify where you want to travel.' });
+      }
+      // Only require origin if user needs flights
+      const needsFlights = !intent.hasFlights && intent.origin && intent.origin.code;
+      if (!intent.hasFlights && (!intent.origin || !intent.origin.code)) {
+        // Try to proceed without flights — user might already be there
+        intent.hasFlights = true;
+        intent.origin = null;
       }
       const missingCodes = intent.destinations.filter(function(d) { return !d.code; });
       if (missingCodes.length > 0) {
@@ -302,37 +317,36 @@ module.exports = async (req, res) => {
       const flightDate = intent.departure_date || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
       const travelers = intent.travelers || 1;
       const destinations = intent.destinations || [];
-      const allStops = [intent.origin, ...destinations];
 
-      // Build all legs including RETURN flight (last dest → origin)
-      const legs = [];
-      let currentDate = flightDate;
-      for (let i = 0; i < allStops.length - 1; i++) {
-        legs.push({ from: allStops[i], to: allStops[i + 1], date: currentDate });
-        // Advance date by days at the destination
-        var daysHere = allStops[i + 1].days || 0;
-        if (daysHere > 0) {
-          var d = new Date(currentDate);
-          d.setDate(d.getDate() + daysHere);
-          currentDate = d.toISOString().split('T')[0];
-        }
-      }
-      // Add return leg: last destination → origin
-      var lastDest = destinations[destinations.length - 1];
-      if (lastDest) {
-        legs.push({ from: lastDest, to: intent.origin, date: currentDate, isReturn: true });
-      }
-
-      // Fetch flights for all legs in parallel
       const realFlights = {};
       const legDates = {};
-      const searchPromises = legs.map(function(leg) {
-        const key = leg.from.code + '-' + leg.to.code;
-        legDates[key] = leg.date;
-        return searchFlights(leg.from.code, leg.to.code, leg.date, travelers)
-          .then(function(results) { if (results) realFlights[key] = results; });
-      });
-      await Promise.all(searchPromises);
+
+      if (needsFlights) {
+        const allStops = [intent.origin, ...destinations];
+        const legs = [];
+        let currentDate = flightDate;
+        for (let i = 0; i < allStops.length - 1; i++) {
+          legs.push({ from: allStops[i], to: allStops[i + 1], date: currentDate });
+          var daysHere = allStops[i + 1].days || 0;
+          if (daysHere > 0) {
+            var d = new Date(currentDate);
+            d.setDate(d.getDate() + daysHere);
+            currentDate = d.toISOString().split('T')[0];
+          }
+        }
+        var lastDest = destinations[destinations.length - 1];
+        if (lastDest) {
+          legs.push({ from: lastDest, to: intent.origin, date: currentDate, isReturn: true });
+        }
+
+        const searchPromises = legs.map(function(leg) {
+          const key = leg.from.code + '-' + leg.to.code;
+          legDates[key] = leg.date;
+          return searchFlights(leg.from.code, leg.to.code, leg.date, travelers)
+            .then(function(results) { if (results) realFlights[key] = results; });
+        });
+        await Promise.all(searchPromises);
+      }
 
       // ===== STEP 2b: Fetch real places from Google Maps via SerpAPI =====
       const placesData = {};
@@ -351,20 +365,28 @@ module.exports = async (req, res) => {
       await Promise.all(placePromises);
 
       // ===== STEP 3: Build trip plan with Sonnet + real flight + places data =====
-      const noFlightRoutes = legs
-        .filter(function(leg) { return !realFlights[leg.from.code + '-' + leg.to.code]; })
-        .map(function(leg) { return leg.from.code + '-' + leg.to.code + ' (' + leg.date + ')'; });
+      let flightContext = '';
+      if (needsFlights) {
+        const noFlightRoutes = Object.keys(legDates)
+          .filter(function(key) { return !realFlights[key]; })
+          .map(function(key) { return key + ' (' + legDates[key] + ')'; });
 
-      const flightContext = Object.keys(realFlights).length > 0
-        ? '\n\nESTIMATED FLIGHT DATA FROM GOOGLE FLIGHTS (prices may vary — show as estimates):\n' +
-          Object.entries(realFlights).map(([route, flights]) =>
-            route + ' (date: ' + (legDates[route] || flightDate) + '):\n' + flights.slice(0, 5).map(f =>
-              '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
-            ).join('\n')
-          ).join('\n\n') +
-          '\n\nIMPORTANT: Include a "date" field in each flight object with the flight date (e.g. "2026-06-15"). Use the dates shown above.' +
-          (noFlightRoutes.length > 0 ? '\n\nROUTES WITH NO LIVE DATA (estimate prices for these): ' + noFlightRoutes.join(', ') : '')
-        : (noFlightRoutes.length > 0 ? '\n\nNo live flight data available. Estimate prices for all routes: ' + noFlightRoutes.join(', ') : '');
+        flightContext = Object.keys(realFlights).length > 0
+          ? '\n\nESTIMATED FLIGHT DATA FROM GOOGLE FLIGHTS (prices may vary — show as estimates):\n' +
+            Object.entries(realFlights).map(([route, flights]) =>
+              route + ' (date: ' + (legDates[route] || flightDate) + '):\n' + flights.slice(0, 5).map(f =>
+                '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
+              ).join('\n')
+            ).join('\n\n') +
+            '\n\nIMPORTANT: Include a "date" field in each flight object with the flight date (e.g. "2026-06-15"). Use the dates shown above.' +
+            (noFlightRoutes.length > 0 ? '\n\nROUTES WITH NO LIVE DATA (estimate prices for these): ' + noFlightRoutes.join(', ') : '')
+          : (noFlightRoutes.length > 0 ? '\n\nNo live flight data available. Estimate prices for all routes: ' + noFlightRoutes.join(', ') : '');
+      } else {
+        flightContext = '\n\nNO FLIGHTS NEEDED — user already has flights booked or is already at the destination. Set "flights":[] in the response. Do NOT include any flight objects.';
+        if (intent.accommodation) {
+          flightContext += '\nACCOMMODATION: ' + intent.accommodation + ' — use this as the hotel entry instead of suggesting a new hotel.';
+        }
+      }
 
       // Build places context for Sonnet
       let placesContext = '';
