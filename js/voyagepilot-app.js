@@ -11,7 +11,7 @@ var lastTripData = null;
 
 // MAP INIT
 map = L.map('map', { zoomControl: true, attributionControl: false }).setView([30, 0], 2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
   maxZoom: 19
 }).addTo(map);
 
@@ -203,18 +203,22 @@ function renderFlightCards(flights, liveData) {
   container.innerHTML = '';
   if (liveData) {
     var badge = document.createElement('div');
-    badge.style.cssText = 'flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:10px;font-size:11px;color:#10b981;font-weight:600;white-space:nowrap;';
-    badge.textContent = 'Live Google Flights Data';
+    badge.className = 'live-badge';
+    badge.innerHTML = '<span class="live-dot"></span> Live Google Flights';
     container.appendChild(badge);
   }
   flights.forEach(function(f) {
+    var from = encodeURIComponent(f.fromCode || f.from || '');
+    var to = encodeURIComponent(f.toCode || f.to || '');
+    var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to;
     var card = document.createElement('div');
     card.className = 'flight-card';
     card.innerHTML =
-      '<div class="route">' + escapeHtml(f.fromCode || f.from) + ' → ' + escapeHtml(f.toCode || f.to) + '</div>' +
+      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' + escapeHtml(f.fromCode || f.from) + ' → ' + escapeHtml(f.toCode || f.to) + '</div>' +
       '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
-      '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' · ' + escapeHtml(f.stops) : '') + '</div>' +
-      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || '') + '</div>';
+      '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' &middot; ' + escapeHtml(f.stops) : '') + '</div>' +
+      '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + '</div>' +
+      '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Search on Google Flights &rarr;</a>';
     container.appendChild(card);
   });
 }

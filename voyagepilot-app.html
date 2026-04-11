@@ -8,110 +8,121 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0f172a; color: #e0e0e0; -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden; }
 
-    .topbar { height: 56px; background: #1e293b; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+    /* TOPBAR */
+    .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
     .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #e0e0e0; font-weight: 600; font-size: 14px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #1e293b; font-weight: 600; font-size: 14px; }
     .topbar-left a img { width: 24px; height: 24px; }
-    .topbar-left .sep { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
-    .topbar-left .app-name { font-size: 13px; font-weight: 500; color: #60a5fa; }
+    .topbar-left .sep { width: 1px; height: 20px; background: #e2e8f0; }
+    .topbar-left .app-name { font-size: 14px; font-weight: 600; color: #2563eb; }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .topbar-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #94a3b8; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .topbar-btn:hover { background: rgba(255,255,255,0.05); color: #e0e0e0; }
-    .topbar-btn.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-    .topbar-btn.primary:hover { background: #2563eb; }
-    .credits-chip { font-size: 12px; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 999px; }
-    .credits-chip strong { color: #e0e0e0; }
+    .topbar-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .topbar-btn:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+    .topbar-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .topbar-btn.primary:hover { background: #1d4ed8; }
+    .credits-chip { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 5px 12px; border-radius: 999px; border: 1px solid #e2e8f0; }
+    .credits-chip strong { color: #1e293b; }
 
+    /* LAYOUT */
     .app-layout { display: flex; height: calc(100vh - 56px); }
 
-    .chat-panel { width: 400px; min-width: 360px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.06); background: #0f172a; }
+    /* CHAT */
+    .chat-panel { width: 400px; min-width: 360px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: #fff; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
     .msg { max-width: 90%; }
     .msg.user { align-self: flex-end; }
     .msg.bot { align-self: flex-start; }
     .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.65; }
-    .msg.user .msg-bubble { background: #3b82f6; color: #fff; border-bottom-right-radius: 4px; }
-    .msg.bot .msg-bubble { background: #1e293b; color: #cbd5e1; border-bottom-left-radius: 4px; }
+    .msg.user .msg-bubble { background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot .msg-bubble { background: #f1f5f9; color: #334155; border-bottom-left-radius: 4px; }
     .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; }
-    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: #64748b; animation: typingBounce 1.4s infinite ease-in-out both; }
+    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; animation: typingBounce 1.4s infinite ease-in-out both; }
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes typingBounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-    .chat-input-area { padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
-    .input-wrapper { background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; display: flex; align-items: flex-end; padding: 8px 8px 8px 16px; gap: 8px; transition: border-color 0.2s; }
-    .input-wrapper:focus-within { border-color: rgba(96,165,250,0.4); }
-    .chat-textarea { flex: 1; background: none; border: none; color: #e0e0e0; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
-    .chat-textarea::placeholder { color: #64748b; }
+    /* INPUT */
+    .chat-input-area { padding: 16px; border-top: 1px solid #e2e8f0; }
+    .input-wrapper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; display: flex; align-items: flex-end; padding: 8px 8px 8px 16px; gap: 8px; transition: border-color 0.2s; }
+    .input-wrapper:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+    .chat-textarea { flex: 1; background: none; border: none; color: #1e293b; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
+    .chat-textarea::placeholder { color: #94a3b8; }
     .btn-icon { width: 36px; height: 36px; border-radius: 10px; border: none; background: transparent; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .btn-icon.send { background: #3b82f6; color: #fff; }
-    .btn-icon.send:hover { background: #2563eb; }
+    .btn-icon.send { background: #2563eb; color: #fff; }
+    .btn-icon.send:hover { background: #1d4ed8; }
     .btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
     .chat-limit-bar { padding: 12px 16px; text-align: center; display: none; }
-    .limit-msg { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+    .limit-msg { font-size: 13px; color: #64748b; margin-bottom: 8px; }
     .limit-actions { display: flex; gap: 8px; justify-content: center; }
     .limit-btn { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; border: none; }
-    .limit-btn.primary { background: #3b82f6; color: #fff; }
-    .limit-btn.secondary { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+    .limit-btn.primary { background: #2563eb; color: #fff; }
+    .limit-btn.primary:hover { background: #1d4ed8; }
+    .limit-btn.secondary { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
     /* MAP */
-    .map-panel { flex: 1; display: flex; flex-direction: column; position: relative; }
-    #map { flex: 1; z-index: 1; background: #0f172a; }
+    .map-panel { flex: 1; display: flex; flex-direction: column; position: relative; background: #f0f4f8; }
+    #map { flex: 1; z-index: 1; }
     .map-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
     .map-empty-inner { text-align: center; }
-    .map-empty-inner svg { width: 64px; height: 64px; opacity: 0.15; margin-bottom: 16px; stroke: #94a3b8; }
-    .map-empty-inner p { font-size: 14px; color: #64748b; }
-    .map-empty-inner p.sub { font-size: 12px; color: #475569; margin-top: 4px; }
+    .map-empty-inner svg { width: 64px; height: 64px; opacity: 0.12; margin-bottom: 16px; stroke: #64748b; }
+    .map-empty-inner p { font-size: 14px; color: #94a3b8; }
+    .map-empty-inner p.sub { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
     .map-empty.hidden { display: none; }
 
     /* TRIP DETAILS */
-    .trip-details { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.08); max-height: 50%; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s ease; }
+    .trip-details { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid #e2e8f0; max-height: 50%; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -4px 24px rgba(0,0,0,0.06); }
     .trip-details.open { transform: translateY(0); }
     .trip-details::-webkit-scrollbar { width: 4px; }
-    .trip-details::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-    .trip-toggle { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 11; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px 20px; font-size: 12px; color: #94a3b8; cursor: pointer; font-family: inherit; display: none; transition: bottom 0.3s ease; }
-    .trip-toggle:hover { color: #e0e0e0; }
+    .trip-details::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .trip-toggle { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 11; background: #fff; border: 1px solid #e2e8f0; border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px 20px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer; font-family: inherit; display: none; transition: bottom 0.3s ease; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
+    .trip-toggle:hover { color: #1e293b; }
     .trip-toggle.visible { display: block; }
     .trip-details.open ~ .trip-toggle { bottom: 50%; }
 
     /* FLIGHT CARDS */
-    .flight-cards { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; }
+    .flight-cards { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; align-items: center; }
     .flight-cards::-webkit-scrollbar { height: 3px; }
-    .flight-cards::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-    .flight-card { flex: 0 0 200px; background: #1e293b; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
-    .flight-card .route { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #60a5fa; font-weight: 600; margin-bottom: 8px; }
-    .flight-card .price { font-size: 22px; font-weight: 700; color: #f0f0f0; margin-bottom: 2px; }
-    .flight-card .duration { font-size: 12px; color: #64748b; }
-    .flight-card .airline { font-size: 11px; color: #94a3b8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .flight-cards::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .flight-card { flex: 0 0 220px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; transition: box-shadow 0.2s, border-color 0.2s; }
+    .flight-card:hover { border-color: #2563eb; box-shadow: 0 2px 12px rgba(37,99,235,0.08); }
+    .flight-card .route { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .flight-card .price { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+    .flight-card .duration { font-size: 12px; color: #94a3b8; }
+    .flight-card .airline { font-size: 11px; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid #f1f5f9; }
+    .flight-card .book-link { display: block; margin-top: 10px; text-align: center; padding: 8px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 600; text-decoration: none; transition: background 0.15s; }
+    .flight-card .book-link:hover { background: #dbeafe; }
+    .live-badge { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; font-size: 11px; color: #16a34a; font-weight: 600; white-space: nowrap; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; animation: livePulse 2s infinite; }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
     /* ITINERARY */
     .itinerary { padding: 0 20px 12px; }
-    .itin-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #60a5fa; font-weight: 600; padding: 12px 0 8px; }
-    .itin-day { background: #1e293b; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
-    .itin-day-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #e2e8f0; user-select: none; }
-    .itin-day-header:hover { background: rgba(255,255,255,0.02); }
-    .itin-day-header .day-num { color: #60a5fa; margin-right: 8px; }
-    .itin-day-header .arrow { color: #64748b; font-size: 10px; transition: transform 0.2s; }
+    .itin-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #2563eb; font-weight: 600; padding: 12px 0 8px; }
+    .itin-day { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
+    .itin-day-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1e293b; user-select: none; }
+    .itin-day-header:hover { background: #f8fafc; }
+    .itin-day-header .day-num { color: #2563eb; margin-right: 8px; }
+    .itin-day-header .arrow { color: #94a3b8; font-size: 10px; transition: transform 0.2s; }
     .itin-day.open .arrow { transform: rotate(180deg); }
-    .itin-day-body { display: none; padding: 0 14px 12px; font-size: 13px; color: #94a3b8; line-height: 1.7; }
+    .itin-day-body { display: none; padding: 0 14px 12px; font-size: 13px; color: #64748b; line-height: 1.7; }
     .itin-day.open .itin-day-body { display: block; }
     .itin-activity { padding: 4px 0; }
-    .itin-time { font-size: 11px; color: #60a5fa; font-weight: 600; }
+    .itin-time { font-size: 11px; color: #2563eb; font-weight: 600; }
 
     /* BUDGET */
-    .budget-bar { display: flex; gap: 16px; padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; align-items: flex-end; }
-    .budget-item { font-size: 11px; color: #64748b; }
-    .budget-item strong { color: #e2e8f0; font-size: 13px; display: block; margin-top: 2px; }
-    .budget-total { margin-left: auto; font-size: 11px; color: #60a5fa; font-weight: 600; }
-    .budget-total strong { color: #fff; font-size: 18px; display: block; margin-top: 2px; }
+    .budget-bar { display: flex; gap: 16px; padding: 14px 20px; border-top: 1px solid #e2e8f0; flex-wrap: wrap; align-items: flex-end; background: #f8fafc; }
+    .budget-item { font-size: 11px; color: #94a3b8; }
+    .budget-item strong { color: #1e293b; font-size: 13px; display: block; margin-top: 2px; }
+    .budget-total { margin-left: auto; font-size: 11px; color: #2563eb; font-weight: 600; }
+    .budget-total strong { color: #1e293b; font-size: 18px; display: block; margin-top: 2px; }
 
     @media (max-width: 900px) {
       .app-layout { flex-direction: column; }
-      .chat-panel { width: 100%; min-width: auto; height: 50vh; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+      .chat-panel { width: 100%; min-width: auto; height: 50vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
       .map-panel { height: 50vh; }
     }
   </style>
@@ -150,7 +161,7 @@ Each credit gives you 5 trip plans. Ready when you are.</div></div>
       </div>
       <div class="chat-input-area" id="chatInputArea">
         <div class="input-wrapper">
-          <textarea class="chat-textarea" id="chatTextarea" rows="1" placeholder="Describe your trip..."></textarea>
+          <textarea class="chat-textarea" id="chatTextarea" rows="1" placeholder="Where do you want to go?"></textarea>
           <div class="input-actions">
             <button class="btn-icon send" id="sendBtn" title="Send">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
