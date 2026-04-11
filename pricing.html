@@ -228,7 +228,7 @@
       document.body.style.overflow = open ? '' : 'hidden';
     }
 
-    function menuLogout() { sb.auth.signOut(); toggleMobileMenu(); setTimeout(function(){ window.location.href = '/'; }, 300); }
+    function menuLogout() { localStorage.clear(); sessionStorage.clear(); window.location.href = '/'; }
 
     function updateNav(session) {
       const n = document.getElementById('navMyAgents'), l = document.getElementById('navLoginBtn');
