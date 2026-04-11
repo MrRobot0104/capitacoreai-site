@@ -64,7 +64,13 @@
       </button>
     </div>
   </header>
-  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Agents</a><a href="/#about">About</a><a href="/#contact">Contact</a></div>
+  <div class="mobile-menu" id="mobileMenu"><a href="/">Home</a><a href="/#services">Services</a><a href="agents.html">Agents</a><a href="/#about">About</a><a href="/#contact">Contact</a>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;text-decoration:none;">Log In / Sign Up</a></div>
+    <div id="menuLoggedIn" style="display:none;padding-top:24px;">
+      <a href="account.html" style="display:block;padding:12px 20px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;text-align:center;text-decoration:none;margin-bottom:8px;">My Agents</a>
+      <button style="display:block;width:100%;padding:12px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" onclick="menuLogout()">Log Out</button>
+    </div>
+  </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
   <main class="page">
@@ -149,7 +155,19 @@
   <script>
     function toggleMobileMenu(){const m=document.getElementById('mobileMenu'),o=document.getElementById('mobileOverlay'),open=m.classList.contains('active');m.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=open?'':'hidden';}
     const sb=supabase.createClient('https://bdlcgzdptcanoadxbhwv.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbGNnemRwdGNhbm9hZHhiaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAxODcsImV4cCI6MjA5MTQwNjE4N30.3AHqw9Hsqyup0Igb4n8zO-vBrae9vwQ7tHUjAP17Hi8');
-    async function checkNav(session){if(session===undefined){const r=await sb.auth.getSession();session=r.data.session;}const n=document.getElementById('navMyAgents'),l=document.getElementById('navLoginBtn');if(session){if(n)n.style.display='inline';if(l)l.style.display='none';}else{if(n)n.style.display='none';if(l)l.style.display='inline-block';}}
+    async function checkNav(session){
+      if(session===undefined){const r=await sb.auth.getSession();session=r.data.session;}
+      const n=document.getElementById('navMyAgents'),l=document.getElementById('navLoginBtn');
+      const ma=document.getElementById('menuAuth'),ml=document.getElementById('menuLoggedIn');
+      if(session){
+        if(n)n.style.display='inline';if(l)l.style.display='none';
+        if(ma)ma.style.display='none';if(ml)ml.style.display='block';
+      }else{
+        if(n)n.style.display='none';if(l)l.style.display='inline-block';
+        if(ma)ma.style.display='block';if(ml)ml.style.display='none';
+      }
+    }
+    async function menuLogout(){try{await sb.auth.signOut();}catch(e){}toggleMobileMenu();checkNav(null);}
     sb.auth.onAuthStateChange((event,session)=>checkNav(session));
   </script>
 </body>
