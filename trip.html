@@ -211,8 +211,9 @@
       var cities = (trip.destinations || []).map(function(d) { return d.city; }).join(' \u2192 ');
       var totalDays = (trip.destinations || []).reduce(function(s, d) { return s + (d.days || 0); }, 0);
 
-      var html = '<h1 class="trip-title">' + esc(trip.title || 'Trip Plan') + '</h1>';
-      html += '<div class="trip-meta"><span>' + totalDays + ' days</span><span>' + (trip.flights || []).length + ' flights</span>';
+      var flightCount = (trip.flights || []).length;
+      var html = '<h1 class="trip-title">' + esc(trip.title || cities || 'Trip Plan') + '</h1>';
+      html += '<div class="trip-meta"><span>' + totalDays + ' days</span>' + (flightCount > 0 ? '<span>' + flightCount + ' flights</span>' : '<span>' + (trip.destinations || []).length + ' cit' + ((trip.destinations || []).length === 1 ? 'y' : 'ies') + '</span>');
       if (trip.dates) html += '<span>' + esc(trip.dates.departure) + ' \u2192 ' + esc(trip.dates.return) + '</span>';
       if (trip.budget) html += '<span>Est. $' + trip.budget.total + '</span>';
       html += '</div>';

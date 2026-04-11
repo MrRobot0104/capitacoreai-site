@@ -194,12 +194,17 @@ function renderTripHero(trip) {
       el.style.backgroundPosition = 'center';
     });
   }
+  var fallbackTitle = originCity ? (originCity + ' \u2192 ' + cities) : cities;
+  var flightCount = (trip.flights || []).length;
+  var destCount = (trip.destinations || []).length;
   el.innerHTML =
-    '<div class="hero-title">' + escapeHtml(trip.title || originCity + ' \u2192 ' + cities) + '</div>' +
+    '<div class="hero-title">' + escapeHtml(trip.title || fallbackTitle) + '</div>' +
     '<div class="hero-meta">' + (trip.dates ? escapeHtml(trip.dates.departure) + ' \u2192 ' + escapeHtml(trip.dates.return) : '') + ' \u00b7 ' + (trip.travelers || 1) + ' traveler' + ((trip.travelers || 1) > 1 ? 's' : '') + ' \u00b7 ' + escapeHtml(trip.budgetLevel || 'mid-range') + '</div>' +
     '<div class="hero-stats">' +
       '<div class="hero-stat"><div class="val">' + totalDays + '</div><div class="label">Days</div></div>' +
-      '<div class="hero-stat"><div class="val">' + (trip.flights || []).length + '</div><div class="label">Flights</div></div>' +
+      (flightCount > 0
+        ? '<div class="hero-stat"><div class="val">' + flightCount + '</div><div class="label">Flights</div></div>'
+        : '<div class="hero-stat"><div class="val">' + destCount + '</div><div class="label">Cit' + (destCount === 1 ? 'y' : 'ies') + '</div></div>') +
       '<div class="hero-stat"><div class="val">' + (trip.budget ? '$' + trip.budget.total : '--') + '</div><div class="label">Est. Total</div></div>' +
     '</div>';
 }
