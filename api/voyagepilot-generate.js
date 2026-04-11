@@ -1,58 +1,103 @@
-const EXTRACT_PROMPT = `You are a travel planning AI. Given a user's trip description, output a COMPLETE trip plan as a single JSON object. No text, no markdown — ONLY JSON.
+// ============ STEP 1: Extract travel intent ============
+const INTENT_PROMPT = `Extract the travel request into JSON. Output ONLY JSON.
+
+{"origin":{"city":"Miami","code":"MIA","lat":25.76,"lng":-80.19},"destinations":[{"city":"London","code":"LHR","lat":51.51,"lng":-0.13,"days":3},{"city":"Tirana","code":"TIA","lat":41.33,"lng":19.82,"days":5}],"departure_date":"2026-06-15","travelers":1,"budget":"mid-range","flexible":false}
+
+Rules: Use IATA codes. Real lat/lng. If no date, use 2 weeks from now (today is ${new Date().toISOString().split('T')[0]}). Default budget "mid-range", travelers 1. Start with { end with }.`;
+
+// ============ STEP 2: Build trip with real flight data ============
+const PLAN_PROMPT = `You are a travel planning AI. You receive REAL flight data from Google Flights plus the user's preferences. Build a complete trip plan as JSON. Output ONLY JSON.
+
+Use the REAL flight prices and airlines provided — do NOT make up prices. Pick the best option for the user's budget level from the real results.
 
 Structure:
 {
   "title": "Miami to London to Tirana",
   "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19},
-  "destinations": [
-    {"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3},
-    {"city":"Tirana","country":"AL","code":"TIA","lat":41.33,"lng":19.82,"days":5}
-  ],
+  "destinations": [{"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3}],
   "flights": [
-    {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$340-420","duration":"9h 15m","airlines":["British Airways","American Airlines","Virgin Atlantic"],"stops":"nonstop"},
-    {"from":"London","fromCode":"LHR","to":"Tirana","toCode":"TIA","price":"$80-150","duration":"3h 10m","airlines":["Wizz Air","British Airways"],"stops":"nonstop"}
+    {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$423","duration":"9h 15m","airlines":["British Airways"],"stops":"nonstop","departureTime":"6:30 PM","arrivalTime":"7:45 AM+1","flightNumber":"BA208"}
   ],
   "itinerary": [
     {"day":1,"title":"Arrive in London","city":"London","activities":[
-      {"time":"Afternoon","description":"Check into hotel in South Kensington. Walk along the Thames to Westminster."},
-      {"time":"Evening","description":"Dinner at Dishoom in Covent Garden. Explore the West End."}
-    ]},
-    {"day":2,"title":"Explore London","city":"London","activities":[
-      {"time":"Morning","description":"Tower of London and Tower Bridge. Walk through Borough Market for lunch."},
-      {"time":"Afternoon","description":"British Museum (free entry). Tea at The Wolseley."},
-      {"time":"Evening","description":"Dinner in Soho. Walk through Piccadilly Circus at night."}
+      {"time":"Afternoon","description":"Check into hotel. Walk along the Thames."},
+      {"time":"Evening","description":"Dinner at Dishoom in Covent Garden."}
     ]}
   ],
-  "hotels": [
-    {"city":"London","name":"Mid-range hotel in South Kensington","pricePerNight":"$120-180","nights":3},
-    {"city":"Tirana","name":"Boutique hotel in Blloku district","pricePerNight":"$50-80","nights":5}
-  ],
+  "hotels": [{"city":"London","name":"Mid-range hotel in South Kensington","pricePerNight":"$120-180","nights":3}],
   "budget": {"flights":500,"hotels":850,"food":400,"activities":200,"transport":100,"total":2050,"currency":"USD","perDay":256},
-  "tips": [
-    "Albania uses the Lek (ALL). 1 USD ≈ 95 ALL.",
-    "UK requires no visa for US citizens (up to 6 months).",
-    "Albania requires no visa for US citizens (up to 1 year).",
-    "London weather in June: 15-22°C, occasional rain.",
-    "Tirana in June: 25-32°C, sunny and warm."
-  ],
-  "dates": {"departure":"2026-06-15","return":"2026-06-23","flexible":false},
+  "tips": ["UK requires no visa for US citizens.","London weather in June: 15-22C."],
+  "dates": {"departure":"2026-06-15","return":"2026-06-23"},
   "travelers": 1,
   "budgetLevel": "mid-range"
 }
 
 Rules:
-- Use REAL coordinates (lat/lng) for all cities — this drives the interactive map
-- Use realistic flight prices based on typical routes and season
-- Use real airline names that fly those routes
-- Generate a FULL day-by-day itinerary for every single day
-- Include real neighborhood names, real restaurant areas, real landmarks
-- Budget breakdown must be realistic for the budget level
-- Include real visa, currency, and weather info
-- If dates not given, use 2 weeks from now
-- If budget not specified, default to "mid-range"
+- Use the REAL flight data provided (prices, airlines, times, stops)
+- Generate FULL day-by-day itinerary for every day
+- Real neighborhoods, landmarks, restaurants
+- Realistic hotel and daily budget estimates
+- Real visa, currency, weather info
+Start with { end with }.`;
 
-Start with { and end with }.`;
+// ============ SerpAPI Google Flights ============
+async function searchFlights(from, to, date, travelers) {
+  const serpKey = process.env.SERPAPI_KEY;
+  if (!serpKey) return null;
 
+  const params = new URLSearchParams({
+    engine: 'google_flights',
+    departure_id: from,
+    arrival_id: to,
+    outbound_date: date,
+    type: '2',
+    currency: 'USD',
+    hl: 'en',
+    adults: String(travelers || 1),
+    api_key: serpKey,
+  });
+
+  try {
+    const res = await fetch('https://serpapi.com/search?' + params.toString());
+    if (!res.ok) {
+      console.error('SerpAPI error:', res.status);
+      return null;
+    }
+    const data = await res.json();
+
+    // Extract best flights and other flights
+    const flights = [];
+    const sources = [
+      ...(data.best_flights || []),
+      ...(data.other_flights || []).slice(0, 5),
+    ];
+
+    sources.forEach(function(option) {
+      if (!option.flights || option.flights.length === 0) return;
+      const legs = option.flights;
+      const firstLeg = legs[0];
+      const lastLeg = legs[legs.length - 1];
+      flights.push({
+        price: option.price ? '$' + option.price : null,
+        duration: option.total_duration ? Math.floor(option.total_duration / 60) + 'h ' + (option.total_duration % 60) + 'm' : '',
+        airline: firstLeg.airline || '',
+        flightNumber: firstLeg.flight_number || '',
+        departureTime: firstLeg.departure_airport?.time || '',
+        arrivalTime: lastLeg.arrival_airport?.time || '',
+        stops: legs.length === 1 ? 'nonstop' : (legs.length - 1) + ' stop' + (legs.length > 2 ? 's' : ''),
+        departureAirport: firstLeg.departure_airport?.name || '',
+        arrivalAirport: lastLeg.arrival_airport?.name || '',
+      });
+    });
+
+    return flights.length > 0 ? flights : null;
+  } catch (err) {
+    console.error('SerpAPI fetch error:', err.message);
+    return null;
+  }
+}
+
+// ============ MAIN HANDLER ============
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -111,56 +156,110 @@ module.exports = async (req, res) => {
         const text = await response.text();
         try { return JSON.parse(text); }
         catch (e) {
-          console.error(label + ' returned non-JSON:', text.substring(0, 200));
+          console.error(label + ' non-JSON:', text.substring(0, 200));
           return null;
         }
       }
 
-      // Generate trip plan with Sonnet (single step — returns structured JSON)
-      const tripRes = await fetch('https://api.anthropic.com/v1/messages', {
+      function extractJson(text) {
+        text = text.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+        try { return JSON.parse(text); } catch (e) {}
+        var m = text.match(/\{[\s\S]*\}/);
+        if (m) { try { return JSON.parse(m[0]); } catch (e) {} }
+        return null;
+      }
+
+      // ===== STEP 1: Extract travel intent with Haiku =====
+      const intentRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2000,
+          system: INTENT_PROMPT,
+          messages: messages,
+        }),
+      });
+
+      const intentData = await safeJson(intentRes, 'Haiku');
+      if (!intentData || !intentRes.ok) {
+        return res.status(500).json({ error: 'Failed to understand your trip request. Try again.' });
+      }
+
+      const intent = extractJson(intentData.content[0].text);
+      if (!intent || !intent.origin || !intent.destinations) {
+        return res.status(500).json({ error: 'Could not parse trip details. Please be more specific about your cities and dates.' });
+      }
+
+      // ===== STEP 2: Fetch real flights from Google via SerpAPI =====
+      const flightDate = intent.departure_date || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+      const travelers = intent.travelers || 1;
+      const allLegs = [intent.origin, ...intent.destinations];
+      const realFlights = {};
+      let currentDate = flightDate;
+
+      for (let i = 0; i < allLegs.length - 1; i++) {
+        const from = allLegs[i];
+        const to = allLegs[i + 1];
+        const key = from.code + '-' + to.code;
+
+        const results = await searchFlights(from.code, to.code, currentDate, travelers);
+        if (results) {
+          realFlights[key] = results;
+        }
+
+        // Advance date by the number of days at this destination
+        if (from.days) {
+          const d = new Date(currentDate);
+          d.setDate(d.getDate() + from.days);
+          currentDate = d.toISOString().split('T')[0];
+        }
+      }
+
+      // ===== STEP 3: Build trip plan with Sonnet + real flight data =====
+      const flightContext = Object.keys(realFlights).length > 0
+        ? '\n\nREAL FLIGHT DATA FROM GOOGLE FLIGHTS (use these exact prices and airlines):\n' +
+          Object.entries(realFlights).map(([route, flights]) =>
+            route + ':\n' + flights.slice(0, 5).map(f =>
+              '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
+            ).join('\n')
+          ).join('\n\n')
+        : '';
+
+      const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 2000);
+
+      const planRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 8000,
-          system: EXTRACT_PROMPT,
-          messages: messages,
+          system: PLAN_PROMPT,
+          messages: [{
+            role: 'user',
+            content: 'Trip request: ' + userRequest + '\n\nExtracted intent: ' + JSON.stringify(intent) + flightContext,
+          }],
         }),
       });
 
-      const tripData = await safeJson(tripRes, 'Sonnet');
-      if (!tripData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
-      if (!tripRes.ok) {
-        console.error('Sonnet error:', tripRes.status);
-        return res.status(500).json({ error: 'Trip planning failed: ' + (tripData.error?.message || 'AI error') });
+      const planData = await safeJson(planRes, 'Sonnet');
+      if (!planData || !planRes.ok) {
+        return res.status(500).json({ error: 'Trip planning failed. Try again.' });
       }
 
-      let jsonText = tripData.content[0].text;
-      jsonText = jsonText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-
-      let tripPlan;
-      try {
-        tripPlan = JSON.parse(jsonText);
-      } catch (e) {
-        var jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try { tripPlan = JSON.parse(jsonMatch[0]); }
-          catch (e2) {
-            console.error('JSON parse error:', e2.message, 'Raw:', jsonText.substring(0, 500));
-            return res.status(500).json({ error: 'Trip data returned invalid format. Try again.' });
-          }
-        } else {
-          console.error('No JSON found. Raw:', jsonText.substring(0, 500));
-          return res.status(500).json({ error: 'Trip data returned invalid format. Try again.' });
-        }
+      const tripPlan = extractJson(planData.content[0].text);
+      if (!tripPlan) {
+        return res.status(500).json({ error: 'Trip data invalid. Try again.' });
       }
+
+      // Tag whether real flight data was used
+      tripPlan.liveFlights = Object.keys(realFlights).length > 0;
 
       // Log usage
-      const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 500);
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ user_id: user.id, prompt: userRequest }),
+        body: JSON.stringify({ user_id: user.id, prompt: userRequest.substring(0, 500) }),
       });
 
       res.status(200).json({ trip: tripPlan });

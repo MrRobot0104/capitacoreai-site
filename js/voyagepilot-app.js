@@ -184,7 +184,7 @@ function renderTrip(trip) {
   map.fitBounds(bounds, { padding: [60, 60], maxZoom: 6 });
 
   // Render flight cards
-  renderFlightCards(trip.flights || []);
+  renderFlightCards(trip.flights || [], trip.liveFlights);
 
   // Render itinerary
   renderItinerary(trip.itinerary || []);
@@ -198,9 +198,15 @@ function renderTrip(trip) {
   document.getElementById('tripDetails').classList.add('open');
 }
 
-function renderFlightCards(flights) {
+function renderFlightCards(flights, liveData) {
   var container = document.getElementById('flightCards');
   container.innerHTML = '';
+  if (liveData) {
+    var badge = document.createElement('div');
+    badge.style.cssText = 'flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:10px;font-size:11px;color:#10b981;font-weight:600;white-space:nowrap;';
+    badge.textContent = 'Live Google Flights Data';
+    container.appendChild(badge);
+  }
   flights.forEach(function(f) {
     var card = document.createElement('div');
     card.className = 'flight-card';
