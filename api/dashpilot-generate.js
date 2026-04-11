@@ -2,51 +2,71 @@ const EXTRACT_PROMPT = `You are a data extraction expert. You MUST output ONLY a
 
 If the user provides CSV/Excel data, read the DATA SUMMARY and RAW DATA and use the ACTUAL numbers.
 If the user describes a dashboard without data, generate realistic sample data that matches their description.
+If the user asks to modify the previous dashboard, keep the previous config and apply only the requested changes.
 
 Output this exact JSON structure:
-{"title":"Dashboard Title","subtitle":"Description","kpis":[{"label":"METRIC","value":"$98.6K","change":"+12%"}],"charts":[{"title":"Chart","subtitle":"","type":"bar","labels":["A","B"],"datasets":[{"label":"Series","data":[100,200]}]}],"table":{"title":"Details","headers":["Col1","Col2"],"rows":[["val1","val2"]]}}
+{"title":"Dashboard Title","subtitle":"Description","badges":[{"text":"Q1 2026","color":"blue"}],"kpis":[{"label":"REVENUE","value":"$98.6K","change":"+12%","subtitle":"vs last quarter"}],"charts":[{"title":"Revenue by Month","subtitle":"Last 6 months","type":"bar","labels":["Jan","Feb","Mar"],"datasets":[{"label":"Revenue","data":[45000,52000,61000]}]}],"table":{"title":"Detailed Breakdown","headers":["Product","Revenue","Growth"],"rows":[["Widget A","$45K","+8%"],["Widget B","$32K","+15%"]]}}
 
-Chart types: bar, horizontalBar, line, doughnut, pie.
-KPI values: Use pre-computed sums/averages from data. Format as $98.6K, 68.2%, 761 units.
-Charts: Put REAL numbers from the data in arrays.
-Table: Include ALL data rows.
+Rules:
+- Chart types: bar, horizontalBar, line, doughnut, pie
+- KPI values: Use pre-computed sums/averages from data. Format as $98.6K, 68.2%, 761 units
+- Charts: Put REAL numbers from the data in arrays. Create 2-4 meaningful charts
+- Table: Include ALL data rows from the source data
+- Badges: Add contextual badges like dates, company names, status (colors: green, blue, amber)
+- KPIs: Create 3-5 key metrics. Include change values like "+12%" or "-3%"
 
-CRITICAL: Your entire response must be a single JSON object. Do NOT include any text, explanation, or markdown. Start with { and end with }.`;
+CRITICAL: Your entire response must be a single JSON object. Start with { and end with }.`;
 
-const DESIGN_PROMPT = `You are an elite dashboard designer and data storyteller. You receive JSON data and create STUNNING, UNIQUE, executive-grade HTML dashboards.
+const DESIGN_PROMPT = `You create beautiful, production-ready HTML dashboards. Output a COMPLETE, working HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
 
-The JSON below contains ALL the data — KPIs, chart configs, and table data. Your job is to make it UNFORGETTABLE.
-
-You also have web search — use it to enrich the dashboard with real company info, product details, industry context, and relevant facts that would impress a CFO.
-
-OUTPUT: A single complete HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
-
-Load in <head>:
+REQUIRED IN <head>:
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
-THINK DEEPLY about the best way to present this data. Consider:
-- What story does this data tell?
-- What would a CFO care about most?
-- What insights are hidden in the numbers?
-- What context from the web makes this more compelling?
+REQUIRED CSS RULES (include these exactly, then add your creative styles on top):
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+.chart-container { position:relative; height:280px; }
+table { width:100%; border-collapse:collapse; }
+@media(max-width:768px) { .grid-2,.grid-3 { grid-template-columns:1fr !important; } }
 
-DESIGN — be creative and UNIQUE every time:
-- Each dashboard should have its own visual personality
-- Use creative layouts: hero sections, split panels, sidebar stats, full-bleed charts
-- Rich color palettes, gradient accents, glass-morphism, dark/light sections
-- Animated number counters, progress rings, sparklines, trend arrows
-- Custom SVG icons, creative section dividers
-- Chart.js with gradient fills, custom tooltips, annotations
-- If the user mentions a company or product, include real facts from your web search
-- Add an "insights" section with AI-generated observations about the data
+STRUCTURE — build the dashboard with these sections in order:
+1. HEADER — title, subtitle, optional badges/metadata
+2. KPI CARDS — grid of 3-5 metric cards showing key numbers
+3. CHARTS — 2-4 Chart.js charts in a responsive grid
+4. DATA TABLE — sortable-looking table with all rows
+5. FOOTER — "Built with DashPilot by CapitaCoreAI"
 
-CHART.JS: ALL code inside window.addEventListener('load', function() { ... })
-Use the EXACT values from the JSON. borderRadius on bars, tension on lines.
+CHART.JS — THIS IS CRITICAL, follow exactly:
+- Wrap ALL Chart.js code in: window.addEventListener('load', function() { ... });
+- Each chart canvas needs a UNIQUE id (chart0, chart1, chart2, etc.)
+- Use this exact pattern for each chart:
+  new Chart(document.getElementById('chart0'), {
+    type: 'bar',
+    data: { labels: [...], datasets: [{ label: '...', data: [...], backgroundColor: '...', borderRadius: 8 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+- For line charts: add tension: 0.4, fill: true, pointRadius: 4
+- For pie/doughnut: use backgroundColor array matching the number of labels
+- NEVER use ctx.createLinearGradient — just use solid hex colors
+- NEVER define Chart plugins or custom scales
 
-DATA: The KPI values, chart data, and table rows from JSON go directly into the HTML. DO NOT change or zero-out any values.
+DESIGN — vary these elements creatively each time:
+- Color palette: pick a cohesive 4-5 color palette (not always blue)
+- Background: light (#f5f5f5), dark (#0f172a), or gradient
+- KPI card style: colored top borders, icon accents, subtle shadows
+- Layout: vary between 2-col and 3-col grids for charts
+- Typography: vary heading sizes and weights
+- Accents: gradient header bars, colored badges, trend arrows on KPIs
 
-Make this look like a McKinsey deliverable meets a Silicon Valley product.`;
+DATA RULES:
+- Use the EXACT values from the JSON — never zero out or change numbers
+- KPI values go directly into the HTML text
+- Chart data arrays come directly from the JSON datasets
+- Table rows come directly from the JSON table.rows
+
+Keep the HTML compact. Do NOT add comments. Do NOT add JavaScript beyond Chart.js initialization.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -153,7 +173,7 @@ module.exports = async (req, res) => {
         }
       }
 
-      // ========= STEP 2: Generate unique HTML with Sonnet + thinking + web search =========
+      // ========= STEP 2: Generate HTML dashboard with Sonnet =========
       const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 1000);
 
       const designRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -161,18 +181,11 @@ module.exports = async (req, res) => {
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 16000,
-          thinking: {
-            type: 'enabled',
-            budget_tokens: 5000
-          },
-          tools: [
-            { type: 'web_search_20250305', name: 'web_search', max_uses: 3 }
-          ],
+          max_tokens: 12000,
           system: DESIGN_PROMPT,
           messages: [{
             role: 'user',
-            content: 'Dashboard data (use these exact values):\n\n' + JSON.stringify(dashConfig, null, 2) + '\n\nUser request: ' + userRequest
+            content: 'Create a dashboard from this data. Output ONLY the HTML file, starting with <!DOCTYPE html>.\n\n' + JSON.stringify(dashConfig, null, 2)
           }],
         }),
       });
@@ -180,11 +193,10 @@ module.exports = async (req, res) => {
       const designData = await safeJson(designRes, 'Sonnet');
       if (!designData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
       if (!designRes.ok) {
-        console.error('Sonnet error:', designRes.status);
+        console.error('Sonnet error:', designRes.status, JSON.stringify(designData).substring(0, 300));
         return res.status(500).json({ error: 'Design generation failed: ' + (designData.error?.message || 'AI error') });
       }
 
-      // Extract text blocks only (skip thinking and tool_result blocks)
       const textBlocks = designData.content.filter(b => b.type === 'text');
       let html = textBlocks.map(b => b.text).join('');
       html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
