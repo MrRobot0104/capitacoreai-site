@@ -207,30 +207,30 @@
       <h2>What DashPilot Created</h2>
       <p class="gallery-sub">Real dashboards and tools built with DashPilot by CapitaCoreAI users.</p>
       <div class="gallery-wrap">
-        <button class="gallery-nav prev" onclick="scrollGallery(-1)">&#8249;</button>
+        <button class="gallery-nav prev" id="galleryPrev">&#8249;</button>
         <div class="gallery-track" id="galleryTrack">
-          <div class="gallery-item" onclick="window.open('preview.html?file=Ultimate_AI_Prompt_Vault_CapitaCoreAI.html','_blank')">
+          <div class="gallery-item" data-preview="preview.html?file=Ultimate_AI_Prompt_Vault_CapitaCoreAI.html">
             <img src="img/dash-prompt-vault.png" alt="AI Prompt Vault">
             <div class="gallery-label">Ultimate AI Prompt Vault<span>500+ expert prompts across 12 categories</span></div>
           </div>
-          <div class="gallery-item" onclick="window.open('preview.html?file=Freelancer_Hub_CapitaCoreAI.html','_blank')">
+          <div class="gallery-item" data-preview="preview.html?file=Freelancer_Hub_CapitaCoreAI.html">
             <img src="img/dash-freelancer.png" alt="Freelancer Hub">
             <div class="gallery-label">Freelancer Hub<span>Project management & invoicing dashboard</span></div>
           </div>
-          <div class="gallery-item" onclick="window.open('preview.html?file=Monthly_Budget_Planner_CapitaCoreAI.html','_blank')">
+          <div class="gallery-item" data-preview="preview.html?file=Monthly_Budget_Planner_CapitaCoreAI.html">
             <img src="img/dash-budget-planner.png" alt="Budget Planner">
             <div class="gallery-label">Monthly Budget Planner<span>Track spending, set budgets & visualize finances</span></div>
           </div>
-          <div class="gallery-item" onclick="window.open('preview.html?file=Social_Media_Calendar_CapitaCoreAI.html','_blank')">
+          <div class="gallery-item" data-preview="preview.html?file=Social_Media_Calendar_CapitaCoreAI.html">
             <img src="img/dash-social-calendar.png" alt="Social Media Calendar">
             <div class="gallery-label">Social Media Calendar<span>Plan, schedule & analyze content across platforms</span></div>
           </div>
-          <div class="gallery-item" onclick="window.open('preview.html?file=dashforge-template.html','_blank')">
+          <div class="gallery-item" data-preview="preview.html?file=dashforge-template.html">
             <img src="img/dash-dashforge.png" alt="DashForge Template">
             <div class="gallery-label">DashForge Budget Template<span>Interactive financial dashboard with expense tracking</span></div>
           </div>
         </div>
-        <button class="gallery-nav next" onclick="scrollGallery(1)">&#8250;</button>
+        <button class="gallery-nav next" id="galleryNext">&#8250;</button>
       </div>
     </div>
 
@@ -246,7 +246,7 @@
             <p>500+ expert prompts across 12 categories. Search, filter, favorite, and copy to clipboard instantly.</p>
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
-              <button class="btn-get" data-file="Ultimate_AI_Prompt_Vault_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+              <button class="btn-get" data-file="Ultimate_AI_Prompt_Vault_CapitaCoreAI.html">Get Dashboard</button>
             </div>
           </div>
         </div>
@@ -257,7 +257,7 @@
             <p>All-in-one project management and accounting dashboard. Track clients, invoices, time, and income.</p>
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
-              <button class="btn-get" data-file="Freelancer_Hub_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+              <button class="btn-get" data-file="Freelancer_Hub_CapitaCoreAI.html">Get Dashboard</button>
             </div>
           </div>
         </div>
@@ -268,7 +268,7 @@
             <p>Plan, schedule, and analyze content across Instagram, TikTok, Twitter, and LinkedIn in one view.</p>
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
-              <button class="btn-get" data-file="Social_Media_Calendar_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+              <button class="btn-get" data-file="Social_Media_Calendar_CapitaCoreAI.html">Get Dashboard</button>
             </div>
           </div>
         </div>
@@ -279,7 +279,7 @@
             <p>Personal finance dashboard for tracking monthly budgets, spending categories, and financial goals.</p>
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
-              <button class="btn-get" data-file="Monthly_Budget_Planner_CapitaCoreAI.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+              <button class="btn-get" data-file="Monthly_Budget_Planner_CapitaCoreAI.html">Get Dashboard</button>
             </div>
           </div>
         </div>
@@ -290,7 +290,7 @@
             <p>Clean financial dashboard template with interactive charts and expense tracking visualizations.</p>
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
-              <button class="btn-get" data-file="dashforge-template.html" onclick="buyPrebuilt(this)">Get Dashboard</button>
+              <button class="btn-get" data-file="dashforge-template.html">Get Dashboard</button>
             </div>
           </div>
         </div>
