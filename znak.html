@@ -67,7 +67,7 @@
     /* PRICING */
     .pricing-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
     .pricing-desc { font-size: 14px; color: #999999; margin-bottom: 24px; }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
     .price-card { border: 1px solid #e0e0e0; border-radius: 14px; padding: 24px; text-align: center; transition: all 0.2s; }
     .price-card:hover { border-color: #cccccc; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .price-card.popular { border-color: #111111; }
@@ -221,20 +221,26 @@
         <div class="price-card">
           <div class="pkg-name">Starter</div>
           <div class="pkg-price">$4.99</div>
-          <div class="pkg-detail">5 dashboards</div>
+          <div class="pkg-detail">10 dashboards</div>
           <button class="btn-buy" onclick="buyPackage('starter')">Buy Starter</button>
+        </div>
+        <div class="price-card">
+          <div class="pkg-name">Growth</div>
+          <div class="pkg-price">$14.99</div>
+          <div class="pkg-detail">30 dashboards</div>
+          <button class="btn-buy" onclick="buyPackage('growth')">Buy Growth</button>
         </div>
         <div class="price-card popular">
           <div class="pkg-name">Pro</div>
-          <div class="pkg-price">$8.99</div>
-          <div class="pkg-detail">10 dashboards</div>
+          <div class="pkg-price">$29.99</div>
+          <div class="pkg-detail">75 dashboards</div>
           <button class="btn-buy" onclick="buyPackage('pro')">Buy Pro</button>
         </div>
         <div class="price-card">
-          <div class="pkg-name">Business</div>
-          <div class="pkg-price">$12.99</div>
-          <div class="pkg-detail">15 dashboards</div>
-          <button class="btn-buy" onclick="buyPackage('business')">Buy Business</button>
+          <div class="pkg-name">Enterprise</div>
+          <div class="pkg-price">$69.99</div>
+          <div class="pkg-detail">200 dashboards</div>
+          <button class="btn-buy" onclick="buyPackage('enterprise')">Buy Enterprise</button>
         </div>
       </div>
     </div>

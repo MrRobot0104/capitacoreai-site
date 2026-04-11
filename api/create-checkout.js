@@ -1,7 +1,8 @@
 const PACKAGES = {
-  starter: { name: 'znak — Starter (5 Dashboards)', tokens: 5, price: 499 },
-  pro:     { name: 'znak — Pro (10 Dashboards)',     tokens: 10, price: 899 },
-  business:{ name: 'znak — Business (15 Dashboards)',tokens: 15, price: 1299 },
+  starter:    { name: 'znak — Starter (10 Dashboards)',     tokens: 10,  price: 499 },
+  growth:     { name: 'znak — Growth (30 Dashboards)',      tokens: 30,  price: 1499 },
+  pro:        { name: 'znak — Pro (75 Dashboards)',         tokens: 75,  price: 2999 },
+  enterprise: { name: 'znak — Enterprise (200 Dashboards)', tokens: 200, price: 6999 },
 };
 
 module.exports = async (req, res) => {
