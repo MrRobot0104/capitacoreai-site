@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Content Calendar & Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --bg: #09090b;
+        --surface: #18181b;
+        --surface-2: #27272a;
+        --border: #3f3f46;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --accent: #6366f1;
+        --instagram: #E4405F;
+        --tiktok: #00F2EA;
+        --twitter: #1DA1F2;
+        --facebook: #1877F2;
+        --linkedin: #0A66C2;
+        --youtube: #FF0000;
+        --pinterest: #E60023;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .btn-accent {
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-accent:hover {
+        background: #5558e3;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+        background: var(--border);
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-danger {
+        background: #ef4444;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 0 2rem;
+        background: var(--surface);
+    }
+
+    .tab-btn {
+        padding: 1rem 1.5rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+        font-size: 0.95rem;
+    }
+
+    .tab-btn:hover {
+        color: var(--text);
+    }
+
+    .tab-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Calendar Styles */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .calendar-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .day-header {
+        text-align: center;
+        font-weight: 600;
+        color: var(--text-muted);
+        padding: 0.5rem 0;
+    }
+
+    .calendar-day {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        min-height: 120px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .calendar-day:hover {
+        border-color: var(--accent);
+        background: var(--surface-2);
+    }
+
+    .calendar-day.other-month {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .calendar-day.other-month:hover {
+        border-color: var(--border);
+        background: var(--surface);
+    }
+
+    .day-number {
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .day-posts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .post-chip {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 0.4rem;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .post-chip.draft { border-left: 3px solid #6b7280; }
+    .post-chip.scheduled { border-left: 3px solid var(--accent); }
+    .post-chip.published { border-left: 3px solid #10b981; }
+    .post-chip.idea { border-left: 3px solid #f59e0b; }
+
+    .platform-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    /* Kanban Board */
+    .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .kanban-column {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        min-height: 600px;
+    }
+
+    .kanban-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .kanban-header h3 {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .kanban-header .count {
+        background: var(--surface-2);
+        color: var(--text-muted);
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.3rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .kanban-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .kanban-card {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .kanban-card:hover {
+        border-color: var(--accent);
+        background: #2a2a2d;
+    }
+
+    .kanban-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .kanban-card-platform {
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .kanban-card-status {
+        margin-left: auto;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .kanban-card-status.draft { background: rgba(107, 114, 128, 0.2); color: #d1d5db; }
+    .kanban-card-status.scheduled { background: rgba(99, 102, 241, 0.2); color: var(--accent); }
+    .kanban-card-status.published { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .kanban-card-status.idea { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    .kanban-card-content {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+
+    .kanban-card-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Analytics */
+    .analytics-header {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0.5rem 0;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .chart-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
+
+    /* Hashtag Manager */
+    .hashtag-sets {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .hashtag-set {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+
+    .hashtag-set-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .hashtag-set-name {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .hashtag-set-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .hashtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hashtag {
+        background: var(--surface-2);
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.3rem;
+        font-size: 0.85rem;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .hashtag-remove {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+
+    .hashtag-remove:hover {
+        opacity: 1;
+    }
+
+    .char-count {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    /* Content Ideas */
+    .ideas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .idea-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .idea-card:hover {
+        border-color: var(--accent);
+        background: var(--surface-2);
+    }
+
+    .idea-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .idea-category {
+        display: inline-block;
+        background: var(--accent);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .idea-star {
+        cursor: pointer;
+        font-size: 1.5rem;
+        transition: all 0.2s;
+    }
+
+    .idea-star.starred {
+        color: #fbbf24;
+    }
+
+    .idea-content {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        color: var(--text-muted);
+    }
+
+    .idea-footer {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Settings */
+    .settings-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .settings-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+
+    .setting-label {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .setting-label-text {
+        font-weight: 500;
+    }
+
+    .setting-label-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .setting-value {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .platform-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .platform-badge {
+        background: var(--surface-2);
+        padding: 0.5rem 1rem;
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .platform-badge .remove {
+        cursor: pointer;
+        opacity: 0.6;
+        font-weight: bold;
+    }
+
+    .platform-badge .remove:hover {
+        opacity: 1;
+    }
+
+    /* Editable Fields */
+    .ed {
+        cursor: pointer;
+        border-bottom: 1px dashed var(--border);
+        padding: 0.2rem 0.4rem;
+        transition: all 0.2s ease;
+    }
+
+    .ed:hover {
+        border-bottom-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: #2a2a2d;
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .modal-actions .btn {
+        flex: 1;
+    }
+
+    /* Footer */
+    footer {
+        text-align: center;
+        padding: 2rem;
+        border-top: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 3rem;
+    }
+
+    footer strong {
+        color: var(--accent);
+    }
+
+    /* Utilities */
+    .flex {
+        display: flex;
+    }
+
+    .gap-1 { gap: 1rem; }
+    .gap-2 { gap: 2rem; }
+
+    .mb-1 { margin-bottom: 1rem; }
+    .mb-2 { margin-bottom: 2rem; }
+
+    .text-muted { color: var(--text-muted); }
+    .text-accent { color: var(--accent); }
+
+    .text-sm { font-size: 0.85rem; }
+    .text-xs { font-size: 0.75rem; }
+
+    .hidden { display: none !important; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .tabs {
+            overflow-x: auto;
+        }
+
+        .container {
+            padding: 1rem;
+        }
+
+        .calendar-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-day {
+            min-height: 80px;
+            padding: 0.5rem;
+        }
+
+        .day-number {
+            font-size: 0.8rem;
+        }
+
+        .post-chip {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.4rem;
+        }
+
+        .kanban-board {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hashtag-sets {
+            grid-template-columns: 1fr;
+        }
+
+        .ideas-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-content {
+            width: 95%;
+        }
+    }
+</style>
+
+<body>
+<div class="header">
+    <div>
+        <h1>Social Media Content Calendar</h1>
+        <p class="subtitle">Plan, schedule, and track your social media content. By CapitaCoreAI.</p>
+    </div>
+    <button class="btn btn-accent" onclick="exportData()">EXPORT</button>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(event, 'calendar')">Calendar</button>
+    <button class="tab-btn" onclick="switchTab(event, 'board')">Content Board</button>
+    <button class="tab-btn" onclick="switchTab(event, 'analytics')">Analytics</button>
+    <button class="tab-btn" onclick="switchTab(event, 'hashtags')">Hashtag Manager</button>
+    <button class="tab-btn" onclick="switchTab(event, 'ideas')">Content Ideas</button>
+    <button class="tab-btn" onclick="switchTab(event, 'settings')">Settings</button>
+</div>
+
+<div class="container">
+    <!-- CALENDAR TAB -->
+    <div id="calendar" class="tab-content active">
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;" id="monthYear"></h2>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-sm" onclick="previousMonth()">← Previous</button>
+                <button class="btn btn-secondary btn-sm" onclick="nextMonth()">Next →</button>
+            </div>
+        </div>
+
+        <div class="calendar-header" id="calendarHeader"></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- CONTENT BOARD TAB -->
+    <div id="board" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Content Board</h2>
+            <button class="btn btn-accent" onclick="addNewCard()">+ Add Card</button>
+        </div>
+        <div class="kanban-board" id="kanbanBoard"></div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div id="analytics" class="tab-content">
+        <h2 style="font-size: 1.5rem; margin-bottom: 2rem;">Analytics & Performance</h2>
+
+        <div class="analytics-header" id="kpis"></div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">Posts by Platform</div>
+                <div class="chart-wrapper">
+                    <canvas id="platformChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Posts per Week (Last 4 Weeks)</div>
+                <div class="chart-wrapper">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Content Type Distribution</div>
+                <div class="chart-wrapper">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Engagement Rate by Platform</div>
+                <div class="chart-wrapper">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HASHTAG MANAGER TAB -->
+    <div id="hashtags" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Hashtag Manager</h2>
+            <button class="btn btn-accent" onclick="addHashtagSet()">+ New Hashtag Set</button>
+        </div>
+        <div class="hashtag-sets" id="hashtagSets"></div>
+    </div>
+
+    <!-- CONTENT IDEAS TAB -->
+    <div id="ideas" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Content Ideas</h2>
+            <button class="btn btn-accent" onclick="addCustomIdea()">+ Add Custom Idea</button>
+        </div>
+        <div class="ideas-grid" id="ideasContainer"></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="settings" class="tab-content">
+        <h2 style="font-size: 1.5rem; margin-bottom: 2rem;">Settings</h2>
+
+        <div class="settings-section">
+            <h3>Active Platforms</h3>
+            <div class="platform-list" id="platformList"></div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 1rem;" onclick="showAddPlatformModal()">+ Add Platform</button>
+        </div>
+
+        <div class="settings-section">
+            <h3>Goals & Targets</h3>
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span class="setting-label-text">Posts per Week Target</span>
+                    <span class="setting-label-desc">Goal number of posts per week</span>
+                </div>
+                <div class="setting-value">
+                    <input type="number" class="form-input" id="postsPerWeek" style="width: 100px;" min="1" max="50" value="5" onchange="saveData()">
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span class="setting-label-text">Default Posting Time</span>
+                    <span class="setting-label-desc">Suggested time for new posts</span>
+                </div>
+                <div class="setting-value">
+                    <input type="time" class="form-input" id="defaultTime" style="width: 120px;" value="09:00" onchange="saveData()">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Data Management</h3>
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span class="setting-label-text">Import/Export Data</span>
+                    <span class="setting-label-desc">Download or restore your calendar data as JSON</span>
+                </div>
+                <div class="setting-value">
+                    <button class="btn btn-secondary btn-sm" onclick="exportData()">Export JSON</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span class="setting-label-text">Reset All Data</span>
+                    <span class="setting-label-desc">Clear all posts, ideas, and settings</span>
+                </div>
+                <div class="setting-value">
+                    <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- POST EDITOR MODAL -->
+<div class="modal" id="postModal">
+    <div class="modal-content">
+        <div class="modal-header">Edit Post</div>
+        <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-select" id="postPlatform" onchange="updatePostContentTypes()">
+                <option value="Instagram">Instagram</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Twitter">Twitter/X</option>
+                <option value="Facebook">Facebook</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="YouTube">YouTube</option>
+                <option value="Pinterest">Pinterest</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Content Type</label>
+            <select class="form-select" id="postContentType">
+                <option value="Post">Post</option>
+                <option value="Reel/Short">Reel/Short</option>
+                <option value="Story">Story</option>
+                <option value="Carousel">Carousel</option>
+                <option value="Live">Live</option>
+                <option value="Blog">Blog</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="postStatus">
+                <option value="Draft">Draft</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Published">Published</option>
+                <option value="Idea">Idea</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="postDate">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Time</label>
+            <input type="time" class="form-input" id="postTime">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Caption</label>
+            <textarea class="form-textarea" id="postCaption" placeholder="Write your caption here..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Hashtags</label>
+            <textarea class="form-textarea" id="postHashtags" placeholder="#hashtag1 #hashtag2 #hashtag3"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closePostModal()">Cancel</button>
+            <button class="btn btn-accent" onclick="savePost()">Save Post</button>
+            <button class="btn btn-danger" id="deletePostBtn" style="display:none;" onclick="deletePost()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- HASHTAG SET MODAL -->
+<div class="modal" id="hashtagModal">
+    <div class="modal-content">
+        <div class="modal-header">Edit Hashtag Set</div>
+        <div class="form-group">
+            <label class="form-label">Set Name</label>
+            <input type="text" class="form-input" id="hashtagSetName" placeholder="e.g., Growth & Engagement">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Hashtags</label>
+            <textarea class="form-textarea" id="hashtagSetTags" placeholder="#growth #marketing #engagement"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeHashtagModal()">Cancel</button>
+            <button class="btn btn-accent" onclick="saveHashtagSet()">Save Set</button>
+            <button class="btn btn-danger" id="deleteHashtagBtn" style="display:none;" onclick="deleteHashtagSet()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD PLATFORM MODAL -->
+<div class="modal" id="addPlatformModal">
+    <div class="modal-content">
+        <div class="modal-header">Add Platform</div>
+        <div class="form-group">
+            <label class="form-label">Select Platform</label>
+            <select class="form-select" id="platformSelect">
+                <option value="">-- Choose a platform --</option>
+                <option value="Instagram">Instagram</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Twitter">Twitter/X</option>
+                <option value="Facebook">Facebook</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="YouTube">YouTube</option>
+                <option value="Pinterest">Pinterest</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeAddPlatformModal()">Cancel</button>
+            <button class="btn btn-accent" onclick="savePlatform()">Add</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<footer>
+<strong>CapitaCoreAI</strong> — Social Media Content Calendar
+</footer>
+
+<script>
+    // Color scheme
+    const COLORS = {
+        chart: ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6','#a855f7','#d946ef']
+    };
+
+    const PLATFORM_COLORS = {
+        'Instagram': '#E4405F',
+        'TikTok': '#00F2EA',
+        'Twitter': '#1DA1F2',
+        'Facebook': '#1877F2',
+        'LinkedIn': '#0A66C2',
+        'YouTube': '#FF0000',
+        'Pinterest': '#E60023'
+    };
+
+    const CONTENT_TYPES = {
+        'Instagram': ['Post', 'Reel/Short', 'Story', 'Carousel', 'Live'],
+        'TikTok': ['Reel/Short', 'Duet', 'Stitch'],
+        'Twitter': ['Post', 'Thread'],
+        'Facebook': ['Post', 'Video', 'Carousel'],
+        'LinkedIn': ['Post', 'Article', 'Document'],
+        'YouTube': ['Video', 'Short', 'Live'],
+        'Pinterest': ['Pin', 'Carousel']
+    };
+
+    let currentData = {};
+    let currentMonth = new Date();
+    let currentPostId = null;
+    let currentHashtagId = null;
+
+    function getDateInMonth(day) {
+        const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+        return date.toISOString().split('T')[0];
+    }
+
+    // Default data
+    const DEFAULT_DATA = {
+        posts: [
+            { id: 1, date: getDateInMonth(5), time: '09:00', platform: 'Instagram', type: 'Post', status: 'Scheduled', caption: 'Monday motivation boost! 💪 Here\'s a quick tip to get your week started...', hashtags: '#motivation #monday #productivity' },
+            { id: 2, date: getDateInMonth(5), time: '14:00', platform: 'TikTok', type: 'Reel/Short', status: 'Draft', caption: 'Quick tutorial: 5 ways to organize your workspace', hashtags: '#productivity #tips #workspace' },
+            { id: 3, date: getDateInMonth(7), time: '10:00', platform: 'LinkedIn', type: 'Post', status: 'Published', caption: 'Excited to announce our new partnership! 🚀', hashtags: '#partnership #growth #announcement' },
+            { id: 4, date: getDateInMonth(7), time: '18:00', platform: 'Instagram', type: 'Story', status: 'Idea', caption: 'Behind-the-scenes team content', hashtags: '#behindthescenes #team #culture' },
+            { id: 5, date: getDateInMonth(10), time: '11:00', platform: 'Twitter', type: 'Post', status: 'Scheduled', caption: 'What\'s your favorite productivity hack? Share below! 👇', hashtags: '#productivity #community #engagement' },
+            { id: 6, date: getDateInMonth(12), time: '09:00', platform: 'Pinterest', type: 'Pin', status: 'Scheduled', caption: 'New blog post: Ultimate guide to content planning', hashtags: '#contentmarketing #socialmedia #planning' },
+            { id: 7, date: getDateInMonth(14), time: '13:00', platform: 'YouTube', type: 'Video', status: 'Draft', caption: 'Full workflow walkthrough - 15 min tutorial', hashtags: '#tutorial #howto #youtube' },
+            { id: 8, date: getDateInMonth(16), time: '10:30', platform: 'Facebook', type: 'Post', status: 'Published', caption: 'Community poll: What features would you like to see next?', hashtags: '#community #feedback #engagement' },
+            { id: 9, date: getDateInMonth(18), time: '15:00', platform: 'Instagram', type: 'Carousel', status: 'Scheduled', caption: 'Carousel: 10 tips for social media success', hashtags: '#tips #socialmedia #growth' },
+            { id: 10, date: getDateInMonth(20), time: '08:00', platform: 'TikTok', type: 'Reel/Short', status: 'Draft', caption: 'Trending audio + our new product = viral potential', hashtags: '#trending #viral #newproduct' },
+            { id: 11, date: getDateInMonth(21), time: '11:00', platform: 'LinkedIn', type: 'Article', status: 'Idea', caption: 'Why social media strategy matters for B2B companies', hashtags: '#b2b #socialmedia #strategy' },
+            { id: 12, date: getDateInMonth(23), time: '16:00', platform: 'Instagram', type: 'Reel/Short', status: 'Published', caption: 'Satisfying workspace tour - follow for more!', hashtags: '#workspace #aesthetic #tour' },
+            { id: 13, date: getDateInMonth(25), time: '09:00', platform: 'Twitter', type: 'Post', status: 'Scheduled', caption: 'Milestone: 50K followers! Thank you all 🎉', hashtags: '#milestone #grateful #community' },
+            { id: 14, date: getDateInMonth(27), time: '12:00', platform: 'Pinterest', type: 'Pin', status: 'Draft', caption: 'Infographic: Content calendar best practices', hashtags: '#infographic #contentcalendar #planning' },
+            { id: 15, date: getDateInMonth(28), time: '14:00', platform: 'Facebook', type: 'Video', status: 'Scheduled', caption: 'Customer testimonial: See how we\'ve helped businesses grow', hashtags: '#testimonial #success #customer' },
+            { id: 16, date: getDateInMonth(2), time: '10:00', platform: 'Instagram', type: 'Story', status: 'Scheduled', caption: 'Daily standup - what\'s on your mind today?', hashtags: '#standup #daily #engagement' },
+            { id: 17, date: getDateInMonth(8), time: '11:30', platform: 'YouTube', type: 'Short', status: 'Published', caption: 'Quick tip: How to optimize your bio', hashtags: '#shorts #tips #optimization' },
+            { id: 18, date: getDateInMonth(15), time: '13:45', platform: 'TikTok', type: 'Duet', status: 'Idea', caption: 'Duet with trending creator in our niche', hashtags: '#duet #trending #collab' },
+            { id: 19, date: getDateInMonth(22), time: '09:15', platform: 'LinkedIn', type: 'Post', status: 'Published', caption: 'Industry insights: Q2 trends and what they mean for you', hashtags: '#industry #trends #insights' },
+            { id: 20, date: getDateInMonth(29), time: '15:30', platform: 'Instagram', type: 'Post', status: 'Draft', caption: 'Monthly wrap-up: Your favorite posts from April', hashtags: '#monthwrap #favorites #instagram' }
+        ],
+        hashtags: [
+            { id: 1, name: 'Growth & Engagement', tags: '#growth #engagement #community #followers #reach #viral #trending' },
+            { id: 2, name: 'Product Launch', tags: '#newproduct #launch #excited #announcement #innovation #coming' },
+            { id: 3, name: 'Behind the Scenes', tags: '#behindthescenes #team #culture #worklife #dayinmylife #teamwork' },
+            { id: 4, name: 'Educational Content', tags: '#tutorial #howto #tips #education #learning #guide #master' },
+            { id: 5, name: 'Inspiration & Motivation', tags: '#motivation #inspiration #mindset #success #goals #achieve' },
+            { id: 6, name: 'Industry Specific', tags: '#socialmedia #marketing #business #entrepreneur #startup #strategy' }
+        ],
+        ideas: [
+            { id: 1, category: 'Hooks', content: 'Start with a surprising statistic: "9 out of 10 marketers say..."', starred: false },
+            { id: 2, category: 'Hooks', content: 'Ask a polarizing question to spark debate in comments', starred: false },
+            { id: 3, category: 'Hooks', content: 'Use a relatable pain point: "If you\'ve ever struggled with..."', starred: false },
+            { id: 4, category: 'CTAs', content: 'Ask followers to tag a friend who needs to see this', starred: false },
+            { id: 5, category: 'CTAs', content: 'Create urgency: "Limited time offer - link in bio"', starred: false },
+            { id: 6, category: 'CTAs', content: 'Poll-style CTA: "Which one are you? 1 or 2?"', starred: false },
+            { id: 7, category: 'Carousel Ideas', content: 'Before/after transformation series (6-8 slides)', starred: false },
+            { id: 8, category: 'Carousel Ideas', content: 'Top X tips list format with visuals', starred: false },
+            { id: 9, category: 'Carousel Ideas', content: 'Myth busting carousel - common misconceptions', starred: false },
+            { id: 10, category: 'Reel Scripts', content: 'Quick demo of your product/service in action', starred: false },
+            { id: 11, category: 'Reel Scripts', content: 'Trending audio + voiceover with text overlay', starred: false },
+            { id: 12, category: 'Reel Scripts', content: 'Speed-up format: showing progress/transformation', starred: false },
+            { id: 13, category: 'Story Prompts', content: 'This or that? Interactive story polls', starred: false },
+            { id: 14, category: 'Story Prompts', content: 'Question sticker: "What\'s your biggest challenge?"', starred: false },
+            { id: 15, category: 'Story Prompts', content: 'Day in the life format across multiple stories', starred: false },
+            { id: 16, category: 'Engagement Questions', content: 'What\'s the best advice you\'ve ever received?', starred: false },
+            { id: 17, category: 'Engagement Questions', content: 'Hot take: What do you disagree with in our industry?', starred: false },
+            { id: 18, category: 'Engagement Questions', content: 'Dream scenario: If you had unlimited budget, what would you do?', starred: false },
+            { id: 19, category: 'Hooks', content: 'Contrarian take: "Everyone says X, but here\'s why Y..."', starred: false },
+            { id: 20, category: 'CTAs', content: 'Save this for later if you found it valuable', starred: true }
+        ],
+        platforms: ['Instagram', 'TikTok', 'Twitter', 'Facebook', 'LinkedIn'],
+        postsPerWeek: 5,
+        defaultTime: '09:00'
+    };
+
+    function saveData() {
+        localStorage.setItem('capitacore_social_calendar', JSON.stringify(currentData));
+    }
+
+    function loadData() {
+        const saved = localStorage.getItem('capitacore_social_calendar');
+        if (saved) {
+            currentData = JSON.parse(saved);
+        } else {
+            currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+        saveData();
+    }
+
+    function switchTab(e, tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(tabId).classList.add('active');
+        e.target.classList.add('active');
+
+        if (tabId === 'analytics') {
+            setTimeout(renderAnalytics, 100);
+        }
+    }
+
+    function refresh() {
+        saveData();
+        renderCalendar();
+        renderBoard();
+        renderHashtags();
+        renderIdeas();
+        renderSettings();
+    }
+
+    // CALENDAR
+    function renderCalendar() {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+
+        document.getElementById('monthYear').textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+
+        const header = document.getElementById('calendarHeader');
+        header.innerHTML = '';
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+            const div = document.createElement('div');
+            div.className = 'day-header';
+            div.textContent = day;
+            header.appendChild(div);
+        });
+
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            const div = document.createElement('div');
+            div.className = 'calendar-day other-month';
+            grid.appendChild(div);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const postsForDay = currentData.posts.filter(p => p.date === dateStr);
+
+            const div = document.createElement('div');
+            div.className = 'calendar-day';
+            div.onclick = () => showPostModal(dateStr);
+
+            let html = `<div class="day-number">${day}</div><div class="day-posts">`;
+            postsForDay.slice(0, 4).forEach(post => {
+                const color = PLATFORM_COLORS[post.platform] || '#6366f1';
+                html += `<div class="post-chip ${post.status.toLowerCase()}">
+                    <div class="platform-dot" style="background-color: ${color};"></div>
+                    <span>${post.platform}</span>
+                </div>`;
+            });
+            if (postsForDay.length > 4) {
+                html += `<div class="post-chip" style="color: var(--text-muted);">+${postsForDay.length - 4} more</div>`;
+            }
+            html += '</div>';
+
+            div.innerHTML = html;
+            grid.appendChild(div);
+        }
+    }
+
+    function previousMonth() {
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        renderCalendar();
+    }
+
+    function nextMonth() {
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        renderCalendar();
+    }
+
+    function showPostModal(dateStr = null) {
+        currentPostId = null;
+        document.getElementById('postDate').value = dateStr || new Date().toISOString().split('T')[0];
+        document.getElementById('postTime').value = currentData.defaultTime;
+        document.getElementById('postPlatform').value = 'Instagram';
+        document.getElementById('postContentType').value = 'Post';
+        document.getElementById('postStatus').value = 'Draft';
+        document.getElementById('postCaption').value = '';
+        document.getElementById('postHashtags').value = '';
+        document.getElementById('deletePostBtn').style.display = 'none';
+
+        document.getElementById('postModal').classList.add('active');
+    }
+
+    function closePostModal() {
+        document.getElementById('postModal').classList.remove('active');
+    }
+
+    function updatePostContentTypes() {
+        const platform = document.getElementById('postPlatform').value;
+        const types = CONTENT_TYPES[platform] || ['Post'];
+        const select = document.getElementById('postContentType');
+        select.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    function savePost() {
+        const post = {
+            id: currentPostId || Math.max(...currentData.posts.map(p => p.id), 0) + 1,
+            date: document.getElementById('postDate').value,
+            time: document.getElementById('postTime').value,
+            platform: document.getElementById('postPlatform').value,
+            type: document.getElementById('postContentType').value,
+            status: document.getElementById('postStatus').value,
+            caption: document.getElementById('postCaption').value,
+            hashtags: document.getElementById('postHashtags').value
+        };
+
+        if (currentPostId) {
+            currentData.posts = currentData.posts.map(p => p.id === currentPostId ? post : p);
+        } else {
+            currentData.posts.push(post);
+        }
+
+        closePostModal();
+        saveData();
+    }
+
+    function deletePost() {
+        if (confirm('Delete this post?')) {
+            currentData.posts = currentData.posts.filter(p => p.id !== currentPostId);
+            closePostModal();
+            saveData();
+        }
+    }
+
+    // KANBAN BOARD
+    function renderBoard() {
+        const board = document.getElementById('kanbanBoard');
+        board.innerHTML = '';
+
+        const columns = ['Ideas', 'Drafting', 'Ready', 'Scheduled', 'Published'];
+
+        columns.forEach(column => {
+            const columnEl = document.createElement('div');
+            columnEl.className = 'kanban-column';
+
+            const statusMap = { 'Ideas': 'Idea', 'Drafting': 'Draft', 'Ready': 'Draft', 'Scheduled': 'Scheduled', 'Published': 'Published' };
+            const posts = currentData.posts.filter(p => p.status === statusMap[column]);
+
+            columnEl.innerHTML = `
+                <div class="kanban-header">
+                    <h3>${column}</h3>
+                    <div class="count">${posts.length}</div>
+                </div>
+                <div class="kanban-cards" id="column-${column}"></div>
+            `;
+
+            board.appendChild(columnEl);
+
+            posts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'kanban-card';
+                card.innerHTML = `
+                    <div class="kanban-card-header">
+                        <span class="kanban-card-platform" style="color: ${PLATFORM_COLORS[post.platform]}">${post.platform}</span>
+                        <span class="kanban-card-status ${post.status.toLowerCase()}">${post.status}</span>
+                    </div>
+                    <div class="kanban-card-content">${post.caption.substring(0, 60)}...</div>
+                    <div class="kanban-card-date">${post.date}</div>
+                `;
+                card.onclick = () => editPost(post.id);
+
+                document.getElementById(`column-${column}`).appendChild(card);
+            });
+        });
+    }
+
+    function editPost(postId) {
+        const post = currentData.posts.find(p => p.id === postId);
+        currentPostId = postId;
+
+        document.getElementById('postDate').value = post.date;
+        document.getElementById('postTime').value = post.time;
+        document.getElementById('postPlatform').value = post.platform;
+        updatePostContentTypes();
+        document.getElementById('postContentType').value = post.type;
+        document.getElementById('postStatus').value = post.status;
+        document.getElementById('postCaption').value = post.caption;
+        document.getElementById('postHashtags').value = post.hashtags;
+        document.getElementById('deletePostBtn').style.display = 'block';
+
+        document.getElementById('postModal').classList.add('active');
+    }
+
+    function addNewCard() {
+        showPostModal();
+    }
+
+    // ANALYTICS
+    function renderAnalytics() {
+        const posts = currentData.posts;
+
+        // KPIs
+        const thisMonth = posts.filter(p => {
+            const pDate = new Date(p.date);
+            return pDate.getMonth() === currentMonth.getMonth() && pDate.getFullYear() === currentMonth.getFullYear();
+        });
+
+        const scheduled = posts.filter(p => p.status === 'Scheduled').length;
+        const platformsActive = new Set(posts.map(p => p.platform)).size;
+        const avgPerWeek = (thisMonth.length / 4).toFixed(1);
+        const completionRate = thisMonth.filter(p => p.status === 'Published').length;
+
+        const kpisHtml = `
+            <div class="kpi-card">
+                <div class="kpi-label">Total Posts (Month)</div>
+                <div class="kpi-value">${thisMonth.length}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Posts Scheduled</div>
+                <div class="kpi-value">${scheduled}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Platforms Active</div>
+                <div class="kpi-value">${platformsActive}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Avg Posts/Week</div>
+                <div class="kpi-value">${avgPerWeek}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Published</div>
+                <div class="kpi-value">${completionRate}</div>
+            </div>
+        `;
+
+        document.getElementById('kpis').innerHTML = kpisHtml;
+
+        // Platform chart
+        const platformCounts = {};
+        currentData.platforms.forEach(p => platformCounts[p] = 0);
+        posts.forEach(p => {
+            if (platformCounts.hasOwnProperty(p.platform)) platformCounts[p.platform]++;
+        });
+
+        new Chart(document.getElementById('platformChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(platformCounts),
+                datasets: [{
+                    data: Object.values(platformCounts),
+                    backgroundColor: COLORS.chart,
+                    borderColor: '#18181b',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#fafafa' } } }
+            }
+        });
+
+        // Weekly chart
+        const weekData = [0, 0, 0, 0];
+        const now = new Date();
+        posts.forEach(p => {
+            const pDate = new Date(p.date);
+            if (pDate.getMonth() === now.getMonth() && pDate.getFullYear() === now.getFullYear()) {
+                const week = Math.floor((pDate.getDate() - 1) / 7);
+                if (week < 4) weekData[week]++;
+            }
+        });
+
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Posts',
+                    data: weekData,
+                    backgroundColor: '#6366f1',
+                    borderColor: '#5558e3',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'x',
+                plugins: { legend: { labels: { color: '#fafafa' } } },
+                scales: { y: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } }, x: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } } }
+            }
+        });
+
+        // Content type chart
+        const typeCounts = {};
+        posts.forEach(p => {
+            typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+        });
+
+        new Chart(document.getElementById('typeChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(typeCounts),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(typeCounts),
+                    backgroundColor: '#8b5cf6',
+                    borderColor: '#7c3aed',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#fafafa' } } },
+                scales: { x: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } }, y: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } } }
+            }
+        });
+
+        // Engagement chart
+        const engagementData = {
+            'Instagram': 4.2,
+            'TikTok': 8.5,
+            'Twitter': 2.1,
+            'Facebook': 1.8,
+            'LinkedIn': 3.5,
+            'YouTube': 6.2,
+            'Pinterest': 2.9
+        };
+
+        new Chart(document.getElementById('engagementChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(engagementData),
+                datasets: [{
+                    label: 'Engagement Rate (%)',
+                    data: Object.values(engagementData),
+                    backgroundColor: '#ec4899',
+                    borderColor: '#db2777',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#fafafa' } } },
+                scales: { y: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } }, x: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } } }
+            }
+        });
+    }
+
+    // HASHTAG MANAGER
+    function renderHashtags() {
+        const container = document.getElementById('hashtagSets');
+        container.innerHTML = '';
+
+        currentData.hashtags.forEach(set => {
+            const tags = set.tags.split(' ').filter(t => t);
+            const charCount = set.tags.length;
+
+            const div = document.createElement('div');
+            div.className = 'hashtag-set';
+
+            let tagsHtml = '';
+            tags.slice(0, 5).forEach(tag => {
+                tagsHtml += `<span class="hashtag">${tag}</span>`;
+            });
+            if (tags.length > 5) {
+                tagsHtml += `<span class="hashtag">+${tags.length - 5}</span>`;
+            }
+
+            div.innerHTML = `
+                <div class="hashtag-set-header">
+                    <div class="hashtag-set-name">${set.name}</div>
+                    <div class="hashtag-set-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editHashtagSet(${set.id})">Edit</button>
+                    </div>
+                </div>
+                <div class="hashtags">${tagsHtml}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="char-count">${charCount} characters</span>
+                    <button class="btn btn-sm" style="background: var(--accent); color: white; border: none; cursor: pointer;" onclick="copyHashtags('${set.tags.replace(/'/g, "\\'")}')">Copy</button>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+
+    function addHashtagSet() {
+        currentHashtagId = null;
+        document.getElementById('hashtagSetName').value = '';
+        document.getElementById('hashtagSetTags').value = '';
+        document.getElementById('deleteHashtagBtn').style.display = 'none';
+        document.getElementById('hashtagModal').classList.add('active');
+    }
+
+    function editHashtagSet(id) {
+        const set = currentData.hashtags.find(h => h.id === id);
+        currentHashtagId = id;
+        document.getElementById('hashtagSetName').value = set.name;
+        document.getElementById('hashtagSetTags').value = set.tags;
+        document.getElementById('deleteHashtagBtn').style.display = 'block';
+        document.getElementById('hashtagModal').classList.add('active');
+    }
+
+    function closeHashtagModal() {
+        document.getElementById('hashtagModal').classList.remove('active');
+    }
+
+    function saveHashtagSet() {
+        const name = document.getElementById('hashtagSetName').value;
+        const tags = document.getElementById('hashtagSetTags').value;
+
+        if (!name || !tags) return alert('Please fill all fields');
+
+        if (currentHashtagId) {
+            currentData.hashtags = currentData.hashtags.map(h =>
+                h.id === currentHashtagId ? { ...h, name, tags } : h
+            );
+        } else {
+            currentData.hashtags.push({
+                id: Math.max(...currentData.hashtags.map(h => h.id), 0) + 1,
+                name,
+                tags
+            });
+        }
+
+        closeHashtagModal();
+        saveData();
+    }
+
+    function deleteHashtagSet() {
+        if (confirm('Delete this hashtag set?')) {
+            currentData.hashtags = currentData.hashtags.filter(h => h.id !== currentHashtagId);
+            closeHashtagModal();
+            saveData();
+        }
+    }
+
+    function copyHashtags(tags) {
+        navigator.clipboard.writeText(tags);
+        alert('Hashtags copied to clipboard!');
+    }
+
+    // CONTENT IDEAS
+    function renderIdeas() {
+        const container = document.getElementById('ideasContainer');
+        container.innerHTML = '';
+
+        currentData.ideas.forEach(idea => {
+            const div = document.createElement('div');
+            div.className = 'idea-card';
+
+            div.innerHTML = `
+                <div class="idea-header">
+                    <span class="idea-category">${idea.category}</span>
+                    <span class="idea-star ${idea.starred ? 'starred' : ''}" onclick="toggleStar(${idea.id})">${idea.starred ? '★' : '☆'}</span>
+                </div>
+                <div class="idea-content">"${idea.content}"</div>
+                <div class="idea-footer">
+                    <button class="btn btn-sm btn-accent" onclick="copyIdea('${idea.content.replace(/'/g, "\\'")}')">Copy</button>
+                    <button class="btn btn-sm btn-secondary" onclick="deleteIdea(${idea.id})">Delete</button>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+
+    function toggleStar(id) {
+        const idea = currentData.ideas.find(i => i.id === id);
+        idea.starred = !idea.starred;
+        saveData();
+    }
+
+    function copyIdea(content) {
+        navigator.clipboard.writeText(content);
+        alert('Idea copied to clipboard!');
+    }
+
+    function deleteIdea(id) {
+        if (confirm('Delete this idea?')) {
+            currentData.ideas = currentData.ideas.filter(i => i.id !== id);
+            saveData();
+        }
+    }
+
+    function addCustomIdea() {
+        const content = prompt('Enter your content idea:');
+        if (content) {
+            const category = prompt('Category (Hooks, CTAs, Carousel Ideas, Reel Scripts, Story Prompts, Engagement Questions):');
+            if (category) {
+                currentData.ideas.push({
+                    id: Math.max(...currentData.ideas.map(i => i.id), 0) + 1,
+                    category,
+                    content,
+                    starred: false
+                });
+                saveData();
+            }
+        }
+    }
+
+    // SETTINGS
+    function renderSettings() {
+        const platformList = document.getElementById('platformList');
+        platformList.innerHTML = '';
+
+        currentData.platforms.forEach(platform => {
+            const badge = document.createElement('div');
+            badge.className = 'platform-badge';
+            badge.innerHTML = `
+                <span style="color: ${PLATFORM_COLORS[platform]}">${platform}</span>
+                <span class="remove" onclick="removePlatform('${platform}')">✕</span>
+            `;
+            platformList.appendChild(badge);
+        });
+
+        document.getElementById('postsPerWeek').value = currentData.postsPerWeek;
+        document.getElementById('defaultTime').value = currentData.defaultTime;
+    }
+
+    function showAddPlatformModal() {
+        document.getElementById('platformSelect').value = '';
+        document.getElementById('addPlatformModal').classList.add('active');
+    }
+
+    function closeAddPlatformModal() {
+        document.getElementById('addPlatformModal').classList.remove('active');
+    }
+
+    function savePlatform() {
+        const platform = document.getElementById('platformSelect').value;
+        if (!platform) return alert('Select a platform');
+        if (currentData.platforms.includes(platform)) return alert('Platform already added');
+
+        currentData.platforms.push(platform);
+        closeAddPlatformModal();
+        saveData();
+    }
+
+    function removePlatform(platform) {
+        currentData.platforms = currentData.platforms.filter(p => p !== platform);
+        saveData();
+    }
+
+    function confirmReset() {
+        if (confirm('Are you sure? This will delete ALL data and cannot be undone.')) {
+            if (confirm('Final confirmation: Delete all data?')) {
+                currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                currentMonth = new Date();
+                saveData();
+            }
+        }
+    }
+
+    function exportData() {
+        const json = JSON.stringify(currentData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `social_calendar_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        refresh();
+    });
+</script>
+
+</body>
+</html>

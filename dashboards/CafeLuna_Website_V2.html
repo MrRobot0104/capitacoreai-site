@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cafe Luna On Kennedy — Latin American Cafe | Tampa, FL</title>
+<meta name="description" content="Handcrafted coffee, fresh breakfast & flavorful Latin American lunch in the heart of Tampa. Mon-Fri 8am-3pm. Order online for pickup.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --espresso:#1C120D;
+  --brown:#3E2723;
+  --warm:#C8A882;
+  --cream:#FBF7F2;
+  --cream-dark:#F3EDE4;
+  --gold:#C9993A;
+  --gold-hover:#B8882F;
+  --sage:#6B7F5E;
+  --white:#FFFFFF;
+  --text:#2C1F17;
+  --text-mid:#7A6B60;
+  --text-light:#A89888;
+  --border:rgba(60,36,21,0.08);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--cream)}
+
+/* UTILITY */
+img{display:block;width:100%;height:100%;object-fit:cover}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(251,247,242,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 48px;height:72px;display:flex;justify-content:space-between;align-items:center;transition:all 0.3s}
+.nav-brand{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--espresso)}
+.nav-brand span{color:var(--gold)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{color:var(--text-mid);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s}
+.nav-links a:hover{color:var(--espresso)}
+.nav-order{background:var(--espresso);color:var(--cream);padding:10px 24px;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;transition:all 0.3s;letter-spacing:0.3px}
+.nav-order:hover{background:var(--brown)}
+.nav-mobile{display:none;font-size:24px;cursor:pointer;color:var(--espresso);background:none;border:none}
+
+/* HERO - FULL BLEED PHOTO */
+.hero{height:100vh;position:relative;overflow:hidden}
+.hero-img{position:absolute;inset:0}
+.hero-img img{filter:brightness(0.55)}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(28,18,13,0.2) 0%,rgba(28,18,13,0.5) 60%,rgba(28,18,13,0.8) 100%)}
+.hero-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:0 48px 80px;max-width:800px}
+.hero-tag{font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:20px}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(42px,6.5vw,72px);font-weight:700;color:var(--white);line-height:1.08;margin-bottom:20px}
+.hero h1 em{font-style:italic;font-weight:500}
+.hero-sub{font-size:18px;color:rgba(255,255,255,0.75);line-height:1.7;max-width:500px;margin-bottom:36px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.btn-gold{background:var(--gold);color:var(--white);padding:15px 32px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;transition:all 0.3s;display:inline-block}
+.btn-gold:hover{background:var(--gold-hover)}
+.btn-white{background:rgba(255,255,255,0.12);color:var(--white);padding:15px 32px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;transition:all 0.3s;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(4px)}
+.btn-white:hover{background:rgba(255,255,255,0.2)}
+.hero-info{position:absolute;bottom:28px;right:48px;z-index:2;display:flex;gap:24px;align-items:center}
+.hero-info-item{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.7);font-size:13px;font-weight:500}
+.hero-info-item .dot{width:6px;height:6px;border-radius:50%;background:#4ADE80}
+
+/* MARQUEE */
+.marquee-bar{background:var(--espresso);padding:14px 0;overflow:hidden;white-space:nowrap}
+.marquee-track{display:inline-block;animation:scroll 30s linear infinite}
+.marquee-track span{font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--warm);margin-right:48px}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* SECTIONS */
+section{padding:100px 48px}
+.container{max-width:1200px;margin:0 auto}
+.sec-tag{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.sec-title{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,48px);font-weight:700;line-height:1.15;margin-bottom:16px}
+.sec-sub{font-size:17px;color:var(--text-mid);line-height:1.7;max-width:540px;margin-bottom:48px}
+
+/* INTRO / ABOUT — PHOTO GRID + TEXT */
+.intro{background:var(--cream)}
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.intro-photos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.intro-photo{border-radius:16px;overflow:hidden}
+.intro-photo.tall{grid-row:span 2;height:100%}
+.intro-photo.short{height:200px}
+.intro-right .pull-quote{font-family:'Playfair Display',serif;font-size:26px;line-height:1.45;color:var(--text);font-weight:500;margin-bottom:20px}
+.intro-right p{font-size:16px;color:var(--text-mid);line-height:1.8;margin-bottom:16px}
+.intro-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.chip{padding:8px 18px;background:var(--white);border:1px solid var(--border);border-radius:100px;font-size:13px;font-weight:600;color:var(--brown)}
+
+/* FULL BLEED PHOTO BREAK */
+.photo-break{height:65vh;position:relative;overflow:hidden}
+.photo-break img{filter:brightness(0.8)}
+.photo-break-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.photo-break-text h2{font-family:'Playfair Display',serif;font-size:clamp(36px,5vw,56px);color:var(--white);font-weight:700;margin-bottom:12px}
+.photo-break-text p{color:rgba(255,255,255,0.8);font-size:18px;max-width:480px}
+
+/* MENU */
+.menu-section{background:var(--white)}
+.menu-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px;margin-bottom:48px}
+.menu-header .right{text-align:right}
+.menu-header .hours-note{font-size:14px;color:var(--text-mid);margin-bottom:8px}
+.menu-cols{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.menu-col h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--espresso);margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid var(--cream-dark)}
+.m-item{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--cream-dark)}
+.m-item:last-child{border:none}
+.m-name{font-size:15px;font-weight:600;color:var(--text)}
+.m-desc{font-size:13px;color:var(--text-light);margin-top:3px}
+.m-price{font-size:15px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:16px}
+.menu-photo{border-radius:16px;overflow:hidden;height:320px;margin-top:48px}
+
+/* FOOD GALLERY */
+.food-gallery{background:var(--cream);padding:80px 48px}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:1200px;margin:0 auto}
+.gallery-item{border-radius:12px;overflow:hidden;aspect-ratio:1;position:relative;cursor:pointer}
+.gallery-item:hover img{transform:scale(1.05);transition:transform 0.5s}
+.gallery-item img{transition:transform 0.5s}
+.gallery-item.wide{grid-column:span 2}
+.gallery-item.tall{grid-row:span 2;aspect-ratio:auto}
+
+/* CATERING */
+.catering{background:var(--espresso);color:var(--cream)}
+.catering .sec-tag{color:var(--gold)}
+.catering .sec-title{color:var(--cream)}
+.catering .sec-sub{color:var(--warm)}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.cat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;transition:transform 0.3s}
+.cat-card:hover{transform:translateY(-4px)}
+.cat-card-img{height:200px;overflow:hidden}
+.cat-card-body{padding:24px}
+.cat-card-body h4{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px;color:var(--gold)}
+.cat-card-body p{font-size:14px;color:var(--warm);line-height:1.7}
+
+/* ORDER SECTION */
+.order-section{background:var(--gold);padding:80px 48px;text-align:center;position:relative;overflow:hidden}
+.order-section::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,0.1),transparent 70%);border-radius:50%}
+.order-section h2{font-family:'Playfair Display',serif;font-size:clamp(32px,4.5vw,52px);color:var(--espresso);margin-bottom:12px;position:relative}
+.order-section>p{font-size:17px;color:var(--brown);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;position:relative}
+.order-btn{display:inline-block;background:var(--espresso);color:var(--cream);padding:16px 40px;border-radius:8px;font-weight:700;font-size:16px;text-decoration:none;transition:all 0.3s;position:relative}
+.order-btn:hover{background:var(--brown)}
+.order-sub{margin-top:16px;font-size:13px;color:var(--brown);opacity:0.7;position:relative}
+
+/* REVIEWS */
+.reviews{background:var(--cream-dark)}
+.reviews-row{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.rev{background:var(--white);border-radius:16px;padding:32px;border:1px solid var(--border)}
+.rev-stars{color:var(--gold);font-size:18px;letter-spacing:2px;margin-bottom:16px}
+.rev p{font-size:16px;color:var(--text-mid);line-height:1.75;font-style:italic;margin-bottom:20px}
+.rev-author{font-size:14px;font-weight:600;color:var(--text)}
+.rev-source{font-size:12px;color:var(--text-light);margin-top:2px}
+
+/* LOCATION */
+.loc-section{background:var(--white)}
+.loc-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
+.loc-map{border-radius:20px;overflow:hidden;height:440px;position:relative}
+.loc-map iframe{width:100%;height:100%;border:none}
+.loc-details h3{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:28px}
+.loc-row{display:flex;gap:16px;margin-bottom:24px;align-items:flex-start}
+.loc-icon{width:44px;height:44px;background:var(--cream);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.loc-label{font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:3px}
+.loc-val{font-size:15px;color:var(--text);font-weight:500}
+.loc-val-sub{font-size:13px;color:var(--text-mid);margin-top:2px}
+
+/* IG SECTION */
+.ig-section{background:var(--espresso);padding:64px 48px;text-align:center}
+.ig-section h2{font-family:'Playfair Display',serif;color:var(--cream);font-size:32px;margin-bottom:6px}
+.ig-section .sec-tag{color:var(--gold)}
+.ig-section p{color:var(--warm);font-size:15px;margin-bottom:28px}
+.ig-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:1000px;margin:0 auto;border-radius:12px;overflow:hidden}
+.ig-item{aspect-ratio:1;overflow:hidden;cursor:pointer}
+.ig-item img{transition:transform 0.4s,filter 0.4s}
+.ig-item:hover img{transform:scale(1.08);filter:brightness(1.1)}
+.ig-handle{display:inline-block;margin-top:24px;color:var(--gold);font-weight:600;text-decoration:none;font-size:15px;transition:color 0.3s}
+.ig-handle:hover{color:var(--warm)}
+
+/* FOOTER */
+footer{background:var(--espresso);border-top:1px solid rgba(255,255,255,0.05);padding:48px 48px 32px}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px}
+.foot-brand{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);margin-bottom:8px}
+.foot-brand span{color:var(--gold)}
+.foot-desc{font-size:14px;color:var(--text-light);line-height:1.7}
+.foot-col h4{font-size:12px;color:var(--warm);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:16px}
+.foot-col a{display:block;color:var(--text-light);text-decoration:none;font-size:14px;margin-bottom:10px;transition:color 0.3s}
+.foot-col a:hover{color:var(--cream)}
+.foot-bottom{max-width:1200px;margin:32px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.foot-copy{font-size:12px;color:var(--text-light)}
+.foot-built{font-size:12px;color:var(--text-light)}
+.foot-built a{color:var(--gold);text-decoration:none}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:0 24px}
+  .nav-links{display:none}
+  .nav-mobile{display:block}
+  section,.food-gallery,.ig-section,.order-section{padding-left:24px;padding-right:24px}
+  .hero-content{padding:0 24px 60px}
+  .hero-info{display:none}
+  .intro-grid{grid-template-columns:1fr;gap:36px}
+  .menu-cols{grid-template-columns:1fr}
+  .gallery-grid{grid-template-columns:1fr 1fr}
+  .cat-grid{grid-template-columns:1fr}
+  .reviews-row{grid-template-columns:1fr}
+  .loc-grid{grid-template-columns:1fr}
+  .loc-map{height:280px}
+  .ig-row{grid-template-columns:repeat(3,1fr)}
+  .footer-inner{grid-template-columns:1fr}
+  .foot-bottom{flex-direction:column;text-align:center}
+}
+@media(max-width:600px){
+  .intro-photos{grid-template-columns:1fr}
+  .intro-photo.tall{grid-row:span 1;height:260px}
+  .gallery-grid{grid-template-columns:1fr}
+  .gallery-item.wide{grid-column:span 1}
+  .hero-actions{flex-direction:column;width:100%}
+  .btn-gold,.btn-white{width:100%;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Cafe <span>Luna</span></div>
+  <div class="nav-links">
+    <a href="#about">Our Story</a>
+    <a href="#menu">Menu</a>
+    <a href="#catering">Catering</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#location">Find Us</a>
+    <a href="#order" class="nav-order">Order Pickup</a>
+  </div>
+  <button class="nav-mobile" onclick="document.querySelector('.nav-links').style.display=document.querySelector('.nav-links').style.display==='flex'?'none':'flex'">&#9776;</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-img">
+    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&q=85" alt="Coffee being poured into a cup">
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Latin American Cafe &bull; Tampa, FL</div>
+    <h1>Where Every Cup Tells a <em>Story</em></h1>
+    <p class="hero-sub">Handcrafted coffee, fresh breakfast, and bold Latin flavors — made with love on Kennedy Blvd.</p>
+    <div class="hero-actions">
+      <a href="#order" class="btn-gold">Order for Pickup</a>
+      <a href="#menu" class="btn-white">View the Menu</a>
+    </div>
+  </div>
+  <div class="hero-info">
+    <div class="hero-info-item"><div class="dot"></div> Open Now</div>
+    <div class="hero-info-item">Mon – Fri &nbsp;8AM – 3PM</div>
+    <div class="hero-info-item">(813) 280-2578</div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <div class="marquee-track">
+    <span>Cafe Con Leche</span>
+    <span>&bull;</span>
+    <span>Cuban Sandwich</span>
+    <span>&bull;</span>
+    <span>Ropa Vieja</span>
+    <span>&bull;</span>
+    <span>Empanadas</span>
+    <span>&bull;</span>
+    <span>Breakfast Burritos</span>
+    <span>&bull;</span>
+    <span>Cold Brew</span>
+    <span>&bull;</span>
+    <span>Sweet Plantains</span>
+    <span>&bull;</span>
+    <span>Mojo Pulled Pork</span>
+    <span>&bull;</span>
+    <span>Cafe Con Leche</span>
+    <span>&bull;</span>
+    <span>Cuban Sandwich</span>
+    <span>&bull;</span>
+    <span>Ropa Vieja</span>
+    <span>&bull;</span>
+    <span>Empanadas</span>
+    <span>&bull;</span>
+    <span>Breakfast Burritos</span>
+    <span>&bull;</span>
+    <span>Cold Brew</span>
+    <span>&bull;</span>
+    <span>Sweet Plantains</span>
+    <span>&bull;</span>
+    <span>Mojo Pulled Pork</span>
+    <span>&bull;</span>
+  </div>
+</div>
+
+<!-- ABOUT / INTRO -->
+<section class="intro" id="about">
+  <div class="container">
+    <div class="intro-grid">
+      <div class="intro-photos">
+        <div class="intro-photo tall">
+          <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80" alt="Cafe interior with warm lighting">
+        </div>
+        <div class="intro-photo short">
+          <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80" alt="Latte art in a ceramic cup">
+        </div>
+        <div class="intro-photo short">
+          <img src="https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=400&q=80" alt="Fresh pastries on display">
+        </div>
+      </div>
+      <div class="intro-right">
+        <div class="sec-tag">Our Story</div>
+        <div class="pull-quote">We bring the warmth of a traditional Latin American cafe to your everyday routine.</div>
+        <p>Cafe Luna was born from a simple idea: that great food and great coffee can turn an ordinary morning into something you look forward to. Nestled in Tampa's Kennedy Blvd business district, we serve the kind of meals that feel like home — bold, fresh, made from scratch, every single day.</p>
+        <p>From our signature cafe con leche to our famous Cuban sandwich to the ropa vieja that keeps regulars coming back week after week — everything is crafted with care and high-quality ingredients. Whether you're grabbing a quick breakfast or sitting down for a proper lunch, you're family here.</p>
+        <div class="intro-chips">
+          <div class="chip">Fresh Daily</div>
+          <div class="chip">Made to Order</div>
+          <div class="chip">Latin Roots</div>
+          <div class="chip">Family Owned</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHOTO BREAK -->
+<div class="photo-break">
+  <img src="https://images.unsplash.com/photo-1504718855392-c0f33b372e72?w=1600&q=85" alt="Cuban style food spread on a table">
+  <div class="photo-break-text">
+    <h2>Fresh. Bold. From Scratch.</h2>
+    <p>Colombian, Cuban, Puerto Rican & Chilean flavors — served every morning and afternoon.</p>
+  </div>
+</div>
+
+<!-- MENU -->
+<section class="menu-section" id="menu">
+  <div class="container">
+    <div class="menu-header">
+      <div>
+        <div class="sec-tag">The Menu</div>
+        <div class="sec-title">Made With Love,<br>Served With Soul</div>
+      </div>
+      <div class="right">
+        <div class="hours-note">Breakfast 8AM – 11AM &nbsp;|&nbsp; Full Menu until 3PM</div>
+        <a href="#order" class="btn-gold" style="font-size:14px;padding:12px 24px">Order for Pickup</a>
+      </div>
+    </div>
+
+    <div class="menu-cols">
+      <div>
+        <div class="menu-col">
+          <h3>Breakfast</h3>
+          <div class="m-item"><div><div class="m-name">Breakfast Burrito</div><div class="m-desc">Eggs, cheese, your choice of protein</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Breakfast Bowl</div><div class="m-desc">Scrambled eggs, rice, beans, plantains</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Cuban Toast & Cheese</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Bacon Empanada</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Ham & Cheese Croissant</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Grilled Chicken Omelette</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Breakfast Sandwich</div></div><div class="m-price">Market</div></div>
+        </div>
+
+        <div class="menu-col" style="margin-top:36px">
+          <h3>Handhelds</h3>
+          <div class="m-item"><div><div class="m-name">Cuban Sandwich</div><div class="m-desc">The classic — pressed with love</div></div><div class="m-price">$11.00</div></div>
+          <div class="m-item"><div><div class="m-name">Philly Cheesesteak</div></div><div class="m-price">$11.85</div></div>
+          <div class="m-item"><div><div class="m-name">Croquettes Sandwich</div></div><div class="m-price">$11.00</div></div>
+          <div class="m-item"><div><div class="m-name">Classic Burger</div></div><div class="m-price">$9.85</div></div>
+          <div class="m-item"><div><div class="m-name">Chicken Sandwich</div></div><div class="m-price">$9.95</div></div>
+          <div class="m-item"><div><div class="m-name">BLT</div></div><div class="m-price">$9.00</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="menu-col">
+          <h3>Platters</h3>
+          <div class="m-item"><div><div class="m-name">Ropa Vieja</div><div class="m-desc">Slow-braised shredded beef, rice, beans</div></div><div class="m-price">$15.75</div></div>
+          <div class="m-item"><div><div class="m-name">Grilled Chicken Breast</div></div><div class="m-price">$13.50</div></div>
+          <div class="m-item"><div><div class="m-name">Chicken Curry</div></div><div class="m-price">$12.65</div></div>
+          <div class="m-item"><div><div class="m-name">Chicken Fried Rice</div></div><div class="m-price">$12.65</div></div>
+          <div class="m-item"><div><div class="m-name">Mojo Pulled Pork</div></div><div class="m-price">$13.50</div></div>
+        </div>
+
+        <div class="menu-col" style="margin-top:36px">
+          <h3>Wraps, Bowls & Salads</h3>
+          <div class="m-item"><div><div class="m-name">Grilled Chicken Wrap</div></div><div class="m-price">$11.00</div></div>
+          <div class="m-item"><div><div class="m-name">Ropa Vieja Wrap</div></div><div class="m-price">$12.50</div></div>
+          <div class="m-item"><div><div class="m-name">Mex Bowl</div></div><div class="m-price">$12.00</div></div>
+          <div class="m-item"><div><div class="m-name">Quesadilla</div></div><div class="m-price">$12.00</div></div>
+          <div class="m-item"><div><div class="m-name">Cobb Salad</div></div><div class="m-price">$11.00</div></div>
+          <div class="m-item"><div><div class="m-name">Caesar Salad</div></div><div class="m-price">$9.00</div></div>
+        </div>
+
+        <div class="menu-col" style="margin-top:36px">
+          <h3>Coffee & Drinks</h3>
+          <div class="m-item"><div><div class="m-name">Cafe con Leche</div><div class="m-desc">The one that keeps them coming back</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Cappuccino</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Iced Latte</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Cold Brew</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Americano</div></div><div class="m-price">Market</div></div>
+          <div class="m-item"><div><div class="m-name">Mocha</div></div><div class="m-price">Market</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-photo">
+      <img src="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=1200&q=80" alt="Fresh sandwich on a plate">
+    </div>
+  </div>
+</section>
+
+<!-- FOOD GALLERY -->
+<div class="food-gallery">
+  <div class="gallery-grid">
+    <div class="gallery-item wide">
+      <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&q=80" alt="Pastries and empanadas">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80" alt="Espresso being pulled">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80" alt="Breakfast plate">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&q=80" alt="Rice and beans platter">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80" alt="Iced coffee drink">
+    </div>
+    <div class="gallery-item wide">
+      <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80" alt="Cafe atmosphere">
+    </div>
+  </div>
+</div>
+
+<!-- ORDER -->
+<div class="order-section" id="order">
+  <h2>Skip the Line.<br>Order Ahead.</h2>
+  <p>Place your order for pickup and have it ready when you walk in. No waiting, no rushing — just great food, on your time.</p>
+  <a href="#" class="order-btn">Start Your Order &rarr;</a>
+  <div class="order-sub">Pickup available Mon – Fri, 8AM – 2:30PM</div>
+</div>
+
+<!-- CATERING -->
+<section class="catering" id="catering">
+  <div class="container">
+    <div class="sec-tag">Catering</div>
+    <div class="sec-title" style="color:var(--cream)">Feed Your Whole Team</div>
+    <div class="sec-sub">Right in Tampa's Kennedy Blvd business corridor — we cater office breakfasts, team lunches, and events with the same care you get at our counter.</div>
+
+    <div class="cat-grid">
+      <div class="cat-card">
+        <div class="cat-card-img">
+          <img src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=80" alt="Breakfast spread on table">
+        </div>
+        <div class="cat-card-body">
+          <h4>Breakfast Packages</h4>
+          <p>Empanada trays, breakfast burritos, pastries & a full coffee service to kickstart your morning meetings.</p>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-img">
+          <img src="https://images.unsplash.com/photo-1555244162-803834f70033?w=600&q=80" alt="Lunch platters">
+        </div>
+        <div class="cat-card-body">
+          <h4>Lunch Platters</h4>
+          <p>Cuban sandwich trays, ropa vieja bowls, build-your-own burrito bars — real food your team will actually love.</p>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-img">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80" alt="Event setup in restaurant">
+        </div>
+        <div class="cat-card-body">
+          <h4>Events & Recurring</h4>
+          <p>Office celebrations, client appreciation, or weekly team lunch delivery. Custom menus built around your headcount.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="reviews" id="reviews">
+  <div class="container">
+    <div class="sec-tag">What People Are Saying</div>
+    <div class="sec-title">Tampa Loves Luna</div>
+    <div class="sec-sub">Don't take our word for it.</div>
+
+    <div class="reviews-row">
+      <div class="rev">
+        <div class="rev-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>"The breakfast burrito with ham is absolutely incredible. And the homemade hot sauce? I put it on everything. This place is a hidden gem on Kennedy."</p>
+        <div class="rev-author">Local Regular</div>
+        <div class="rev-source">Google Review</div>
+      </div>
+      <div class="rev">
+        <div class="rev-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>"The staff is super friendly and helpful. I'm vegetarian and they went out of their way to customize something for me. The cafe con leche is the best in Tampa."</p>
+        <div class="rev-author">Verified Customer</div>
+        <div class="rev-source">Yelp Review</div>
+      </div>
+      <div class="rev">
+        <div class="rev-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>"Clean, calm atmosphere — perfect for working on my laptop. The Cuban sandwich is legit and the coffee keeps me coming back every single morning."</p>
+        <div class="rev-author">Kennedy Blvd Regular</div>
+        <div class="rev-source">TripAdvisor</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTAGRAM -->
+<section class="ig-section">
+  <div class="sec-tag">Follow the Flavor</div>
+  <h2>@cafeluna813</h2>
+  <p>Fresh plates, happy faces, and your morning coffee.</p>
+  <div class="ig-row">
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefda?w=300&q=80" alt="Coffee cup"></div>
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=300&q=80" alt="Food plate"></div>
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300&q=80" alt="Cold brew coffee"></div>
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=300&q=80" alt="Latin food"></div>
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=300&q=80" alt="Cafe counter"></div>
+    <div class="ig-item"><img src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=300&q=80" alt="Latte art"></div>
+  </div>
+  <a href="https://www.instagram.com/cafeluna813/" target="_blank" class="ig-handle">Follow @cafeluna813 &rarr;</a>
+</section>
+
+<!-- LOCATION -->
+<section class="loc-section" id="location">
+  <div class="container">
+    <div class="loc-grid">
+      <div class="loc-map">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3524.8!2d-82.5130!3d27.9468!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88c2c3b6e3c0b3b7%3A0x0!2s5201+W+Kennedy+Blvd+%23105%2C+Tampa%2C+FL+33609!5e0!3m2!1sen!2sus!4v1700000000000" allowfullscreen loading="lazy"></iframe>
+      </div>
+      <div class="loc-details">
+        <div class="sec-tag">Find Us</div>
+        <h3>Come Say Hello</h3>
+
+        <div class="loc-row">
+          <div class="loc-icon">&#128205;</div>
+          <div>
+            <div class="loc-label">Address</div>
+            <div class="loc-val">5201 W Kennedy Blvd, Suite 105</div>
+            <div class="loc-val-sub">Tampa, FL 33609 &bull; Free parking garage</div>
+          </div>
+        </div>
+
+        <div class="loc-row">
+          <div class="loc-icon">&#128336;</div>
+          <div>
+            <div class="loc-label">Hours</div>
+            <div class="loc-val">Monday – Friday: 8:00AM – 3:00PM</div>
+            <div class="loc-val-sub">Saturday & Sunday: Closed</div>
+          </div>
+        </div>
+
+        <div class="loc-row">
+          <div class="loc-icon">&#128222;</div>
+          <div>
+            <div class="loc-label">Phone</div>
+            <div class="loc-val">(813) 280-2578</div>
+          </div>
+        </div>
+
+        <div class="loc-row">
+          <div class="loc-icon">&#9993;</div>
+          <div>
+            <div class="loc-label">Email</div>
+            <div class="loc-val">Cafelunatampa@gmail.com</div>
+          </div>
+        </div>
+
+        <div class="loc-row">
+          <div class="loc-icon">&#128666;</div>
+          <div>
+            <div class="loc-label">Delivery</div>
+            <div class="loc-val">Available on DoorDash & Uber Eats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="foot-brand">Cafe <span>Luna</span></div>
+      <p class="foot-desc">Latin American cafe in the heart of Tampa. Handcrafted coffee, fresh breakfast & bold lunch — Mon through Fri.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Quick Links</h4>
+      <a href="#about">Our Story</a>
+      <a href="#menu">Menu</a>
+      <a href="#catering">Catering</a>
+      <a href="#order">Order Online</a>
+      <a href="#location">Find Us</a>
+    </div>
+    <div class="foot-col">
+      <h4>Connect</h4>
+      <a href="https://www.instagram.com/cafeluna813/" target="_blank">Instagram</a>
+      <a href="https://www.facebook.com/p/Cafe-Luna-100087274585801/" target="_blank">Facebook</a>
+      <a href="mailto:Cafelunatampa@gmail.com">Email Us</a>
+      <a href="tel:8132802578">Call Us</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <div class="foot-copy">&copy; 2026 Cafe Luna On Kennedy. All rights reserved.</div>
+    <div class="foot-built">Website by <a href="#">CapitaCoreAi</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

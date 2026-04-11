@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Hub | CapitaCoreAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Freelancer Hub</h1>
+            <p class="subtitle">Track clients, projects, invoices, and income. By CapitaCoreAI.</p>
+        </div>
+        <button class="btn btn-accent" onclick="exportData()">EXPORT</button>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'dashboard')">Dashboard</button>
+        <button class="tab-btn" onclick="switchTab(event, 'clients')">Clients</button>
+        <button class="tab-btn" onclick="switchTab(event, 'projects')">Projects</button>
+        <button class="tab-btn" onclick="switchTab(event, 'invoices')">Invoices</button>
+        <button class="tab-btn" onclick="switchTab(event, 'timetracker')">Time Tracker</button>
+        <button class="tab-btn" onclick="switchTab(event, 'reports')">Reports</button>
+        <button class="tab-btn" onclick="switchTab(event, 'settings')">Settings</button>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard" class="tab-content active">
+        <div class="grid-4">
+            <div class="kpi-card">
+                <p class="label">Total Revenue</p>
+                <h2 id="kpi-total-revenue">$0</h2>
+                <p class="detail">All time</p>
+            </div>
+            <div class="kpi-card">
+                <p class="label">This Month</p>
+                <h2 id="kpi-month-revenue">$0</h2>
+                <p class="detail" id="month-detail"></p>
+            </div>
+            <div class="kpi-card">
+                <p class="label">Outstanding</p>
+                <h2 id="kpi-outstanding">$0</h2>
+                <p class="detail" id="outstanding-detail"></p>
+            </div>
+            <div class="kpi-card">
+                <p class="label">Active Projects</p>
+                <h2 id="kpi-active-projects">0</h2>
+                <p class="detail">In progress</p>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="chart-card">
+                <h3>Revenue by Month (6 months)</h3>
+                <canvas id="revenue-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Revenue by Client</h3>
+                <canvas id="client-revenue-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="chart-card">
+                <h3>Projects by Status</h3>
+                <canvas id="project-status-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Invoices by Status</h3>
+                <canvas id="invoice-status-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENTS TAB -->
+    <div id="clients" class="tab-content">
+        <div class="section-header">
+            <h2>Client Management</h2>
+            <button class="btn btn-accent" onclick="addNewClient()">+ ADD CLIENT</button>
+        </div>
+
+        <div class="form-card" id="new-client-form" style="display:none;">
+            <h3>New Client</h3>
+            <input type="text" id="client-name" placeholder="Name" class="form-input">
+            <input type="email" id="client-email" placeholder="Email" class="form-input">
+            <input type="tel" id="client-phone" placeholder="Phone" class="form-input">
+            <input type="text" id="client-company" placeholder="Company" class="form-input">
+            <select id="client-status" class="form-input">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Lead">Lead</option>
+            </select>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveNewClient()">Save</button>
+                <button class="btn btn-secondary" onclick="cancelNewClient()">Cancel</button>
+            </div>
+        </div>
+
+        <table id="clients-table" class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Total Revenue</th>
+                    <th>Projects</th>
+                    <th>Last Contact</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="clients-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- PROJECTS TAB -->
+    <div id="projects" class="tab-content">
+        <div class="section-header">
+            <h2>Project Management</h2>
+            <button class="btn btn-accent" onclick="addNewProject()">+ ADD PROJECT</button>
+        </div>
+
+        <div class="form-card" id="new-project-form" style="display:none;">
+            <h3>New Project</h3>
+            <input type="text" id="project-name" placeholder="Project Name" class="form-input">
+            <select id="project-client" class="form-input">
+                <option value="">Select Client</option>
+            </select>
+            <select id="project-status" class="form-input">
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+            <input type="date" id="project-start" class="form-input">
+            <input type="date" id="project-deadline" class="form-input">
+            <input type="number" id="project-budget" placeholder="Budget" class="form-input">
+            <input type="number" id="project-paid" placeholder="Amount Paid" class="form-input">
+            <select id="project-priority" class="form-input">
+                <option value="Low">Low Priority</option>
+                <option value="Medium">Medium Priority</option>
+                <option value="High">High Priority</option>
+            </select>
+            <textarea id="project-notes" placeholder="Notes" class="form-input" rows="3"></textarea>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveNewProject()">Save</button>
+                <button class="btn btn-secondary" onclick="cancelNewProject()">Cancel</button>
+            </div>
+        </div>
+
+        <table id="projects-table" class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Client</th>
+                    <th>Status</th>
+                    <th>Start Date</th>
+                    <th>Deadline</th>
+                    <th>Budget</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
+                    <th>Priority</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="projects-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- INVOICES TAB -->
+    <div id="invoices" class="tab-content">
+        <div class="section-header">
+            <h2>Invoice Tracker</h2>
+            <button class="btn btn-accent" onclick="addNewInvoice()">+ NEW INVOICE</button>
+        </div>
+
+        <div class="kpi-single">
+            <p class="label">Total Outstanding</p>
+            <h2 id="invoice-outstanding">$0</h2>
+        </div>
+
+        <div class="form-card" id="new-invoice-form" style="display:none;">
+            <h3>New Invoice</h3>
+            <input type="text" id="invoice-number" placeholder="Invoice #" class="form-input">
+            <select id="invoice-client" class="form-input">
+                <option value="">Select Client</option>
+            </select>
+            <select id="invoice-project" class="form-input">
+                <option value="">Select Project (optional)</option>
+            </select>
+            <input type="number" id="invoice-amount" placeholder="Amount" class="form-input">
+            <input type="date" id="invoice-date-issued" class="form-input">
+            <input type="date" id="invoice-due-date" class="form-input">
+            <select id="invoice-status" class="form-input">
+                <option value="Draft">Draft</option>
+                <option value="Sent">Sent</option>
+                <option value="Paid">Paid</option>
+                <option value="Overdue">Overdue</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+            <input type="text" id="invoice-payment-method" placeholder="Payment Method" class="form-input">
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveNewInvoice()">Save</button>
+                <button class="btn btn-secondary" onclick="cancelNewInvoice()">Cancel</button>
+            </div>
+        </div>
+
+        <table id="invoices-table" class="table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Client</th>
+                    <th>Project</th>
+                    <th>Amount</th>
+                    <th>Date Issued</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Payment Method</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="invoices-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- TIME TRACKER TAB -->
+    <div id="timetracker" class="tab-content">
+        <div class="section-header">
+            <h2>Time Tracker</h2>
+            <button class="btn btn-accent" onclick="addNewTimeEntry()">+ LOG TIME</button>
+        </div>
+
+        <div class="grid-3">
+            <div class="kpi-card">
+                <p class="label">Weekly Hours</p>
+                <h2 id="weekly-hours">0h</h2>
+            </div>
+            <div class="kpi-card">
+                <p class="label">Monthly Hours</p>
+                <h2 id="monthly-hours">0h</h2>
+            </div>
+            <div class="kpi-card">
+                <p class="label">Avg Hourly Rate</p>
+                <h2 id="avg-rate">$0</h2>
+            </div>
+        </div>
+
+        <div class="form-card" id="new-time-form" style="display:none;">
+            <h3>Log Time Entry</h3>
+            <input type="date" id="time-date" class="form-input">
+            <select id="time-client" class="form-input">
+                <option value="">Select Client</option>
+            </select>
+            <select id="time-project" class="form-input">
+                <option value="">Select Project (optional)</option>
+            </select>
+            <input type="number" id="time-hours" placeholder="Hours" step="0.5" class="form-input">
+            <input type="number" id="time-rate" placeholder="Hourly Rate" class="form-input">
+            <textarea id="time-description" placeholder="Description" class="form-input" rows="2"></textarea>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveNewTimeEntry()">Save</button>
+                <button class="btn btn-secondary" onclick="cancelNewTimeEntry()">Cancel</button>
+            </div>
+        </div>
+
+        <table id="timetracker-table" class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Project</th>
+                    <th>Hours</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="timetracker-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div id="reports" class="tab-content">
+        <div class="section-header">
+            <h2>Analytics & Reports</h2>
+            <button class="btn btn-secondary" onclick="exportReport()">EXPORT REPORT</button>
+        </div>
+
+        <div class="grid-2">
+            <div class="chart-card">
+                <h3>Income Trend (Last 6 Months)</h3>
+                <canvas id="income-trend-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Top 5 Clients by Revenue</h3>
+                <canvas id="top-clients-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="chart-card">
+                <h3>Project Completion Rate</h3>
+                <canvas id="completion-rate-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Hours by Client (This Month)</h3>
+                <canvas id="hours-by-client-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <p class="label">Avg Time to Payment</p>
+                <h3 id="avg-payment-time">N/A</h3>
+            </div>
+            <div class="stat-box">
+                <p class="label">Project Success Rate</p>
+                <h3 id="success-rate">0%</h3>
+            </div>
+            <div class="stat-box">
+                <p class="label">Billable Hours (This Month)</p>
+                <h3 id="billable-hours">0h</h3>
+            </div>
+            <div class="stat-box">
+                <p class="label">Avg Project Value</p>
+                <h3 id="avg-project-value">$0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="settings" class="tab-content">
+        <div class="grid-2">
+            <div class="form-card">
+                <h3>Business Settings</h3>
+                <label>Currency Symbol</label>
+                <input type="text" id="currency-symbol" class="form-input" value="$" maxlength="3">
+
+                <label>Default Hourly Rate</label>
+                <input type="number" id="default-rate" class="form-input" value="50">
+
+                <label>Payment Terms</label>
+                <select id="payment-terms" class="form-input">
+                    <option value="Net 15">Net 15</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 60">Net 60</option>
+                </select>
+
+                <label>Tax Rate (%)</label>
+                <input type="number" id="tax-rate" class="form-input" value="0" min="0" max="100" step="0.5">
+
+                <label>Invoice Prefix</label>
+                <input type="text" id="invoice-prefix" class="form-input" value="INV-" maxlength="10">
+
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+
+            <div class="form-card">
+                <h3>Data Management</h3>
+                <button class="btn btn-secondary" onclick="exportAllData()" style="width:100%; margin-bottom:10px;">Download All Data (JSON)</button>
+                <button class="btn btn-secondary" onclick="importDataPrompt()" style="width:100%; margin-bottom:10px;">Import Data (JSON)</button>
+                <button class="btn btn-danger" onclick="resetToDefaults()" style="width:100%;">Reset to Default Data</button>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Services Offered</h3>
+            <div id="services-list"></div>
+            <input type="text" id="new-service" placeholder="Add a service" class="form-input">
+            <button class="btn btn-accent" onclick="addService()">Add Service</button>
+        </div>
+
+        <div class="form-card">
+            <h3>Expense Categories</h3>
+            <div id="expenses-list"></div>
+            <input type="text" id="new-expense" placeholder="Add a category" class="form-input">
+            <button class="btn btn-accent" onclick="addExpenseCategory()">Add Category</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <strong>CapitaCoreAI</strong> — Freelancer Client & Project Tracker
+</footer>
+
+<style>
+:root {
+    --bg: #09090b;
+    --surface: #18181b;
+    --surface-2: #27272a;
+    --border: #3f3f46;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --accent: #6366f1;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 30px;
+    border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.header .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 30px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+    background: var(--surface);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+    animation: fadeIn 0.2s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+}
+
+.kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.kpi-card .label {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.kpi-card h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.kpi-card .detail {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.kpi-single {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: 300px;
+}
+
+.kpi-single h2 {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.chart-card h3 {
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-box .label {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.stat-box h3 {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.section-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-accent:hover {
+    background: #5558e3;
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+
+.btn-danger {
+    background: #7f1d1d;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #991b1b;
+}
+
+.form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.form-card h3 {
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.form-card label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-input::placeholder {
+    color: var(--text-muted);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-group .btn {
+    flex: 1;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+}
+
+.table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.table td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr:hover {
+    background: var(--surface-2);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ed {
+    cursor: pointer;
+    border-bottom: 1px dashed rgba(99, 102, 241, 0.35);
+    transition: all 0.2s;
+}
+
+.ed:hover {
+    filter: brightness(1.25);
+    border-bottom-color: var(--accent);
+}
+
+.ed:not(.badge):not(.priority) {
+    color: var(--blue);
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.badge.inactive {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge.lead {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+}
+
+.badge.draft {
+    background: rgba(161, 161, 170, 0.2);
+    color: var(--text-muted);
+}
+
+.badge.sent {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.badge.paid {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.badge.overdue {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge.cancelled {
+    background: rgba(161, 161, 170, 0.2);
+    color: var(--text-muted);
+}
+
+.badge.draft { background: rgba(161, 161, 170, 0.2); color: var(--text-muted); }
+.badge.not-started { background: rgba(161, 161, 170, 0.2); color: var(--text-muted); }
+.badge.in-progress { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.badge.on-hold { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+.badge.completed { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+
+.priority {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.priority.high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.priority.medium { background: rgba(234, 179, 8, 0.15); color: #eab308; }
+.priority.low { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+.priority:hover {
+    border-bottom-color: var(--accent);
+    filter: brightness(1.2);
+}
+
+footer {
+    text-align: center;
+    padding: 30px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 60px;
+}
+
+footer strong {
+    color: var(--accent);
+}
+</style>
+
+<script>
+// ============================================================================
+// DATA INITIALIZATION (declare before DEFAULT_DATA to avoid temporal dead zone)
+// ============================================================================
+let currentData = {};
+
+function getCurrentMonth() {
+    const now = new Date();
+    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+}
+
+function getLastSixMonths() {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        months.push(year + '-' + month);
+    }
+    return months;
+}
+
+const STORAGE_KEY = 'capitacore_freelancer_data';
+
+const DEFAULT_DATA = {
+    settings: {
+        currencySymbol: '$',
+        defaultRate: 50,
+        paymentTerms: 'Net 30',
+        taxRate: 10,
+        invoicePrefix: 'INV-',
+        services: ['Web Development', 'UI/UX Design', 'Content Writing', 'Consulting'],
+        expenses: ['Software', 'Equipment', 'Marketing', 'Utilities']
+    },
+    clients: [
+        { id: 1, name: 'Acme Corp', email: 'contact@acme.com', phone: '(555) 123-4567', company: 'Acme Corporation', status: 'Active', lastContact: '2026-04-05' },
+        { id: 2, name: 'TechStart Inc', email: 'hello@techstart.io', phone: '(555) 234-5678', company: 'TechStart Inc', status: 'Active', lastContact: '2026-04-02' },
+        { id: 3, name: 'Blue Horizon', email: 'info@bluehorizon.com', phone: '(555) 345-6789', company: 'Blue Horizon LLC', status: 'Active', lastContact: '2026-03-28' },
+        { id: 4, name: 'Digital Dreams', email: 'projects@digitaldreams.co', phone: '(555) 456-7890', company: 'Digital Dreams Agency', status: 'Inactive', lastContact: '2026-02-15' },
+        { id: 5, name: 'Green Energy Solutions', email: 'contact@greenenergy.com', phone: '(555) 567-8901', company: 'Green Energy Inc', status: 'Lead', lastContact: '2026-04-01' },
+        { id: 6, name: 'Sarah Chen', email: 'sarah@freelancetools.com', phone: '(555) 678-9012', company: 'Freelance Tools', status: 'Active', lastContact: '2026-03-30' },
+        { id: 7, name: 'Phoenix Media', email: 'deals@phoenixmedia.net', phone: '(555) 789-0123', company: 'Phoenix Media Group', status: 'Active', lastContact: '2026-04-04' },
+        { id: 8, name: 'CloudScale Ventures', email: 'partnerships@cloudscale.io', phone: '(555) 890-1234', company: 'CloudScale Ventures', status: 'Lead', lastContact: '2026-03-25' }
+    ],
+    projects: [
+        { id: 1, name: 'Website Redesign', clientId: 1, status: 'In Progress', startDate: '2026-03-10', deadline: '2026-04-30', budget: 5000, paid: 2000, priority: 'High', notes: 'Complete redesign with new branding' },
+        { id: 2, name: 'Mobile App MVP', clientId: 2, status: 'In Progress', startDate: '2026-03-15', deadline: '2026-05-15', budget: 12000, paid: 4000, priority: 'High', notes: 'iOS and Android MVP development' },
+        { id: 3, name: 'Logo Design', clientId: 3, status: 'Completed', startDate: '2026-02-01', deadline: '2026-02-28', budget: 1500, paid: 1500, priority: 'Medium', notes: 'Brand identity suite' },
+        { id: 4, name: 'E-commerce Integration', clientId: 1, status: 'In Progress', startDate: '2026-03-20', deadline: '2026-04-20', budget: 3000, paid: 1000, priority: 'High', notes: 'Stripe and PayPal setup' },
+        { id: 5, name: 'Content Strategy', clientId: 6, status: 'Completed', startDate: '2026-03-01', deadline: '2026-03-31', budget: 2000, paid: 2000, priority: 'Medium', notes: '3-month content plan' },
+        { id: 6, name: 'API Documentation', clientId: 2, status: 'Not Started', startDate: '2026-04-15', deadline: '2026-05-01', budget: 1500, paid: 0, priority: 'Low', notes: 'Technical documentation' },
+        { id: 7, name: 'Social Media Campaign', clientId: 7, status: 'In Progress', startDate: '2026-03-25', deadline: '2026-04-25', budget: 2500, paid: 1000, priority: 'Medium', notes: 'Instagram and LinkedIn' },
+        { id: 8, name: 'SEO Optimization', clientId: 3, status: 'Completed', startDate: '2026-01-15', deadline: '2026-03-15', budget: 1800, paid: 1800, priority: 'Low', notes: 'On-page and technical SEO' },
+        { id: 9, name: 'Dashboard Development', clientId: 4, status: 'On Hold', startDate: '2026-02-01', deadline: '2026-04-01', budget: 4000, paid: 1000, priority: 'Medium', notes: 'Admin panel with analytics' },
+        { id: 10, name: 'Video Production', clientId: 7, status: 'In Progress', startDate: '2026-03-10', deadline: '2026-04-15', budget: 6000, paid: 2000, priority: 'High', notes: '5 promotional videos' },
+        { id: 11, name: 'Brand Guidelines', clientId: 5, status: 'Not Started', startDate: '2026-04-10', deadline: '2026-05-10', budget: 2200, paid: 0, priority: 'Medium', notes: 'Complete brand book' },
+        { id: 12, name: 'Database Migration', clientId: 2, status: 'Completed', startDate: '2026-02-15', deadline: '2026-03-30', budget: 3500, paid: 3500, priority: 'High', notes: 'PostgreSQL migration' }
+    ],
+    invoices: [
+        { id: 1, number: 'INV-001', clientId: 1, projectId: 1, amount: 2000, dateIssued: '2026-03-15', dueDate: '2026-04-15', status: 'Sent', paymentMethod: 'Bank Transfer' },
+        { id: 2, number: 'INV-002', clientId: 2, projectId: 2, amount: 4000, dateIssued: '2026-03-20', dueDate: '2026-04-20', status: 'Sent', paymentMethod: 'Credit Card' },
+        { id: 3, number: 'INV-003', clientId: 3, projectId: 3, amount: 1500, dateIssued: '2026-02-28', dueDate: '2026-03-28', status: 'Paid', paymentMethod: 'Bank Transfer' },
+        { id: 4, number: 'INV-004', clientId: 6, projectId: 5, amount: 2000, dateIssued: '2026-03-31', dueDate: '2026-03-31', status: 'Paid', paymentMethod: 'ACH' },
+        { id: 5, number: 'INV-005', clientId: 1, projectId: 4, amount: 1000, dateIssued: '2026-03-25', dueDate: '2026-04-25', status: 'Draft', paymentMethod: '' },
+        { id: 6, number: 'INV-006', clientId: 2, projectId: 12, amount: 3500, dateIssued: '2026-03-30', dueDate: '2026-03-30', status: 'Paid', paymentMethod: 'Bank Transfer' },
+        { id: 7, number: 'INV-007', clientId: 3, projectId: 8, amount: 1800, dateIssued: '2026-03-15', dueDate: '2026-03-15', status: 'Paid', paymentMethod: 'PayPal' },
+        { id: 8, number: 'INV-008', clientId: 7, projectId: 7, amount: 1000, dateIssued: '2026-03-30', dueDate: '2026-04-30', status: 'Sent', paymentMethod: 'Credit Card' },
+        { id: 9, number: 'INV-009', clientId: 7, projectId: 10, amount: 2000, dateIssued: '2026-03-15', dueDate: '2026-04-15', status: 'Sent', paymentMethod: 'Bank Transfer' },
+        { id: 10, number: 'INV-010', clientId: 4, projectId: 9, amount: 1000, dateIssued: '2026-02-01', dueDate: '2026-03-01', status: 'Overdue', paymentMethod: 'Bank Transfer' },
+        { id: 11, number: 'INV-011', clientId: 2, projectId: 2, amount: 4000, dateIssued: '2026-04-01', dueDate: '2026-05-01', status: 'Draft', paymentMethod: '' },
+        { id: 12, number: 'INV-012', clientId: 1, projectId: 1, amount: 3000, dateIssued: '2026-04-05', dueDate: '2026-05-05', status: 'Draft', paymentMethod: '' },
+        { id: 13, number: 'INV-013', clientId: 6, projectId: 5, amount: 500, dateIssued: '2026-03-20', dueDate: '2026-04-20', status: 'Paid', paymentMethod: 'ACH' },
+        { id: 14, number: 'INV-014', clientId: 3, projectId: 3, amount: 1000, dateIssued: '2026-02-20', dueDate: '2026-03-20', status: 'Paid', paymentMethod: 'Bank Transfer' },
+        { id: 15, number: 'INV-015', clientId: 7, projectId: 10, amount: 1000, dateIssued: '2026-04-01', dueDate: '2026-05-01', status: 'Draft', paymentMethod: '' }
+    ],
+    timeEntries: [
+        { id: 1, date: '2026-04-01', clientId: 1, projectId: 1, hours: 5, rate: 100, description: 'Frontend development' },
+        { id: 2, date: '2026-04-01', clientId: 2, projectId: 2, hours: 8, rate: 120, description: 'Mobile app architecture' },
+        { id: 3, date: '2026-04-02', clientId: 3, projectId: 3, hours: 2, rate: 80, description: 'Design revisions' },
+        { id: 4, date: '2026-04-02', clientId: 1, projectId: 4, hours: 4, rate: 100, description: 'E-commerce setup' },
+        { id: 5, date: '2026-04-03', clientId: 6, projectId: 5, hours: 3, rate: 75, description: 'Content calendar planning' },
+        { id: 6, date: '2026-04-03', clientId: 2, projectId: 2, hours: 6, rate: 120, description: 'API development' },
+        { id: 7, date: '2026-04-04', clientId: 7, projectId: 7, hours: 5, rate: 90, description: 'Social media content creation' },
+        { id: 8, date: '2026-04-04', clientId: 7, projectId: 10, hours: 4, rate: 110, description: 'Video editing' },
+        { id: 9, date: '2026-04-05', clientId: 1, projectId: 1, hours: 7, rate: 100, description: 'Backend integration' },
+        { id: 10, date: '2026-04-05', clientId: 2, projectId: 12, hours: 3, rate: 120, description: 'Database optimization' },
+        { id: 11, date: '2026-03-25', clientId: 6, projectId: 5, hours: 4, rate: 75, description: 'Initial strategy session' },
+        { id: 12, date: '2026-03-26', clientId: 7, projectId: 7, hours: 5, rate: 90, description: 'Campaign planning' },
+        { id: 13, date: '2026-03-27', clientId: 1, projectId: 1, hours: 6, rate: 100, description: 'Design system creation' },
+        { id: 14, date: '2026-03-28', clientId: 2, projectId: 2, hours: 8, rate: 120, description: 'Sprint development' },
+        { id: 15, date: '2026-03-29', clientId: 3, projectId: 8, hours: 3, rate: 80, description: 'SEO audit' },
+        { id: 16, date: '2026-03-30', clientId: 4, projectId: 9, hours: 2, rate: 95, description: 'Dashboard wireframing' },
+        { id: 17, date: '2026-03-31', clientId: 7, projectId: 10, hours: 6, rate: 110, description: 'Video shooting' },
+        { id: 18, date: '2026-04-06', clientId: 1, projectId: 4, hours: 3, rate: 100, description: 'Testing and bug fixes' },
+        { id: 19, date: '2026-04-06', clientId: 2, projectId: 2, hours: 5, rate: 120, description: 'Testing suite' },
+        { id: 20, date: '2026-04-07', clientId: 6, projectId: 5, hours: 2, rate: 75, description: 'Monthly review' }
+    ]
+};
+
+// ============================================================================
+// DATA PERSISTENCE
+// ============================================================================
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+}
+
+function loadData() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            currentData = JSON.parse(saved);
+        } else {
+            currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+    } catch (e) {
+        console.error('Error loading data:', e);
+        currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
+    saveData();
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+const fmt = v => new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+}).format(v);
+
+function getClientName(clientId) {
+    const client = currentData.clients.find(c => c.id === clientId);
+    return client ? client.name : 'Unknown';
+}
+
+function getProjectName(projectId) {
+    const project = currentData.projects.find(p => p.id === projectId);
+    return project ? project.name : 'Unknown';
+}
+
+function getNextId(arr) {
+    return arr.length > 0 ? Math.max(...arr.map(i => i.id)) + 1 : 1;
+}
+
+function refresh() {
+    saveData();
+    renderDashboard();
+    renderClients();
+    renderProjects();
+    renderInvoices();
+    renderTimeTracker();
+    renderReports();
+    renderSettings();
+}
+
+// ============================================================================
+// TAB SWITCHING
+// ============================================================================
+let charts = {};
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    e.target.classList.add('active');
+
+    if (id === 'dashboard' || id === 'reports') {
+        setTimeout(() => {
+            Object.values(charts).forEach(c => {
+                if (c && c.resize) c.resize();
+            });
+        }, 100);
+    }
+}
+
+// ============================================================================
+// DASHBOARD
+// ============================================================================
+function renderDashboard() {
+    const totalRevenue = currentData.invoices
+        .filter(i => i.status === 'Paid')
+        .reduce((sum, i) => sum + i.amount, 0);
+
+    const thisMonth = getCurrentMonth();
+    const monthRevenue = currentData.invoices
+        .filter(i => i.status === 'Paid' && i.dateIssued.startsWith(thisMonth))
+        .reduce((sum, i) => sum + i.amount, 0);
+
+    const outstanding = currentData.invoices
+        .filter(i => ['Sent', 'Draft', 'Overdue'].includes(i.status))
+        .reduce((sum, i) => sum + i.amount, 0);
+
+    const activeProjects = currentData.projects
+        .filter(p => ['In Progress', 'Not Started'].includes(p.status))
+        .length;
+
+    document.getElementById('kpi-total-revenue').textContent = fmt(totalRevenue);
+    document.getElementById('kpi-month-revenue').textContent = fmt(monthRevenue);
+    document.getElementById('kpi-outstanding').textContent = fmt(outstanding);
+    document.getElementById('kpi-active-projects').textContent = activeProjects;
+
+    const lastMonths = getLastSixMonths();
+    const revenueByMonth = {};
+    lastMonths.forEach(m => { revenueByMonth[m] = 0; });
+    currentData.invoices
+        .filter(i => i.status === 'Paid')
+        .forEach(i => {
+            const month = i.dateIssued.substring(0, 7);
+            if (revenueByMonth.hasOwnProperty(month)) revenueByMonth[month] += i.amount;
+        });
+
+    const revenueByClient = {};
+    currentData.clients.forEach(c => { revenueByClient[c.name] = 0; });
+    currentData.invoices
+        .filter(i => i.status === 'Paid')
+        .forEach(i => {
+            const clientName = getClientName(i.clientId);
+            revenueByClient[clientName] = (revenueByClient[clientName] || 0) + i.amount;
+        });
+
+    const projectsByStatus = {};
+    ['Not Started', 'In Progress', 'On Hold', 'Completed', 'Cancelled'].forEach(s => {
+        projectsByStatus[s] = currentData.projects.filter(p => p.status === s).length;
+    });
+
+    const invoicesByStatus = {};
+    ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'].forEach(s => {
+        invoicesByStatus[s] = currentData.invoices.filter(i => i.status === s).length;
+    });
+
+    // Revenue by month chart
+    if (charts.revenue) charts.revenue.destroy();
+    const ctx1 = document.getElementById('revenue-chart').getContext('2d');
+    charts.revenue = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: lastMonths.map(m => {
+                const [y, mo] = m.split('-');
+                return new Date(y, mo - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            }),
+            datasets: [{
+                label: 'Revenue',
+                data: lastMonths.map(m => revenueByMonth[m] || 0),
+                backgroundColor: '#6366f1',
+                borderColor: '#6366f1',
+                borderRadius: 6,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: { ticks: { color: '#a1a1aa' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Revenue by client chart
+    if (charts.clientRevenue) charts.clientRevenue.destroy();
+    const ctx2 = document.getElementById('client-revenue-chart').getContext('2d');
+    const topClients = Object.entries(revenueByClient)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+    charts.clientRevenue = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: topClients.map(c => c[0]),
+            datasets: [{
+                label: 'Revenue',
+                data: topClients.map(c => c[1]),
+                backgroundColor: '#8b5cf6',
+                borderColor: '#8b5cf6',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: { ticks: { color: '#a1a1aa' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Projects by status chart
+    if (charts.projectStatus) charts.projectStatus.destroy();
+    const ctx3 = document.getElementById('project-status-chart').getContext('2d');
+    charts.projectStatus = new Chart(ctx3, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(projectsByStatus),
+            datasets: [{
+                data: Object.values(projectsByStatus),
+                backgroundColor: ['#a1a1aa', '#3b82f6', '#eab308', '#22c55e', '#ef4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: '#a1a1aa' } } }
+        }
+    });
+
+    // Invoices by status chart
+    if (charts.invoiceStatus) charts.invoiceStatus.destroy();
+    const ctx4 = document.getElementById('invoice-status-chart').getContext('2d');
+    charts.invoiceStatus = new Chart(ctx4, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(invoicesByStatus),
+            datasets: [{
+                data: Object.values(invoicesByStatus),
+                backgroundColor: ['#a1a1aa', '#3b82f6', '#22c55e', '#ef4444', '#6366f1']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: '#a1a1aa' } } }
+        }
+    });
+}
+
+// ============================================================================
+// CLIENTS
+// ============================================================================
+function renderClients() {
+    const tbody = document.getElementById('clients-tbody');
+    tbody.innerHTML = '';
+
+    currentData.clients.forEach(client => {
+        const clientRevenue = currentData.invoices
+            .filter(i => i.clientId === client.id && i.status === 'Paid')
+            .reduce((sum, i) => sum + i.amount, 0);
+
+        const projectCount = currentData.projects.filter(p => p.clientId === client.id).length;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="ed" onclick="editClient(${client.id}, 'name')">${client.name}</span></td>
+            <td><span class="ed" onclick="editClient(${client.id}, 'email')">${client.email}</span></td>
+            <td><span class="ed" onclick="editClient(${client.id}, 'phone')">${client.phone}</span></td>
+            <td><span class="ed" onclick="editClient(${client.id}, 'company')">${client.company}</span></td>
+            <td><span class="badge ${client.status.toLowerCase()} ed" onclick="editClientStatus(${client.id})">${client.status}</span></td>
+            <td>${fmt(clientRevenue)}</td>
+            <td>${projectCount}</td>
+            <td><span class="ed" onclick="editClient(${client.id}, 'lastContact')">${client.lastContact}</span></td>
+            <td><button class="btn btn-secondary" onclick="deleteClient(${client.id})">Remove</button></td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Populate client selects
+    const clientSelects = document.querySelectorAll('[id$="-client"]');
+    clientSelects.forEach(sel => {
+        sel.innerHTML = '<option value="">Select Client</option>';
+        currentData.clients.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+    });
+}
+
+function addNewClient() {
+    document.getElementById('new-client-form').style.display = 'block';
+    document.getElementById('client-name').value = '';
+    document.getElementById('client-email').value = '';
+    document.getElementById('client-phone').value = '';
+    document.getElementById('client-company').value = '';
+    document.getElementById('client-status').value = 'Active';
+}
+
+function saveNewClient() {
+    const client = {
+        id: getNextId(currentData.clients),
+        name: document.getElementById('client-name').value,
+        email: document.getElementById('client-email').value,
+        phone: document.getElementById('client-phone').value,
+        company: document.getElementById('client-company').value,
+        status: document.getElementById('client-status').value,
+        lastContact: new Date().toISOString().split('T')[0]
+    };
+
+    if (!client.name.trim()) { alert('Please enter a client name'); return; }
+
+    currentData.clients.push(client);
+    document.getElementById('new-client-form').style.display = 'none';
+    refresh();
+}
+
+function cancelNewClient() {
+    document.getElementById('new-client-form').style.display = 'none';
+}
+
+function editClient(clientId, field) {
+    const client = currentData.clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    let val = client[field];
+    if (field === 'email') {
+        val = prompt('Email:', val);
+    } else if (field === 'phone') {
+        val = prompt('Phone:', val);
+    } else if (field === 'company') {
+        val = prompt('Company:', val);
+    } else if (field === 'lastContact') {
+        val = prompt('Last Contact (YYYY-MM-DD):', val);
+    } else {
+        val = prompt('Name:', val);
+    }
+
+    if (val !== null) {
+        client[field] = val;
+        refresh();
+    }
+}
+
+function editClientStatus(clientId) {
+    const client = currentData.clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const options = ['Active', 'Inactive', 'Lead'];
+    const choice = prompt('Status:\n1. Active\n2. Inactive\n3. Lead\n\nEnter number:', options.indexOf(client.status) + 1);
+
+    if (choice && choice >= 1 && choice <= 3) {
+        client.status = options[parseInt(choice) - 1];
+        refresh();
+    }
+}
+
+function deleteClient(clientId) {
+    if (!confirm('Delete this client? This will not delete their projects.')) return;
+    currentData.clients = currentData.clients.filter(c => c.id !== clientId);
+    refresh();
+}
+
+// ============================================================================
+// PROJECTS
+// ============================================================================
+function renderProjects() {
+    const tbody = document.getElementById('projects-tbody');
+    tbody.innerHTML = '';
+
+    currentData.projects
+        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+        .forEach(project => {
+            const balance = project.budget - project.paid;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span class="ed" onclick="editProject(${project.id}, 'name')">${project.name}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'clientId')">${getClientName(project.clientId)}</span></td>
+                <td><span class="badge ${project.status.toLowerCase().replace(' ', '-')} ed" onclick="editProjectStatus(${project.id})">${project.status}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'startDate')">${project.startDate}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'deadline')">${project.deadline}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'budget')">${fmt(project.budget)}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'paid')">${fmt(project.paid)}</span></td>
+                <td>${fmt(balance)}</td>
+                <td><span class="priority ${project.priority.toLowerCase()} ed" onclick="editProjectPriority(${project.id})">${project.priority}</span></td>
+                <td><span class="ed" onclick="editProject(${project.id}, 'notes')">${project.notes}</span></td>
+                <td><button class="btn btn-secondary" onclick="deleteProject(${project.id})">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    // Populate project selects
+    const projectSelects = document.querySelectorAll('[id$="-project"]');
+    projectSelects.forEach(sel => {
+        sel.innerHTML = '<option value="">Select Project (optional)</option>';
+        currentData.projects.forEach(p => {
+            sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+    });
+}
+
+function addNewProject() {
+    document.getElementById('new-project-form').style.display = 'block';
+    document.getElementById('project-name').value = '';
+    document.getElementById('project-client').value = '';
+    document.getElementById('project-status').value = 'Not Started';
+    document.getElementById('project-start').value = '';
+    document.getElementById('project-deadline').value = '';
+    document.getElementById('project-budget').value = '';
+    document.getElementById('project-paid').value = '';
+    document.getElementById('project-priority').value = 'Medium';
+    document.getElementById('project-notes').value = '';
+}
+
+function saveNewProject() {
+    const project = {
+        id: getNextId(currentData.projects),
+        name: document.getElementById('project-name').value,
+        clientId: parseInt(document.getElementById('project-client').value),
+        status: document.getElementById('project-status').value,
+        startDate: document.getElementById('project-start').value,
+        deadline: document.getElementById('project-deadline').value,
+        budget: parseFloat(document.getElementById('project-budget').value) || 0,
+        paid: parseFloat(document.getElementById('project-paid').value) || 0,
+        priority: document.getElementById('project-priority').value,
+        notes: document.getElementById('project-notes').value
+    };
+
+    if (!project.name.trim() || !project.clientId) { alert('Please fill in required fields'); return; }
+
+    currentData.projects.push(project);
+    document.getElementById('new-project-form').style.display = 'none';
+    refresh();
+}
+
+function cancelNewProject() {
+    document.getElementById('new-project-form').style.display = 'none';
+}
+
+function editProject(projectId, field) {
+    const project = currentData.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    if (field === 'clientId') {
+        const choice = prompt('Client ID:');
+        if (choice) project.clientId = parseInt(choice);
+    } else if (field === 'budget' || field === 'paid') {
+        const val = prompt(`${field === 'budget' ? 'Budget' : 'Amount Paid'}:`, project[field]);
+        if (val) project[field] = parseFloat(val);
+    } else {
+        const val = prompt(`${field === 'name' ? 'Project Name' : field === 'startDate' ? 'Start Date' : field === 'deadline' ? 'Deadline' : 'Notes'}:`, project[field]);
+        if (val !== null) project[field] = val;
+    }
+    refresh();
+}
+
+function editProjectStatus(projectId) {
+    const project = currentData.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const statuses = ['Not Started', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
+    const choice = prompt('Status:\n1. Not Started\n2. In Progress\n3. On Hold\n4. Completed\n5. Cancelled', statuses.indexOf(project.status) + 1);
+
+    if (choice && choice >= 1 && choice <= 5) {
+        project.status = statuses[parseInt(choice) - 1];
+        refresh();
+    }
+}
+
+function editProjectPriority(projectId) {
+    const project = currentData.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const priorities = ['Low', 'Medium', 'High'];
+    const choice = prompt('Priority:\n1. Low\n2. Medium\n3. High', priorities.indexOf(project.priority) + 1);
+
+    if (choice && choice >= 1 && choice <= 3) {
+        project.priority = priorities[parseInt(choice) - 1];
+        refresh();
+    }
+}
+
+function deleteProject(projectId) {
+    if (!confirm('Delete this project?')) return;
+    currentData.projects = currentData.projects.filter(p => p.id !== projectId);
+    currentData.invoices = currentData.invoices.filter(i => i.projectId !== projectId);
+    currentData.timeEntries = currentData.timeEntries.filter(t => t.projectId !== projectId);
+    refresh();
+}
+
+// ============================================================================
+// INVOICES
+// ============================================================================
+function renderInvoices() {
+    const tbody = document.getElementById('invoices-tbody');
+    tbody.innerHTML = '';
+
+    currentData.invoices.forEach(invoice => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="ed" onclick="editInvoice(${invoice.id}, 'number')">${invoice.number}</span></td>
+            <td>${getClientName(invoice.clientId)}</td>
+            <td>${invoice.projectId ? getProjectName(invoice.projectId) : '-'}</td>
+            <td><span class="ed" onclick="editInvoice(${invoice.id}, 'amount')">${fmt(invoice.amount)}</span></td>
+            <td><span class="ed" onclick="editInvoice(${invoice.id}, 'dateIssued')">${invoice.dateIssued}</span></td>
+            <td><span class="ed" onclick="editInvoice(${invoice.id}, 'dueDate')">${invoice.dueDate}</span></td>
+            <td><span class="badge ${invoice.status.toLowerCase()} ed" onclick="editInvoiceStatus(${invoice.id})">${invoice.status}</span></td>
+            <td><span class="ed" onclick="editInvoice(${invoice.id}, 'paymentMethod')">${invoice.paymentMethod || '-'}</span></td>
+            <td>
+                ${invoice.status !== 'Paid' ? `<button class="btn btn-primary" onclick="markAsPaid(${invoice.id})">Mark Paid</button>` : ''}
+                <button class="btn btn-secondary" onclick="deleteInvoice(${invoice.id})">Remove</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Update outstanding total
+    const outstanding = currentData.invoices
+        .filter(i => ['Sent', 'Draft', 'Overdue'].includes(i.status))
+        .reduce((sum, i) => sum + i.amount, 0);
+    document.getElementById('invoice-outstanding').textContent = fmt(outstanding);
+}
+
+function addNewInvoice() {
+    document.getElementById('new-invoice-form').style.display = 'block';
+    const prefix = currentData.settings.invoicePrefix || 'INV-';
+    const nextNum = currentData.invoices.length + 1;
+    document.getElementById('invoice-number').value = prefix + String(nextNum).padStart(3, '0');
+    document.getElementById('invoice-client').value = '';
+    document.getElementById('invoice-project').value = '';
+    document.getElementById('invoice-amount').value = '';
+    document.getElementById('invoice-date-issued').value = new Date().toISOString().split('T')[0];
+    document.getElementById('invoice-due-date').value = '';
+    document.getElementById('invoice-status').value = 'Draft';
+    document.getElementById('invoice-payment-method').value = '';
+}
+
+function saveNewInvoice() {
+    const invoice = {
+        id: getNextId(currentData.invoices),
+        number: document.getElementById('invoice-number').value,
+        clientId: parseInt(document.getElementById('invoice-client').value),
+        projectId: parseInt(document.getElementById('invoice-project').value) || 0,
+        amount: parseFloat(document.getElementById('invoice-amount').value) || 0,
+        dateIssued: document.getElementById('invoice-date-issued').value,
+        dueDate: document.getElementById('invoice-due-date').value,
+        status: document.getElementById('invoice-status').value,
+        paymentMethod: document.getElementById('invoice-payment-method').value
+    };
+
+    if (!invoice.number.trim() || !invoice.clientId || !invoice.amount) {
+        alert('Please fill in required fields');
+        return;
+    }
+
+    currentData.invoices.push(invoice);
+    document.getElementById('new-invoice-form').style.display = 'none';
+    refresh();
+}
+
+function cancelNewInvoice() {
+    document.getElementById('new-invoice-form').style.display = 'none';
+}
+
+function editInvoice(invoiceId, field) {
+    const invoice = currentData.invoices.find(i => i.id === invoiceId);
+    if (!invoice) return;
+
+    if (field === 'amount') {
+        const val = prompt('Amount:', invoice.amount);
+        if (val) invoice.amount = parseFloat(val);
+    } else {
+        const val = prompt(`${field}:`, invoice[field]);
+        if (val !== null) invoice[field] = val;
+    }
+    refresh();
+}
+
+function editInvoiceStatus(invoiceId) {
+    const invoice = currentData.invoices.find(i => i.id === invoiceId);
+    if (!invoice) return;
+
+    const statuses = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
+    const choice = prompt('Status:\n1. Draft\n2. Sent\n3. Paid\n4. Overdue\n5. Cancelled', statuses.indexOf(invoice.status) + 1);
+
+    if (choice && choice >= 1 && choice <= 5) {
+        invoice.status = statuses[parseInt(choice) - 1];
+        refresh();
+    }
+}
+
+function markAsPaid(invoiceId) {
+    const invoice = currentData.invoices.find(i => i.id === invoiceId);
+    if (invoice) {
+        invoice.status = 'Paid';
+        refresh();
+    }
+}
+
+function deleteInvoice(invoiceId) {
+    if (!confirm('Delete this invoice?')) return;
+    currentData.invoices = currentData.invoices.filter(i => i.id !== invoiceId);
+    refresh();
+}
+
+// ============================================================================
+// TIME TRACKER
+// ============================================================================
+function renderTimeTracker() {
+    const tbody = document.getElementById('timetracker-tbody');
+    tbody.innerHTML = '';
+
+    currentData.timeEntries
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .forEach(entry => {
+            const total = entry.hours * entry.rate;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span class="ed" onclick="editTimeEntry(${entry.id}, 'date')">${entry.date}</span></td>
+                <td>${getClientName(entry.clientId)}</td>
+                <td>${entry.projectId ? getProjectName(entry.projectId) : '-'}</td>
+                <td><span class="ed" onclick="editTimeEntry(${entry.id}, 'hours')">${entry.hours}h</span></td>
+                <td><span class="ed" onclick="editTimeEntry(${entry.id}, 'rate')">${fmt(entry.rate)}/h</span></td>
+                <td>${fmt(total)}</td>
+                <td><span class="ed" onclick="editTimeEntry(${entry.id}, 'description')">${entry.description}</span></td>
+                <td><button class="btn btn-secondary" onclick="deleteTimeEntry(${entry.id})">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    // Calculate stats
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weeklyHours = currentData.timeEntries
+        .filter(e => new Date(e.date) >= weekAgo)
+        .reduce((sum, e) => sum + e.hours, 0);
+
+    const thisMonth = getCurrentMonth();
+    const monthlyHours = currentData.timeEntries
+        .filter(e => e.date.startsWith(thisMonth))
+        .reduce((sum, e) => sum + e.hours, 0);
+
+    const totalMoneyLogged = currentData.timeEntries
+        .reduce((sum, e) => sum + (e.hours * e.rate), 0);
+    const avgRate = currentData.timeEntries.length > 0 ? totalMoneyLogged / currentData.timeEntries.reduce((sum, e) => sum + e.hours, 0) : 0;
+
+    document.getElementById('weekly-hours').textContent = weeklyHours + 'h';
+    document.getElementById('monthly-hours').textContent = monthlyHours + 'h';
+    document.getElementById('avg-rate').textContent = fmt(avgRate) + '/h';
+}
+
+function addNewTimeEntry() {
+    document.getElementById('new-time-form').style.display = 'block';
+    document.getElementById('time-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('time-client').value = '';
+    document.getElementById('time-project').value = '';
+    document.getElementById('time-hours').value = '';
+    document.getElementById('time-rate').value = currentData.settings.defaultRate || 50;
+    document.getElementById('time-description').value = '';
+}
+
+function saveNewTimeEntry() {
+    const entry = {
+        id: getNextId(currentData.timeEntries),
+        date: document.getElementById('time-date').value,
+        clientId: parseInt(document.getElementById('time-client').value),
+        projectId: parseInt(document.getElementById('time-project').value) || 0,
+        hours: parseFloat(document.getElementById('time-hours').value) || 0,
+        rate: parseFloat(document.getElementById('time-rate').value) || 0,
+        description: document.getElementById('time-description').value
+    };
+
+    if (!entry.date || !entry.clientId || !entry.hours || !entry.rate) {
+        alert('Please fill in required fields');
+        return;
+    }
+
+    currentData.timeEntries.push(entry);
+    document.getElementById('new-time-form').style.display = 'none';
+    refresh();
+}
+
+function cancelNewTimeEntry() {
+    document.getElementById('new-time-form').style.display = 'none';
+}
+
+function editTimeEntry(entryId, field) {
+    const entry = currentData.timeEntries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    if (field === 'hours' || field === 'rate') {
+        const val = prompt(`${field === 'hours' ? 'Hours' : 'Rate ($/h)'}:`, entry[field]);
+        if (val) entry[field] = parseFloat(val);
+    } else {
+        const val = prompt(`${field}:`, entry[field]);
+        if (val !== null) entry[field] = val;
+    }
+    refresh();
+}
+
+function deleteTimeEntry(entryId) {
+    if (!confirm('Delete this time entry?')) return;
+    currentData.timeEntries = currentData.timeEntries.filter(e => e.id !== entryId);
+    refresh();
+}
+
+// ============================================================================
+// REPORTS
+// ============================================================================
+function renderReports() {
+    const lastMonths = getLastSixMonths();
+    const revenueByMonth = {};
+    lastMonths.forEach(m => { revenueByMonth[m] = 0; });
+    currentData.invoices
+        .filter(i => i.status === 'Paid')
+        .forEach(i => {
+            const month = i.dateIssued.substring(0, 7);
+            if (revenueByMonth.hasOwnProperty(month)) revenueByMonth[month] += i.amount;
+        });
+
+    const revenueByClient = {};
+    currentData.clients.forEach(c => { revenueByClient[c.id] = { name: c.name, revenue: 0 }; });
+    currentData.invoices
+        .filter(i => i.status === 'Paid')
+        .forEach(i => {
+            if (revenueByClient[i.clientId]) {
+                revenueByClient[i.clientId].revenue += i.amount;
+            }
+        });
+
+    const topClients = Object.values(revenueByClient)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+    const completedProjects = currentData.projects.filter(p => p.status === 'Completed').length;
+    const totalProjects = currentData.projects.length;
+    const completionRate = totalProjects > 0 ? ((completedProjects / totalProjects) * 100).toFixed(0) : 0;
+
+    const paidInvoices = currentData.invoices.filter(i => i.status === 'Paid');
+    let avgPaymentTime = 0;
+    if (paidInvoices.length > 0) {
+        let totalDays = 0;
+        paidInvoices.forEach(i => {
+            const issued = new Date(i.dateIssued);
+            const today = new Date();
+            const days = Math.floor((today - issued) / (1000 * 60 * 60 * 24));
+            totalDays += days;
+        });
+        avgPaymentTime = Math.round(totalDays / paidInvoices.length);
+    }
+
+    const thisMonth = getCurrentMonth();
+    const billableHours = currentData.timeEntries
+        .filter(e => e.date.startsWith(thisMonth))
+        .reduce((sum, e) => sum + e.hours, 0);
+
+    const avgProjectValue = totalProjects > 0
+        ? currentData.projects.reduce((sum, p) => sum + p.budget, 0) / totalProjects
+        : 0;
+
+    // Income trend
+    if (charts.incomeTrend) charts.incomeTrend.destroy();
+    const ctx1 = document.getElementById('income-trend-chart').getContext('2d');
+    charts.incomeTrend = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: lastMonths.map(m => {
+                const [y, mo] = m.split('-');
+                return new Date(y, mo - 1).toLocaleDateString('en-US', { month: 'short' });
+            }),
+            datasets: [{
+                label: 'Revenue',
+                data: lastMonths.map(m => revenueByMonth[m] || 0),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#6366f1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: { ticks: { color: '#a1a1aa' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Top clients
+    if (charts.topClients) charts.topClients.destroy();
+    const ctx2 = document.getElementById('top-clients-chart').getContext('2d');
+    charts.topClients = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: topClients.map(c => c.name),
+            datasets: [{
+                label: 'Revenue',
+                data: topClients.map(c => c.revenue),
+                backgroundColor: '#8b5cf6'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: { ticks: { color: '#a1a1aa' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Completion rate
+    if (charts.completionRate) charts.completionRate.destroy();
+    const ctx3 = document.getElementById('completion-rate-chart').getContext('2d');
+    charts.completionRate = new Chart(ctx3, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'In Progress'],
+            datasets: [{
+                data: [completedProjects, totalProjects - completedProjects],
+                backgroundColor: ['#22c55e', '#3b82f6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: '#a1a1aa' } } }
+        }
+    });
+
+    // Hours by client
+    const hoursByClient = {};
+    currentData.timeEntries
+        .filter(e => e.date.startsWith(thisMonth))
+        .forEach(e => {
+            const name = getClientName(e.clientId);
+            hoursByClient[name] = (hoursByClient[name] || 0) + e.hours;
+        });
+
+    if (charts.hoursByClient) charts.hoursByClient.destroy();
+    const ctx4 = document.getElementById('hours-by-client-chart').getContext('2d');
+    const clientNames = Object.keys(hoursByClient);
+    charts.hoursByClient = new Chart(ctx4, {
+        type: 'bar',
+        data: {
+            labels: clientNames,
+            datasets: [{
+                label: 'Hours',
+                data: clientNames.map(c => hoursByClient[c]),
+                backgroundColor: '#ec4899'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: { ticks: { color: '#a1a1aa' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Update stats
+    document.getElementById('avg-payment-time').textContent = avgPaymentTime > 0 ? avgPaymentTime + ' days' : 'N/A';
+    document.getElementById('success-rate').textContent = completionRate + '%';
+    document.getElementById('billable-hours').textContent = Math.round(billableHours) + 'h';
+    document.getElementById('avg-project-value').textContent = fmt(avgProjectValue);
+}
+
+function exportReport() {
+    const report = {
+        exportDate: new Date().toISOString(),
+        totalRevenue: currentData.invoices
+            .filter(i => i.status === 'Paid')
+            .reduce((sum, i) => sum + i.amount, 0),
+        outstanding: currentData.invoices
+            .filter(i => ['Sent', 'Draft', 'Overdue'].includes(i.status))
+            .reduce((sum, i) => sum + i.amount, 0),
+        totalProjects: currentData.projects.length,
+        completedProjects: currentData.projects.filter(p => p.status === 'Completed').length,
+        totalClients: currentData.clients.length,
+        totalTimeLogged: currentData.timeEntries.reduce((sum, e) => sum + e.hours, 0)
+    };
+
+    const dataStr = JSON.stringify(report, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'freelancer-report-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+}
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+function renderSettings() {
+    document.getElementById('currency-symbol').value = currentData.settings.currencySymbol || '$';
+    document.getElementById('default-rate').value = currentData.settings.defaultRate || 50;
+    document.getElementById('payment-terms').value = currentData.settings.paymentTerms || 'Net 30';
+    document.getElementById('tax-rate').value = currentData.settings.taxRate || 0;
+    document.getElementById('invoice-prefix').value = currentData.settings.invoicePrefix || 'INV-';
+
+    const servicesList = document.getElementById('services-list');
+    servicesList.innerHTML = '';
+    (currentData.settings.services || []).forEach(service => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '10px';
+        div.innerHTML = `<span style="color: var(--text-muted);">${service}</span> <button class="btn btn-secondary" onclick="removeService('${service}')" style="padding: 5px 10px; font-size: 12px;">Remove</button>`;
+        servicesList.appendChild(div);
+    });
+
+    const expensesList = document.getElementById('expenses-list');
+    expensesList.innerHTML = '';
+    (currentData.settings.expenses || []).forEach(expense => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '10px';
+        div.innerHTML = `<span style="color: var(--text-muted);">${expense}</span> <button class="btn btn-secondary" onclick="removeExpense('${expense}')" style="padding: 5px 10px; font-size: 12px;">Remove</button>`;
+        expensesList.appendChild(div);
+    });
+}
+
+function saveSettings() {
+    currentData.settings.currencySymbol = document.getElementById('currency-symbol').value;
+    currentData.settings.defaultRate = parseFloat(document.getElementById('default-rate').value);
+    currentData.settings.paymentTerms = document.getElementById('payment-terms').value;
+    currentData.settings.taxRate = parseFloat(document.getElementById('tax-rate').value);
+    currentData.settings.invoicePrefix = document.getElementById('invoice-prefix').value;
+    refresh();
+    alert('Settings saved!');
+}
+
+function addService() {
+    const service = document.getElementById('new-service').value.trim();
+    if (!service) { alert('Please enter a service'); return; }
+    if (!currentData.settings.services) currentData.settings.services = [];
+    currentData.settings.services.push(service);
+    document.getElementById('new-service').value = '';
+    refresh();
+}
+
+function removeService(service) {
+    if (!currentData.settings.services) return;
+    currentData.settings.services = currentData.settings.services.filter(s => s !== service);
+    refresh();
+}
+
+function addExpenseCategory() {
+    const category = document.getElementById('new-expense').value.trim();
+    if (!category) { alert('Please enter a category'); return; }
+    if (!currentData.settings.expenses) currentData.settings.expenses = [];
+    currentData.settings.expenses.push(category);
+    document.getElementById('new-expense').value = '';
+    refresh();
+}
+
+function removeExpense(expense) {
+    if (!currentData.settings.expenses) return;
+    currentData.settings.expenses = currentData.settings.expenses.filter(e => e !== expense);
+    refresh();
+}
+
+// ============================================================================
+// EXPORT / IMPORT / RESET
+// ============================================================================
+function exportData() {
+    const dataStr = JSON.stringify(currentData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'freelancer-data-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+}
+
+function exportAllData() {
+    exportData();
+}
+
+function importDataPrompt() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const imported = JSON.parse(event.target.result);
+                currentData = imported;
+                saveData();
+                refresh();
+                alert('Data imported successfully!');
+            } catch (err) {
+                alert('Error importing data: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function resetToDefaults() {
+    if (!confirm('Reset all data to defaults? This cannot be undone.')) return;
+    currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    saveData();
+    refresh();
+    alert('Data reset to defaults!');
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+window.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    refresh();
+});
+</script>
+
+</body>
+</html>

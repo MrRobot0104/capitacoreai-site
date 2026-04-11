@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Planner — DashForge by CapitaCoreAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --white: #ffffff;
+    --bg: #f8f9fb;
+    --bg-card: #ffffff;
+    --border: #e8ecf1;
+    --border-light: #f1f3f6;
+    --text: #1a1f36;
+    --text-2: #4a5578;
+    --text-3: #8892a8;
+    --accent: #4f46e5;
+    --accent-light: #eef2ff;
+    --green: #10b981;
+    --green-light: #ecfdf5;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --amber: #f59e0b;
+    --amber-light: #fffbeb;
+    --blue: #3b82f6;
+    --blue-light: #eff6ff;
+    --radius: 12px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* === NAV === */
+  .nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-logo svg { width: 18px; height: 18px; }
+  .nav-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .nav-title span {
+    color: var(--text-3);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--bg); }
+  .nav-tab.active { color: var(--accent); background: var(--accent-light); }
+  .nav-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text-2);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: #d1d5db; background: var(--bg); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #4338ca; border-color: #4338ca; }
+
+  /* === LAYOUT === */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 28px 32px 48px;
+  }
+
+  /* === PAGE HEADER === */
+  .page-header {
+    margin-bottom: 28px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .page-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .period-selector {
+    display: flex;
+    gap: 4px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .period-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .period-btn.active {
+    background: var(--text);
+    color: white;
+  }
+
+  /* === KPI CARDS === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+  }
+  .kpi:hover { box-shadow: var(--shadow); }
+  .kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .kpi-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-icon svg { width: 16px; height: 16px; }
+  .kpi-icon.green { background: var(--green-light); color: var(--green); }
+  .kpi-icon.red { background: var(--red-light); color: var(--red); }
+  .kpi-icon.blue { background: var(--blue-light); color: var(--blue); }
+  .kpi-icon.amber { background: var(--amber-light); color: var(--amber); }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .kpi-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-left: 4px;
+  }
+
+  /* === CARDS / PANELS === */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .card-body { padding: 22px; }
+
+  /* === GRID LAYOUTS === */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .full-width { margin-bottom: 24px; }
+
+  /* === CHART CONTAINERS === */
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+
+  /* === TABLE === */
+  .table-card { overflow: hidden; margin-bottom: 24px; }
+  .table-toolbar {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .search-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    width: 240px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .search-box::placeholder { color: var(--text-3); }
+  .search-box:focus { border-color: var(--accent); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 22px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 12px 22px;
+    font-size: 13px;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border-light);
+  }
+  tbody tr:hover { background: #fafbfd; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .cat-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .cat-housing { background: var(--blue-light); color: var(--blue); }
+  .cat-food { background: var(--amber-light); color: var(--amber); }
+  .cat-transport { background: #f0fdf4; color: #16a34a; }
+  .cat-utilities { background: #faf5ff; color: #9333ea; }
+  .cat-entertainment { background: #fff7ed; color: #ea580c; }
+  .cat-insurance { background: var(--red-light); color: var(--red); }
+  .cat-savings { background: var(--accent-light); color: var(--accent); }
+
+  .amount { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .amount-neg { color: var(--red); }
+  .amount-pos { color: var(--green); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border-light);
+    border-radius: 2px;
+    overflow: hidden;
+    width: 100px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  /* === SAVINGS GOALS === */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .goal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .goal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .goal-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .goal-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .goal-bar {
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .goal-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+  .goal-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+  .goal-detail span { color: var(--text-2); font-weight: 500; }
+
+  /* === FOOTER === */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3, .goals-grid { grid-template-columns: 1fr; }
+    .nav-tabs { display: none; }
+  }
+  @media (max-width: 640px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .container { padding: 20px 16px 40px; }
+    .nav-inner { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <div class="nav-title">DashForge <span>by CapitaCoreAI</span></div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="nav-tab" onclick="switchTab('budget',this)">Budget</button>
+      <button class="nav-tab" onclick="switchTab('goals',this)">Goals</button>
+      <button class="nav-tab" onclick="switchTab('reports',this)">Reports</button>
+    </div>
+    <div class="nav-actions">
+      <button class="btn" onclick="exportData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button class="btn btn-primary" onclick="saveAll()">Save changes</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <h1>Budget Planner</h1>
+        <p>April 2026 — Monthly overview and spending analysis</p>
+      </div>
+      <div class="period-selector">
+        <button class="period-btn">Week</button>
+        <button class="period-btn active">Month</button>
+        <button class="period-btn">Quarter</button>
+        <button class="period-btn">Year</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Income</span>
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+      </div>
+      <div class="kpi-value">$5,400</div>
+      <span class="kpi-change up">↑ 3.2%</span>
+      <span class="kpi-sub">vs last month</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Expenses</span>
+        <div class="kpi-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+      </div>
+      <div class="kpi-value">$3,847</div>
+      <span class="kpi-change down">↑ 5.1%</span>
+      <span class="kpi-sub">vs last month</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Net Savings</span>
+        <div class="kpi-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </div>
+      </div>
+      <div class="kpi-value">$1,553</div>
+      <span class="kpi-change up">↑ 12%</span>
+      <span class="kpi-sub">vs last month</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Savings Rate</span>
+        <div class="kpi-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+      <div class="kpi-value">28.8%</div>
+      <span class="kpi-change up">↑ 2.4%</span>
+      <span class="kpi-sub">target: 30%</span>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Monthly Spending Trend</span>
+        <button class="btn" style="padding:5px 10px;font-size:11px;">6 months</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Spending by Category</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <canvas id="catChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET TABLE -->
+  <div class="card table-card full-width">
+    <div class="card-header">
+      <span class="card-title">Budget Breakdown</span>
+      <div class="table-toolbar" style="padding:0;border:0;">
+        <input type="text" class="search-box" placeholder="Search categories..." oninput="filterTable(this.value)">
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Budgeted</th>
+          <th>Spent</th>
+          <th>Remaining</th>
+          <th>Progress</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="budgetBody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SAVINGS GOALS -->
+  <div style="margin-bottom:16px;">
+    <h2 style="font-size:16px;font-weight:600;letter-spacing:-0.02em;">Savings Goals</h2>
+    <p style="font-size:13px;color:var(--text-3);margin-top:2px;">Track progress toward your financial targets</p>
+  </div>
+  <div class="goals-grid">
+    <div class="goal-card">
+      <div class="goal-top">
+        <span class="goal-name">Emergency Fund</span>
+        <span class="goal-pct">67%</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" style="width:67%;background:var(--green);"></div></div>
+      <div class="goal-detail">
+        <span>$6,700 saved</span>
+        <span>$10,000 goal</span>
+      </div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-top">
+        <span class="goal-name">Vacation Fund</span>
+        <span class="goal-pct">42%</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" style="width:42%;background:var(--blue);"></div></div>
+      <div class="goal-detail">
+        <span>$2,100 saved</span>
+        <span>$5,000 goal</span>
+      </div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-top">
+        <span class="goal-name">New Laptop</span>
+        <span class="goal-pct">85%</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" style="width:85%;background:var(--accent);"></div></div>
+      <div class="goal-detail">
+        <span>$1,700 saved</span>
+        <span>$2,000 goal</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>DashForge by <a href="#">CapitaCoreAI</a> — Budget Planner</span>
+    <span>Last updated: April 11, 2026</span>
+  </footer>
+
+</div>
+
+<script>
+// === BUDGET DATA ===
+const budget = [
+  { cat: 'Housing', cls: 'housing', budget: 1500, spent: 1500, icon: '🏠' },
+  { cat: 'Food & Dining', cls: 'food', budget: 600, spent: 487, icon: '🍽' },
+  { cat: 'Transportation', cls: 'transport', budget: 350, spent: 298, icon: '🚗' },
+  { cat: 'Utilities', cls: 'utilities', budget: 250, spent: 234, icon: '⚡' },
+  { cat: 'Entertainment', cls: 'entertainment', budget: 200, spent: 142, icon: '🎬' },
+  { cat: 'Insurance', cls: 'insurance', budget: 400, spent: 400, icon: '🛡' },
+  { cat: 'Savings', cls: 'savings', budget: 800, spent: 786, icon: '💎' },
+];
+
+function renderTable(data) {
+  const body = document.getElementById('budgetBody');
+  body.innerHTML = data.map(r => {
+    const rem = r.budget - r.spent;
+    const pct = Math.min((r.spent / r.budget) * 100, 100);
+    const color = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : 'var(--green)';
+    const status = pct >= 100 ? 'At limit' : pct >= 80 ? 'Near limit' : 'On track';
+    const statusColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : 'var(--green)';
+    return `<tr>
+      <td><span class="cat-pill cat-${r.cls}">${r.cat}</span></td>
+      <td class="amount">$${r.budget.toLocaleString()}</td>
+      <td class="amount">$${r.spent.toLocaleString()}</td>
+      <td class="amount ${rem < 0 ? 'amount-neg' : 'amount-pos'}">$${rem.toLocaleString()}</td>
+      <td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div></td>
+      <td><span style="font-size:12px;font-weight:500;color:${statusColor}">${status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(q) {
+  const filtered = budget.filter(r => r.cat.toLowerCase().includes(q.toLowerCase()));
+  renderTable(filtered);
+}
+
+// === TREND CHART ===
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+    datasets: [
+      {
+        label: 'Income',
+        data: [5200, 5400, 5200, 5400, 5400, 5400],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.06)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#10b981',
+      },
+      {
+        label: 'Expenses',
+        data: [3600, 4100, 3500, 3700, 3660, 3847],
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.04)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#ef4444',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        align: 'end',
+        labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 11, weight: '500' }, color: '#8892a8' }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 11 }, color: '#8892a8' }
+      },
+      y: {
+        grid: { color: '#f1f3f6' },
+        border: { display: false },
+        ticks: {
+          font: { size: 11 },
+          color: '#8892a8',
+          callback: v => '$' + (v/1000) + 'k'
+        }
+      }
+    },
+    interaction: { intersect: false, mode: 'index' }
+  }
+});
+
+// === CATEGORY CHART ===
+const catCtx = document.getElementById('catChart').getContext('2d');
+new Chart(catCtx, {
+  type: 'doughnut',
+  data: {
+    labels: budget.map(r => r.cat),
+    datasets: [{
+      data: budget.map(r => r.spent),
+      backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#f97316', '#ef4444', '#4f46e5'],
+      borderWidth: 0,
+      hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11, weight: '500' }, color: '#4a5578' }
+      }
+    }
+  }
+});
+
+// === TAB SWITCH ===
+function switchTab(id, el) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function saveAll() {
+  const btn = event.target;
+  btn.textContent = 'Saved!';
+  setTimeout(() => { btn.textContent = 'Save changes'; }, 1500);
+}
+
+function exportData() {
+  alert('Export feature — connect to your backend');
+}
+
+// INIT
+renderTable(budget);
+</script>
+
+</body>
+</html>
