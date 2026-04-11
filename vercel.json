@@ -14,7 +14,7 @@
     }
   ],
   "functions": {
-    "api/znak-generate.js": {
+    "api/dashpilot-generate.js": {
       "memory": 1024,
       "maxDuration": 300
     },

@@ -1,5 +1,5 @@
 -- ============================================
--- CapitaCoreAI / Znak - Database Setup
+-- CapitaCoreAI / DashPilot - Database Setup
 -- Run this in Supabase SQL Editor (supabase.com → your project → SQL Editor)
 -- ============================================
 

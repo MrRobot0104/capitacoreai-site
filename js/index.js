@@ -264,9 +264,9 @@ async function checkMenuAuth(session) {
     var hasAccess = isAdmin || balance > 0;
     var list = document.getElementById('menuAgentsList');
     if (hasAccess) {
-      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">' + (isAdmin ? '\u221E' : balance) + ' credits remaining</span></div><a href="znak-app.html" class="agent-link">Launch \u2192</a></div>';
+      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:#999999;">' + (isAdmin ? '\u221E' : balance) + ' credits remaining</span></div><a href="dashpilot-app.html" class="agent-link">Launch \u2192</a></div>';
     } else {
-      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">znak</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="pricing.html" class="agent-link">Buy \u2192</a></div>';
+      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="pricing.html" class="agent-link">Buy \u2192</a></div>';
     }
   } else {
     authDiv.style.display = 'block';

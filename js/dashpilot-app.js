@@ -166,10 +166,10 @@ function showLimitBar() {
 
 // CONVERSATION CONTROL
 async function startNewDashboard() {
-  if (creditBalance <= 0) { window.location.href = 'znak.html'; return; }
+  if (creditBalance <= 0) { window.location.href = 'dashpilot.html'; return; }
   var result = await sb.auth.getSession();
   var session = result.data.session;
-  var res = await fetch('/api/znak-generate', {
+  var res = await fetch('/api/dashpilot-generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     body: JSON.stringify({ action: 'start_conversation' })
@@ -200,7 +200,7 @@ async function startNewDashboard() {
 async function continueConversation() {
   var result = await sb.auth.getSession();
   var session = result.data.session;
-  var res = await fetch('/api/znak-generate', {
+  var res = await fetch('/api/dashpilot-generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     body: JSON.stringify({ action: 'start_conversation' })
@@ -223,10 +223,10 @@ async function sendMessage() {
   if (!message && !uploadedFileData) return;
 
   if (!conversationStarted) {
-    if (creditBalance <= 0) { window.location.href = 'znak.html'; return; }
+    if (creditBalance <= 0) { window.location.href = 'dashpilot.html'; return; }
     var authResult = await sb.auth.getSession();
     var authSession = authResult.data.session;
-    var res = await fetch('/api/znak-generate', {
+    var res = await fetch('/api/dashpilot-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authSession.access_token },
       body: JSON.stringify({ action: 'start_conversation' })
@@ -301,7 +301,7 @@ async function sendMessage() {
     var session = sessionResult.data.session;
     var controller = new AbortController();
     var timeout = setTimeout(function() { controller.abort(); }, 300000);
-    var res = await fetch('/api/znak-generate', {
+    var res = await fetch('/api/dashpilot-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ action: 'generate', history: conversationHistory }),

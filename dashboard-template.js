@@ -142,7 +142,7 @@ td.pct{font-weight:600;color:#2563eb;background:#eff6ff;border-radius:4px;text-a
 <div class="dash">
 <div class="header anim"><h1>${esc(c.title||'Dashboard')}</h1>${c.subtitle?'<p>'+esc(c.subtitle)+'</p>':''}${c.badges&&c.badges.length?'<div class="header-badges">'+c.badges.map(b=>'<span class="badge '+(b.color||'')+'">'+esc(b.text)+'</span>').join('')+'</div>':''}</div>
 ${kpiHtml}${chartsHtml}${tableHtml}
-<div class="footer">Built with <b>znak</b> by CapitaCoreAI</div>
+<div class="footer">Built with <b>DashPilot</b> by CapitaCoreAI</div>
 </div>${chartJs}</body></html>`;
 }
 if(typeof module!=='undefined')module.exports={renderDashboard};
