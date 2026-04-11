@@ -269,20 +269,22 @@
 
       function resetButtons() {
         btns.forEach(b => { b.disabled = false; });
-        document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
-        document.querySelector('[onclick*="growth"]').textContent = 'Buy Growth';
-        document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
-        document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
-      }
-
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) {
-        alert('Session expired. Please log in again.');
-        window.location.href = 'account.html';
-        return;
+        try {
+          document.querySelector('[onclick*="starter"]').textContent = 'Buy Starter';
+          document.querySelector('[onclick*="growth"]').textContent = 'Buy Growth';
+          document.querySelector('[onclick*="pro"]').textContent = 'Buy Pro';
+          document.querySelector('[onclick*="enterprise"]').textContent = 'Buy Enterprise';
+        } catch(e) {}
       }
 
       try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+          resetButtons();
+          window.location.href = 'account.html';
+          return;
+        }
+
         const res = await fetch('/api/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -292,20 +294,20 @@
         const text = await res.text();
         let data;
         try { data = JSON.parse(text); } catch (e) {
-          alert('Server error (status ' + res.status + '): ' + text.substring(0, 200));
           resetButtons();
+          alert('Server error: ' + text.substring(0, 200));
           return;
         }
 
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('Checkout error: ' + (data.error || 'No checkout URL returned. Status: ' + res.status));
           resetButtons();
+          alert('Error: ' + (data.error || 'No checkout URL'));
         }
       } catch (err) {
-        alert('Network error: ' + err.message);
         resetButtons();
+        alert('Error: ' + err.message);
       }
     }
 
