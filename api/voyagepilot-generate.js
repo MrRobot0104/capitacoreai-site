@@ -54,6 +54,7 @@ async function searchFlights(from, to, date, travelers) {
     currency: 'USD',
     hl: 'en',
     adults: String(travelers || 1),
+    deep_search: 'true',
     api_key: serpKey,
   });
 
@@ -198,10 +199,12 @@ module.exports = async (req, res) => {
       const realFlights = {};
       let currentDate = flightDate;
 
+      const legDates = {};
       for (let i = 0; i < allLegs.length - 1; i++) {
         const from = allLegs[i];
         const to = allLegs[i + 1];
         const key = from.code + '-' + to.code;
+        legDates[key] = currentDate;
 
         const results = await searchFlights(from.code, to.code, currentDate, travelers);
         if (results) {
@@ -218,12 +221,13 @@ module.exports = async (req, res) => {
 
       // ===== STEP 3: Build trip plan with Sonnet + real flight data =====
       const flightContext = Object.keys(realFlights).length > 0
-        ? '\n\nREAL FLIGHT DATA FROM GOOGLE FLIGHTS (use these exact prices and airlines):\n' +
+        ? '\n\nREAL FLIGHT DATA FROM GOOGLE FLIGHTS (use these exact prices, airlines, and dates):\n' +
           Object.entries(realFlights).map(([route, flights]) =>
-            route + ':\n' + flights.slice(0, 5).map(f =>
+            route + ' (date: ' + (legDates[route] || flightDate) + '):\n' + flights.slice(0, 5).map(f =>
               '  ' + f.airline + ' ' + f.flightNumber + ' | ' + f.price + ' | ' + f.duration + ' | ' + f.stops + ' | Depart: ' + f.departureTime + ' Arrive: ' + f.arrivalTime
             ).join('\n')
-          ).join('\n\n')
+          ).join('\n\n') +
+          '\n\nIMPORTANT: Include a "date" field in each flight object with the flight date (e.g. "2026-06-15"). Use the dates shown above.'
         : '';
 
       const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 2000);

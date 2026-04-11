@@ -210,15 +210,18 @@ function renderFlightCards(flights, liveData) {
   flights.forEach(function(f) {
     var from = encodeURIComponent(f.fromCode || f.from || '');
     var to = encodeURIComponent(f.toCode || f.to || '');
-    var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to;
+    var dateParam = f.date ? '+on+' + encodeURIComponent(f.date) : '';
+    var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
+    var dateLabel = f.date ? '<div style="font-size:11px;color:#64748b;margin-top:4px;">' + escapeHtml(f.date) + '</div>' : '';
     var card = document.createElement('div');
     card.className = 'flight-card';
     card.innerHTML =
-      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' + escapeHtml(f.fromCode || f.from) + ' → ' + escapeHtml(f.toCode || f.to) + '</div>' +
+      '<div class="route"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3s-3-1-4.5.5L13 7 5 5.2 3.5 6.7l6 3.5-2 2-3-1-1.5 1.5 3.5 2 2 3.5L10 16l-1-3 2-2 3.5 6 1.5-1.5z"/></svg>' + escapeHtml(f.fromCode || f.from) + ' &rarr; ' + escapeHtml(f.toCode || f.to) + '</div>' +
       '<div class="price">' + escapeHtml(f.price || 'TBD') + '</div>' +
       '<div class="duration">' + escapeHtml(f.duration || '') + (f.stops ? ' &middot; ' + escapeHtml(f.stops) : '') + '</div>' +
+      dateLabel +
       '<div class="airline">' + escapeHtml((f.airlines || []).join(', ') || f.airline || '') + '</div>' +
-      '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Search on Google Flights &rarr;</a>';
+      '<a class="book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights &rarr;</a>';
     container.appendChild(card);
   });
 }
