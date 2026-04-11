@@ -27,15 +27,21 @@ function fetchCityPhoto(city, callback) {
   fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(city))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var url = (data.originalimage && data.originalimage.source) || (data.thumbnail && data.thumbnail.source) || '';
+      // Prefer thumbnail (reliable JPEG), scale up to 800px
+      var thumb = data.thumbnail && data.thumbnail.source;
+      var orig = data.originalimage && data.originalimage.source;
+      var url = '';
+      if (thumb) {
+        url = thumb.replace(/\/\d+px-/, '/800px-');
+      } else if (orig && !orig.endsWith('.svg')) {
+        url = orig;
+      }
       if (url) {
-        // Get a wider version by modifying the thumb URL
-        url = url.replace(/\/\d+px-/, '/800px-');
         cityPhotoCache[city] = url;
         callback(url);
       }
     })
-    .catch(function() {});
+    .catch(function(e) { console.log('Photo fetch failed for', city, e); });
 }
 
 // ==================== MAP ====================
@@ -64,7 +70,9 @@ function showMap() {
   setTimeout(function() {
     if (map) map.invalidateSize();
     if (lastTripData) drawRoute(lastTripData);
-  }, 200);
+    // Second invalidateSize after routes are drawn
+    setTimeout(function() { if (map) map.invalidateSize(); }, 300);
+  }, 300);
 }
 
 function hideMap() {
@@ -97,7 +105,14 @@ function drawRoute(trip) {
   });
 
   for (var i = 0; i < points.length - 1; i++) {
-    var line = L.polyline([[points[i].lat, points[i].lng], [points[i+1].lat, points[i+1].lng]], { color: colors[i % colors.length], weight: 2.5, opacity: 0.7, dashArray: '8,6' }).addTo(map);
+    var isReturnLeg = points[i + 1].isReturn;
+    var lineStyle = {
+      color: isReturnLeg ? '#94a3b8' : colors[i % colors.length],
+      weight: isReturnLeg ? 2 : 2.5,
+      opacity: 0.7,
+      dashArray: isReturnLeg ? '4,8' : '8,6'
+    };
+    var line = L.polyline([[points[i].lat, points[i].lng], [points[i+1].lat, points[i+1].lng]], lineStyle).addTo(map);
     mapLayers.push(line);
   }
 
