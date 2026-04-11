@@ -1,70 +1,57 @@
-const EXTRACT_PROMPT = `You are a travel planning data extractor. Extract the user's travel request into structured JSON. Output ONLY valid JSON.
+const EXTRACT_PROMPT = `You are a travel planning AI. Given a user's trip description, output a COMPLETE trip plan as a single JSON object. No text, no markdown — ONLY JSON.
 
-Output this exact structure:
-{"origin":{"city":"Miami","country":"US","code":"MIA"},"destinations":[{"city":"London","country":"UK","code":"LHR","days":3},{"city":"Tirana","country":"AL","code":"TIA","days":5}],"dates":{"departure":"2026-06-15","flexible":false},"budget":"mid-range","travelers":1,"preferences":["direct flights","central hotels"],"total_days":8}
+Structure:
+{
+  "title": "Miami to London to Tirana",
+  "origin": {"city":"Miami","country":"US","code":"MIA","lat":25.76,"lng":-80.19},
+  "destinations": [
+    {"city":"London","country":"UK","code":"LHR","lat":51.51,"lng":-0.13,"days":3},
+    {"city":"Tirana","country":"AL","code":"TIA","lat":41.33,"lng":19.82,"days":5}
+  ],
+  "flights": [
+    {"from":"Miami","fromCode":"MIA","to":"London","toCode":"LHR","price":"$340-420","duration":"9h 15m","airlines":["British Airways","American Airlines","Virgin Atlantic"],"stops":"nonstop"},
+    {"from":"London","fromCode":"LHR","to":"Tirana","toCode":"TIA","price":"$80-150","duration":"3h 10m","airlines":["Wizz Air","British Airways"],"stops":"nonstop"}
+  ],
+  "itinerary": [
+    {"day":1,"title":"Arrive in London","city":"London","activities":[
+      {"time":"Afternoon","description":"Check into hotel in South Kensington. Walk along the Thames to Westminster."},
+      {"time":"Evening","description":"Dinner at Dishoom in Covent Garden. Explore the West End."}
+    ]},
+    {"day":2,"title":"Explore London","city":"London","activities":[
+      {"time":"Morning","description":"Tower of London and Tower Bridge. Walk through Borough Market for lunch."},
+      {"time":"Afternoon","description":"British Museum (free entry). Tea at The Wolseley."},
+      {"time":"Evening","description":"Dinner in Soho. Walk through Piccadilly Circus at night."}
+    ]}
+  ],
+  "hotels": [
+    {"city":"London","name":"Mid-range hotel in South Kensington","pricePerNight":"$120-180","nights":3},
+    {"city":"Tirana","name":"Boutique hotel in Blloku district","pricePerNight":"$50-80","nights":5}
+  ],
+  "budget": {"flights":500,"hotels":850,"food":400,"activities":200,"transport":100,"total":2050,"currency":"USD","perDay":256},
+  "tips": [
+    "Albania uses the Lek (ALL). 1 USD ≈ 95 ALL.",
+    "UK requires no visa for US citizens (up to 6 months).",
+    "Albania requires no visa for US citizens (up to 1 year).",
+    "London weather in June: 15-22°C, occasional rain.",
+    "Tirana in June: 25-32°C, sunny and warm."
+  ],
+  "dates": {"departure":"2026-06-15","return":"2026-06-23","flexible":false},
+  "travelers": 1,
+  "budgetLevel": "mid-range"
+}
 
 Rules:
-- Use IATA airport codes for all cities
-- If dates not specified, use 2 weeks from today and set flexible:true
+- Use REAL coordinates (lat/lng) for all cities — this drives the interactive map
+- Use realistic flight prices based on typical routes and season
+- Use real airline names that fly those routes
+- Generate a FULL day-by-day itinerary for every single day
+- Include real neighborhood names, real restaurant areas, real landmarks
+- Budget breakdown must be realistic for the budget level
+- Include real visa, currency, and weather info
+- If dates not given, use 2 weeks from now
 - If budget not specified, default to "mid-range"
-- If travelers not specified, default to 1
-- Extract any preferences mentioned (direct flights, window seat, etc.)
-- Calculate total_days from all destination stays
 
-Your entire response must be a single JSON object. Start with { and end with }.`;
-
-const DESIGN_PROMPT = `You create beautiful, interactive HTML travel itineraries. Output a COMPLETE HTML file. No markdown. No backticks. Start with <!DOCTYPE html>.
-
-REQUIRED in <head>:
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-STRUCTURE:
-1. HEADER — Trip title (e.g. "Miami → London → Tirana"), dates, traveler count
-2. TRIP OVERVIEW — Total duration, number of cities, estimated budget range
-3. ROUTE MAP — Full-width Leaflet.js interactive map showing:
-   - Markers for each city with popup info
-   - Curved flight path lines between cities (use L.curve or polylines with intermediate points)
-   - Different colors for each leg
-   - Map centered to show all destinations
-4. FLIGHT CARDS — For each leg: origin → destination, estimated price range, duration, airline suggestions
-5. DAY-BY-DAY ITINERARY — Expandable sections for each day with:
-   - Morning/afternoon/evening activities
-   - Local restaurant suggestions
-   - Transit instructions between activities
-   - Estimated daily budget
-6. ACCOMMODATION — Hotel suggestions for each city with price ranges
-7. BUDGET SUMMARY — Total estimated cost breakdown (flights, hotels, activities, food)
-8. TRAVEL TIPS — Local customs, currency, weather, visa requirements
-9. FOOTER — "Built with VoyagePilot by CapitaCoreAI"
-
-LEAFLET MAP — CRITICAL:
-- Initialize inside: window.addEventListener('load', function() { ... });
-- Create map: var map = L.map('map').fitBounds([[lat1,lng1],[lat2,lng2]]);
-- Use OpenStreetMap tiles: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '© OpenStreetMap'}).addTo(map);
-- Add markers: L.marker([lat, lng]).addTo(map).bindPopup('City Name');
-- Draw flight paths: L.polyline([[lat1,lng1],[lat2,lng2]], {color: '#2563eb', weight: 3, dashArray: '10,10'}).addTo(map);
-- Map div must have explicit height: #map { height: 400px; width: 100%; border-radius: 12px; }
-
-DESIGN:
-- Clean, modern design with Inter font
-- Light background (#f8f9fb), white cards with subtle borders
-- Use a travel-appropriate color palette (blues, teals)
-- Responsive grid layout
-- No emojis — use SVG icons or simple text markers
-- Flight cards with departure/arrival times, price estimates
-- Budget breakdown in a clean table
-
-Generate REALISTIC data:
-- Use real airport codes and approximate flight durations
-- Estimate realistic flight prices based on typical routes
-- Suggest real neighborhoods and landmark areas
-- Include real currency and visa information for the countries
-- Suggest realistic daily budgets based on the budget preference
-
-Keep HTML compact. No comments.`;
+Start with { and end with }.`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -73,54 +60,53 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Not authenticated' });
-  const token = authHeader.split(' ')[1];
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnon = process.env.SUPABASE_ANON_KEY;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Not authenticated' });
+    const token = authHeader.split(' ')[1];
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnon = process.env.SUPABASE_ANON_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
 
-  const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
-    headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
-  });
-  if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
-  const user = await userRes.json();
-
-  const adminCheck = await fetch(
-    supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=is_admin',
-    { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
-  );
-  const adminData = await adminCheck.json();
-  const isAdmin = adminData[0]?.is_admin === true;
-
-  const { action, history } = req.body;
-
-  if (action === 'start_conversation') {
-    if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999 });
-    const deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_token', {
-      method: 'POST',
-      headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_uuid: user.id }),
+    const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
+      headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
     });
-    if (!deductRes.ok) return res.status(500).json({ error: 'Failed to check credits' });
-    const newBalance = await deductRes.json();
-    if (newBalance === -1) return res.status(402).json({ error: 'No credits remaining.' });
-    return res.status(200).json({ ok: true, remaining: newBalance });
-  }
+    if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
+    const user = await userRes.json();
 
-  if (action === 'generate') {
-    if (!Array.isArray(history) || history.length === 0) return res.status(400).json({ error: 'No conversation history.' });
+    const adminCheck = await fetch(
+      supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=is_admin',
+      { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
+    );
+    const adminData = await adminCheck.json();
+    const isAdmin = adminData[0]?.is_admin === true;
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
+    const { action, history } = req.body;
 
-    const messages = history.slice(-10).map(h => ({
-      role: h.role === 'assistant' ? 'assistant' : 'user',
-      content: typeof h.content === 'string' ? h.content.substring(0, 20000) : String(h.content).substring(0, 20000)
-    }));
+    if (action === 'start_conversation') {
+      if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999 });
+      const deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_token', {
+        method: 'POST',
+        headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_uuid: user.id }),
+      });
+      if (!deductRes.ok) return res.status(500).json({ error: 'Failed to check credits' });
+      const newBalance = await deductRes.json();
+      if (newBalance === -1) return res.status(402).json({ error: 'No credits remaining.' });
+      return res.status(200).json({ ok: true, remaining: newBalance });
+    }
 
-    try {
-      // Safe JSON parser — handles text error responses from API
+    if (action === 'generate') {
+      if (!Array.isArray(history) || history.length === 0) return res.status(400).json({ error: 'No conversation history.' });
+
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
+
+      const messages = history.slice(-10).map(h => ({
+        role: h.role === 'assistant' ? 'assistant' : 'user',
+        content: typeof h.content === 'string' ? h.content.substring(0, 20000) : String(h.content).substring(0, 20000)
+      }));
+
       async function safeJson(response, label) {
         const text = await response.text();
         try { return JSON.parse(text); }
@@ -130,97 +116,59 @@ module.exports = async (req, res) => {
         }
       }
 
-      // ========= STEP 1: Extract travel intent with Haiku (fast, cheap, accurate) =========
-      const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
+      // Generate trip plan with Sonnet (single step — returns structured JSON)
+      const tripRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 4000,
+          model: 'claude-sonnet-4-6',
+          max_tokens: 8000,
           system: EXTRACT_PROMPT,
           messages: messages,
         }),
       });
 
-      const extractData = await safeJson(extractRes, 'Haiku');
-      if (!extractData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
-      if (!extractRes.ok) {
-        console.error('Haiku error:', extractRes.status);
-        return res.status(500).json({ error: 'Data extraction failed: ' + (extractData.error?.message || 'AI error') });
+      const tripData = await safeJson(tripRes, 'Sonnet');
+      if (!tripData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
+      if (!tripRes.ok) {
+        console.error('Sonnet error:', tripRes.status);
+        return res.status(500).json({ error: 'Trip planning failed: ' + (tripData.error?.message || 'AI error') });
       }
 
-      let jsonText = extractData.content[0].text;
+      let jsonText = tripData.content[0].text;
       jsonText = jsonText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
-      let travelConfig;
+      let tripPlan;
       try {
-        travelConfig = JSON.parse(jsonText);
+        tripPlan = JSON.parse(jsonText);
       } catch (e) {
-        // Try to extract JSON object from surrounding text
         var jsonMatch = jsonText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          try {
-            travelConfig = JSON.parse(jsonMatch[0]);
-          } catch (e2) {
+          try { tripPlan = JSON.parse(jsonMatch[0]); }
+          catch (e2) {
             console.error('JSON parse error:', e2.message, 'Raw:', jsonText.substring(0, 500));
-            return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
+            return res.status(500).json({ error: 'Trip data returned invalid format. Try again.' });
           }
         } else {
-          console.error('No JSON found in response. Raw:', jsonText.substring(0, 500));
-          return res.status(500).json({ error: 'Data extraction returned invalid format. Try again.' });
+          console.error('No JSON found. Raw:', jsonText.substring(0, 500));
+          return res.status(500).json({ error: 'Trip data returned invalid format. Try again.' });
         }
       }
 
-      // ========= STEP 2: Generate HTML itinerary with Sonnet =========
-      const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 1000);
-
-      const designRes = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 16000,
-          thinking: {
-            type: 'enabled',
-            budget_tokens: 10000
-          },
-          tools: [
-            { type: 'web_search_20250305', name: 'web_search', max_uses: 3 }
-          ],
-          system: DESIGN_PROMPT,
-          messages: [{
-            role: 'user',
-            content: 'Travel plan data (use these exact values):\n\n' + JSON.stringify(travelConfig, null, 2) + '\n\nUser request: ' + userRequest
-          }],
-        }),
-      });
-
-      const designData = await safeJson(designRes, 'Sonnet');
-      if (!designData) return res.status(500).json({ error: 'AI service temporarily unavailable. Please try again.' });
-      if (!designRes.ok) {
-        console.error('Sonnet error:', designRes.status, JSON.stringify(designData).substring(0, 300));
-        return res.status(500).json({ error: 'Design generation failed: ' + (designData.error?.message || 'AI error') });
-      }
-
-      const textBlocks = designData.content.filter(b => b.type === 'text');
-      let html = textBlocks.map(b => b.text).join('');
-      html = html.replace(/^```(?:html)?\s*\n/i, '').replace(/\n```\s*$/i, '').trim();
-      if (!html.includes('</html>')) html += '\n</body></html>';
-
       // Log usage
+      const userRequest = (messages[messages.length - 1]?.content || '').substring(0, 500);
       await fetch(supabaseUrl + '/rest/v1/usage_log', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ user_id: user.id, prompt: userRequest.substring(0, 500) }),
+        body: JSON.stringify({ user_id: user.id, prompt: userRequest }),
       });
 
-      res.status(200).json({ html, config: travelConfig });
-    } catch (err) {
-      console.error('Generate error:', err.message);
-      res.status(500).json({ error: 'Generation failed: ' + err.message });
+      res.status(200).json({ trip: tripPlan });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
     }
-    return;
+  } catch (err) {
+    console.error('VoyagePilot error:', err.message);
+    res.status(500).json({ error: 'Trip planning failed: ' + err.message });
   }
-
-  res.status(400).json({ error: 'Invalid action' });
 };
