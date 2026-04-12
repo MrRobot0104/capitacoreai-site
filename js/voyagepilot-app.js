@@ -569,10 +569,6 @@ async function refreshCredits() {
   isAdmin = data && data.is_admin === true;
   creditBalance = isAdmin ? 9999 : (data ? data.token_balance : 0);
   document.getElementById('creditDisplay').textContent = isAdmin ? '\u221e' : creditBalance;
-  if (creditBalance <= 0 && !conversationStarted) {
-    addBotMessage("You don't have any credits. Purchase some to start planning trips.");
-    disableInput();
-  }
 }
 
 async function logout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }

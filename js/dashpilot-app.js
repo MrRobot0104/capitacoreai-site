@@ -46,10 +46,6 @@ async function refreshCredits() {
   isAdmin = data && data.is_admin === true;
   creditBalance = isAdmin ? 9999 : (data ? data.token_balance : 0);
   document.getElementById('creditDisplay').textContent = isAdmin ? '\u221E' : creditBalance;
-  if (creditBalance < CREDIT_COST && !conversationStarted) {
-    addBotMessage("DashPilot requires " + CREDIT_COST + " credits per use. You have " + creditBalance + ". <a href='pricing.html' style='color:#111;text-decoration:underline;'>Buy credits</a> to get started.");
-    disableInput();
-  }
 }
 
 async function logout() { await sb.auth.signOut(); localStorage.clear(); window.location.href = '/'; }
