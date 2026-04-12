@@ -63,7 +63,8 @@
     .gallery-track::-webkit-scrollbar { display: none; }
     .gallery-item { flex: 0 0 360px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: #111111; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
     .gallery-item:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,106,0,0.08); }
-    .gallery-item img { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .gallery-item img, .gallery-item .gallery-placeholder { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .gallery-placeholder { display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: rgba(255,255,255,0.15); letter-spacing: 0.05em; }
     .gallery-item .gallery-label { padding: 14px 18px; font-size: 14px; font-weight: 600; }
     .gallery-item .gallery-label span { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.5); display: block; margin-top: 2px; }
     .gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: #111111; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); color: #ffffff; }
@@ -231,6 +232,26 @@
             <img src="img/dash-dashforge.png" alt="DashForge Template">
             <div class="gallery-label">DashForge Budget Template<span>Interactive financial dashboard with expense tracking</span></div>
           </div>
+          <div class="gallery-item" data-preview="preview.html?file=ai-business-command-center.html">
+            <div class="gallery-placeholder" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);">CommandAI</div>
+            <div class="gallery-label">AI Business Command Center<span>Real-time KPIs, revenue tracking & AI-powered insights</span></div>
+          </div>
+          <div class="gallery-item" data-preview="preview.html?file=client-project-tracker.html">
+            <div class="gallery-placeholder" style="background:linear-gradient(135deg,#1a1a1a,#2d1f0e,#3d2b10);">ProjectFlow</div>
+            <div class="gallery-label">Client Project Tracker<span>Client onboarding, milestones & project pipeline</span></div>
+          </div>
+          <div class="gallery-item" data-preview="preview.html?file=inventory-sales-tracker.html">
+            <div class="gallery-placeholder" style="background:linear-gradient(135deg,#0a1628,#1a2940,#0d3b2e);">StockPulse</div>
+            <div class="gallery-label">Inventory &amp; Sales Tracker<span>Real-time stock levels, sales analytics & alerts</span></div>
+          </div>
+          <div class="gallery-item" data-preview="preview.html?file=invoice-payment-tracker.html">
+            <div class="gallery-placeholder" style="background:linear-gradient(135deg,#1a0a2e,#2e1065,#1e1b4b);">InvoiceTrack</div>
+            <div class="gallery-label">Invoice &amp; Payment Tracker<span>Track invoices, payments, aging & cash flow</span></div>
+          </div>
+          <div class="gallery-item" data-preview="preview.html?file=rental-property-manager.html">
+            <div class="gallery-placeholder" style="background:linear-gradient(135deg,#1c1917,#292524,#44403c);">PropertyPro</div>
+            <div class="gallery-label">Rental Property Manager<span>Tenants, leases, rent collection & maintenance</span></div>
+          </div>
         </div>
         <button class="gallery-nav next" id="galleryNext">&#8250;</button>
       </div>
@@ -293,6 +314,61 @@
             <div class="card-footer">
               <span class="card-price">1 Credit</span>
               <button class="btn-get" data-file="dashforge-template.html">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">CommandAI</div>
+          <div class="card-body">
+            <h3>AI Business Command Center</h3>
+            <p>Real-time business KPIs, revenue tracking, team performance metrics, and AI-powered strategic insights.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="ai-business-command-center.html">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder" style="background:linear-gradient(135deg,#1a1a1a,#2d1f0e,#3d2b10);color:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">ProjectFlow</div>
+          <div class="card-body">
+            <h3>Client Project Tracker</h3>
+            <p>Track client onboarding, project milestones, deadlines, and team assignments in one dashboard.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="client-project-tracker.html">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder" style="background:linear-gradient(135deg,#0a1628,#1a2940,#0d3b2e);color:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">StockPulse</div>
+          <div class="card-body">
+            <h3>Inventory &amp; Sales Tracker</h3>
+            <p>Monitor stock levels, track sales performance, set reorder alerts, and analyze product trends.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="inventory-sales-tracker.html">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder" style="background:linear-gradient(135deg,#1a0a2e,#2e1065,#1e1b4b);color:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">InvoiceTrack</div>
+          <div class="card-body">
+            <h3>Invoice &amp; Payment Tracker</h3>
+            <p>Track invoices, monitor payment status, analyze aging reports, and manage cash flow.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="invoice-payment-tracker.html">Get Dashboard</button>
+            </div>
+          </div>
+        </div>
+        <div class="prebuilt-card">
+          <div class="card-placeholder" style="background:linear-gradient(135deg,#1c1917,#292524,#44403c);color:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">PropertyPro</div>
+          <div class="card-body">
+            <h3>Rental Property Manager</h3>
+            <p>Manage tenants, leases, rent collection, maintenance requests, and property financials.</p>
+            <div class="card-footer">
+              <span class="card-price">1 Credit</span>
+              <button class="btn-get" data-file="rental-property-manager.html">Get Dashboard</button>
             </div>
           </div>
         </div>
