@@ -131,6 +131,16 @@ async function showDashboard(user) {
   var isAdmin = data && data.is_admin === true;
   document.getElementById('dashUserInfo').textContent = 'Welcome, ' + name;
 
+  // Populate profile card
+  var pName = document.getElementById('profileName');
+  var pUser = document.getElementById('profileUsername');
+  var pEmail = document.getElementById('profileEmail');
+  var pCredits = document.getElementById('profileCredits');
+  if (pName) pName.textContent = (data && data.first_name) || '—';
+  if (pUser) pUser.textContent = (data && data.username) ? '@' + data.username : '—';
+  if (pEmail) pEmail.textContent = user.email || '—';
+  if (pCredits) pCredits.textContent = isAdmin ? '\u221E' : balance;
+
   var list = document.getElementById('agentsList');
   var balance = (data && data.token_balance) || 0;
   var hasAccess = isAdmin || balance > 0;
