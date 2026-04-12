@@ -23,7 +23,7 @@ function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSiz
     ctx.beginPath();
     ctx.moveTo(x1, y);
     ctx.lineTo(x2, y);
-    ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.2) + ')';
+    ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.4) + ')';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 6]);
     ctx.stroke();
@@ -39,14 +39,14 @@ function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSiz
       ctx.beginPath();
       ctx.moveTo(x1, y);
       ctx.lineTo(nextX1, nextY);
-      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.35) + ')';
+      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.6) + ')';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.beginPath();
       ctx.moveTo(x2, y);
       ctx.lineTo(nextX2, nextY);
-      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.35) + ')';
+      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.6) + ')';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
@@ -54,20 +54,20 @@ function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSiz
     // Node dots
     ctx.beginPath();
     ctx.arc(x1, y, nodeSize, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.6) + ')';
+    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.85) + ')';
     ctx.fill();
 
     // Glow on primary nodes
     if (opacity > 0.2) {
       ctx.beginPath();
       ctx.arc(x1, y, nodeSize * 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.08) + ')';
+      ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.15) + ')';
       ctx.fill();
     }
 
     ctx.beginPath();
     ctx.arc(x2, y, nodeSize * 0.8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.45) + ')';
+    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.7) + ')';
     ctx.fill();
   }
 }
@@ -81,17 +81,17 @@ function animate() {
   var h = canvas.height;
 
   // Primary strand — right side, bold
-  drawDNA(w - 120, -100 - scrollY, h + 400, 22, 80, 0.6, 0, 4, 0.4);
+  drawDNA(w - 120, -100 - scrollY, h + 400, 22, 80, 0.6, 0, 4, 0.7);
   // Secondary strand — left side
-  drawDNA(100, 50 - scrollY * 0.7, h + 300, 18, 60, 0.5, 2, 3.5, 0.25);
-  // Center-right — subtle
-  drawDNA(w * 0.65, 200 - scrollY * 0.5, h, 14, 50, 0.4, 4, 3, 0.15);
-  // Far left — ghost
-  drawDNA(w * 0.25, -50 - scrollY * 0.4, h + 200, 16, 45, 0.35, 1.5, 2.5, 0.1);
-  // Center — very subtle
-  drawDNA(w * 0.45, 100 - scrollY * 0.6, h + 100, 12, 35, 0.45, 3, 2, 0.07);
+  drawDNA(100, 50 - scrollY * 0.7, h + 300, 18, 60, 0.5, 2, 3.5, 0.5);
+  // Center-right
+  drawDNA(w * 0.65, 200 - scrollY * 0.5, h, 14, 50, 0.4, 4, 3, 0.3);
+  // Far left
+  drawDNA(w * 0.25, -50 - scrollY * 0.4, h + 200, 16, 45, 0.35, 1.5, 2.5, 0.22);
+  // Center — subtle
+  drawDNA(w * 0.45, 100 - scrollY * 0.6, h + 100, 12, 35, 0.45, 3, 2, 0.15);
   // Far right edge
-  drawDNA(w - 30, -200 - scrollY * 0.3, h + 500, 20, 30, 0.55, 5, 2, 0.08);
+  drawDNA(w - 30, -200 - scrollY * 0.3, h + 500, 20, 30, 0.55, 5, 2, 0.18);
 
   requestAnimationFrame(animate);
 }
