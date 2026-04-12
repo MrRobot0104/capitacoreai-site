@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoyagePilot — AI Travel Planner | CapitaCoreAI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; }
+
+    /* NAV */
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
     .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
@@ -23,44 +25,96 @@
     .btn-nav { background: #FF6A00; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
     .btn-nav:hover { background: #FF8000; }
 
-    .page { max-width: 1152px; margin: 0 auto; padding: 140px 32px 80px; }
-
     /* HERO */
-    .hero-row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; margin-bottom: 80px; }
-    .hero-text h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 16px; }
-    .hero-text p { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 24px; }
-    .hero-preview { background: #111111; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; position: relative; min-height: 300px; }
-    .hero-preview .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 36px; font-weight: 700; color: rgba(255,255,255,0.04); letter-spacing: 0.1em; }
-    .preview-route { text-align: center; font-size: 18px; font-weight: 600; color: #ffffff; letter-spacing: 0.02em; margin-bottom: 20px; }
-    .preview-leg-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
-    .preview-leg { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; }
-    .preview-leg .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
-    .preview-leg .price { font-size: 20px; font-weight: 700; color: #ffffff; }
-    .preview-leg .duration { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
-
-    /* CTA */
-    .cta-section { text-align: center; max-width: 560px; margin: 0 auto 80px; }
-    .cta-section h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
-    .cta-section p { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 24px; }
-    .btn-cta { display: inline-flex; align-items: center; gap: 8px; background: #FF6A00; color: #fff; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: background 0.2s; }
-    .btn-cta:hover { background: #FF8000; }
-    .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.5); padding: 14px 28px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; margin-left: 12px; }
+    .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat; }
+    .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,10,10,0.5) 0%, rgba(10,10,10,0.75) 50%, #0a0a0a 100%); }
+    .hero-inner { position: relative; z-index: 2; text-align: center; max-width: 760px; padding: 0 32px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,106,0,0.1); border: 1px solid rgba(255,106,0,0.25); border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 500; color: #FF6A00; margin-bottom: 28px; }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #FF6A00; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 { font-size: clamp(2.5rem, 5.5vw, 4rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; margin-bottom: 20px; }
+    .hero h1 span { background: linear-gradient(135deg, #FF6A00, #FF9A40); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-inner > p { font-size: 17px; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 36px; max-width: 580px; margin-left: auto; margin-right: auto; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
+    .btn-hero { display: inline-flex; align-items: center; gap: 8px; background: #FF6A00; color: #fff; padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 24px rgba(255,106,0,0.25); }
+    .btn-hero:hover { background: #FF8000; box-shadow: 0 6px 32px rgba(255,106,0,0.35); transform: translateY(-1px); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; }
     .btn-outline:hover { color: #FF6A00; border-color: #FF6A00; }
+    .hero-stats { display: flex; gap: 40px; justify-content: center; }
+    .hero-stat { text-align: center; }
+    .hero-stat .hs-val { font-size: 24px; font-weight: 800; color: #ffffff; }
+    .hero-stat .hs-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+    /* SECTION COMMON */
+    .section { max-width: 1152px; margin: 0 auto; padding: 100px 32px; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-header h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+    .section-header p { font-size: 15px; color: rgba(255,255,255,0.45); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+    /* DESTINATIONS */
+    .dest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .dest-card { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 3/4; cursor: pointer; }
+    .dest-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; display: block; }
+    .dest-card:hover img { transform: scale(1.06); }
+    .dest-card .dest-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, transparent 100%); transition: background 0.3s; }
+    .dest-card:hover .dest-overlay { background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%); }
+    .dest-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px; }
+    .dest-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+    .dest-info .dest-country { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+    .dest-info .dest-tag { display: inline-block; font-size: 11px; color: #FF6A00; background: rgba(255,106,0,0.12); padding: 4px 10px; border-radius: 999px; font-weight: 500; }
+
+    /* TRIPS GALLERY */
+    .trips-section { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .trips-wrap { position: relative; overflow: hidden; max-width: 1152px; margin: 0 auto; padding: 0 32px; }
+    .trips-track { display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 0 24px; -ms-overflow-style: none; scrollbar-width: none; }
+    .trips-track::-webkit-scrollbar { display: none; }
+    .trip-card { flex: 0 0 340px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: #111; transition: transform 0.25s, box-shadow 0.25s; }
+    .trip-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(255,106,0,0.1); }
+    .trip-card-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .trip-card-body { padding: 20px; }
+    .trip-route { font-size: 16px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+    .trip-route span { color: #FF6A00; }
+    .trip-meta { display: flex; gap: 16px; font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 12px; }
+    .trip-meta strong { color: rgba(255,255,255,0.8); }
+    .trip-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.55; }
+    .trips-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; background: rgba(17,17,17,0.9); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: all 0.2s; color: #fff; backdrop-filter: blur(8px); }
+    .trips-nav:hover { background: #FF6A00; border-color: #FF6A00; }
+    .trips-nav.prev { left: 40px; }
+    .trips-nav.next { right: 40px; }
+
+    /* HOW IT WORKS */
+    .how-section .section { padding-bottom: 80px; }
+    .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .how-step { text-align: center; padding: 32px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: border-color 0.2s; }
+    .how-step:hover { border-color: rgba(255,106,0,0.3); }
+    .how-step-num { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,106,0,0.1); color: #FF6A00; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .how-step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .how-step p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
 
     /* FEATURES */
-    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-bottom: 80px; }
-    .feature { padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .feature { padding: 28px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: border-color 0.2s, box-shadow 0.2s; backdrop-filter: blur(12px); }
     .feature:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 4px 20px rgba(255,106,0,0.06); }
-    .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #ffffff; }
-    .feature p { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+    .feature-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,106,0,0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .feature-icon svg { color: #FF6A00; }
+    .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .feature p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
 
-    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 80px; }
+    /* CTA */
+    .cta-section { text-align: center; max-width: 600px; margin: 0 auto; padding: 100px 32px 120px; }
+    .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 12px; }
+    .cta-section p { font-size: 15px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-bottom: 28px; }
+
+    /* FOOTER */
+    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
     .footer-inner p { font-size: 12px; color: rgba(255,255,255,0.4); }
     .footer-nav { display: flex; gap: 24px; }
     .footer-nav a { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; }
     .footer-nav a:hover { color: #FF6A00; }
 
+    /* MOBILE */
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
     .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #111111; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.3); }
     .mobile-menu.active { right: 0; }
@@ -71,16 +125,25 @@
 
     @media (max-width: 768px) {
       .nav-links, .nav .btn-nav { display: none; }
-      .hero-row { grid-template-columns: 1fr; gap: 32px; }
+      .hero h1 { font-size: 2.2rem; }
+      .hero-stats { gap: 24px; }
+      .hero-stat .hs-val { font-size: 20px; }
+      .dest-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-grid { grid-template-columns: 1fr; }
       .features { grid-template-columns: 1fr; }
-      .preview-leg-row { grid-template-columns: 1fr; }
+      .trip-card { flex: 0 0 290px; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
     }
-    .feature { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    @media (max-width: 480px) {
+      .dest-grid { grid-template-columns: 1fr; }
+      .hero-stats { flex-direction: column; gap: 12px; }
+      .hero-buttons { flex-direction: column; align-items: center; }
+    }
   </style>
 </head>
 <body>
 
+  <!-- NAV -->
   <header class="nav">
     <div class="nav-inner">
       <a href="/" class="nav-brand"><img src="logo.svg" alt="CapitaCoreAI"><span class="wordmark"><span class="w-capita">Capita</span><span class="w-core">Core</span><span class="w-ai">AI</span></span></a>
@@ -105,75 +168,212 @@
   </div>
   <div class="mobile-overlay" id="mobileOverlay"></div>
 
-  <main class="page">
-    <!-- HERO -->
-    <div class="hero-row">
-      <div class="hero-text">
-        <h1>Meet VoyagePilot</h1>
-        <p>Tell VoyagePilot where you want to go — it builds your complete travel itinerary in real time. Multi-city flights, hotels, daily plans, and an interactive route map. Powered by AI and real-time flight data.</p>
-        <p style="font-size:13px;color:rgba(255,255,255,0.5);">Powered by Amadeus &amp; AI. Built by CapitaCoreAI.</p>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-badge"><span class="dot"></span> Powered by Amadeus &amp; AI</div>
+      <h1>Plan your dream trip <span>with AI</span></h1>
+      <p>Tell VoyagePilot where you want to go. Get real-time flights, hotels, day-by-day itineraries, and an interactive route map — all in seconds.</p>
+      <div class="hero-buttons">
+        <a href="pricing.html" class="btn-hero">Buy Credits</a>
+        <a href="voyagepilot-app.html" class="btn-outline launch-btn" style="display:none;">Launch VoyagePilot &rarr;</a>
       </div>
-      <div class="hero-preview">
-        <div class="watermark">VOYAGEPILOT</div>
-        <div class="preview-route">Miami &rarr; London &rarr; Tirana</div>
-        <div class="preview-leg-row">
-          <div class="preview-leg">
-            <div class="label">Miami &rarr; London</div>
-            <div class="price">$342</div>
-            <div class="duration">9h 15m</div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hs-val">1,200+</div><div class="hs-label">Trips Planned</div></div>
+        <div class="hero-stat"><div class="hs-val">85+</div><div class="hs-label">Countries</div></div>
+        <div class="hero-stat"><div class="hs-val">4.9</div><div class="hs-label">Avg Rating</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR DESTINATIONS -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Popular Destinations</h2>
+      <p>Where will VoyagePilot take you?</p>
+    </div>
+    <div class="dest-grid">
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80" alt="Santorini" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>Santorini</h3><span class="dest-country">Greece</span><span class="dest-tag">From $420</span></div>
+      </div>
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" alt="Tokyo" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>Tokyo</h3><span class="dest-country">Japan</span><span class="dest-tag">From $680</span></div>
+      </div>
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80" alt="Paris" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>Paris</h3><span class="dest-country">France</span><span class="dest-tag">From $380</span></div>
+      </div>
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80" alt="London" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>London</h3><span class="dest-country">United Kingdom</span><span class="dest-tag">From $350</span></div>
+      </div>
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80" alt="Bali" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>Bali</h3><span class="dest-country">Indonesia</span><span class="dest-tag">From $290</span></div>
+      </div>
+      <div class="dest-card">
+        <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80" alt="Dubai" loading="lazy">
+        <div class="dest-overlay"></div>
+        <div class="dest-info"><h3>Dubai</h3><span class="dest-country">UAE</span><span class="dest-tag">From $440</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIPS CREATED -->
+  <div class="trips-section">
+    <div class="section" style="padding-bottom:60px;">
+      <div class="section-header">
+        <h2>Trips Created with VoyagePilot</h2>
+        <p>Real itineraries built by VoyagePilot users.</p>
+      </div>
+    </div>
+    <div class="trips-wrap">
+      <button class="trips-nav prev" id="tripsPrev">&#8249;</button>
+      <div class="trips-track" id="tripsTrack">
+        <div class="trip-card">
+          <img class="trip-card-img" src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80" alt="Europe Classic" loading="lazy">
+          <div class="trip-card-body">
+            <div class="trip-route">Miami <span>&rarr;</span> London <span>&rarr;</span> Tirana</div>
+            <div class="trip-meta"><span><strong>10</strong> days</span><span><strong>3</strong> cities</span><span>from <strong>$687</strong></span></div>
+            <div class="trip-desc">Multi-city European adventure. Explore London's culture, then fly to Albania's hidden gem.</div>
           </div>
-          <div class="preview-leg">
-            <div class="label">London &rarr; Tirana</div>
-            <div class="price">$189</div>
-            <div class="duration">2h 45m</div>
+        </div>
+        <div class="trip-card">
+          <img class="trip-card-img" src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" alt="Japan Express" loading="lazy">
+          <div class="trip-card-body">
+            <div class="trip-route">Tokyo <span>&rarr;</span> Kyoto <span>&rarr;</span> Osaka</div>
+            <div class="trip-meta"><span><strong>7</strong> days</span><span><strong>3</strong> cities</span><span>from <strong>$1,240</strong></span></div>
+            <div class="trip-desc">The ultimate Japan experience. Bullet trains between cities, temples, street food, and nightlife.</div>
           </div>
-          <div class="preview-leg">
-            <div class="label">Tirana &rarr; Miami</div>
-            <div class="price">$156</div>
-            <div class="duration">3h 10m</div>
+        </div>
+        <div class="trip-card">
+          <img class="trip-card-img" src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80" alt="Mediterranean" loading="lazy">
+          <div class="trip-card-body">
+            <div class="trip-route">Paris <span>&rarr;</span> Barcelona <span>&rarr;</span> Rome</div>
+            <div class="trip-meta"><span><strong>12</strong> days</span><span><strong>3</strong> cities</span><span>from <strong>$920</strong></span></div>
+            <div class="trip-desc">Romance, tapas, and ruins. Three iconic cities connected by short flights.</div>
+          </div>
+        </div>
+        <div class="trip-card">
+          <img class="trip-card-img" src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80" alt="Southeast Asia" loading="lazy">
+          <div class="trip-card-body">
+            <div class="trip-route">Bali <span>&rarr;</span> Singapore <span>&rarr;</span> Bangkok</div>
+            <div class="trip-meta"><span><strong>14</strong> days</span><span><strong>3</strong> cities</span><span>from <strong>$850</strong></span></div>
+            <div class="trip-desc">Temples, beaches, and street markets. The ultimate Southeast Asia backpacking route.</div>
+          </div>
+        </div>
+        <div class="trip-card">
+          <img class="trip-card-img" src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80" alt="Greek Islands" loading="lazy">
+          <div class="trip-card-body">
+            <div class="trip-route">Athens <span>&rarr;</span> Santorini <span>&rarr;</span> Mykonos</div>
+            <div class="trip-meta"><span><strong>9</strong> days</span><span><strong>3</strong> cities</span><span>from <strong>$780</strong></span></div>
+            <div class="trip-desc">Island hopping through the Aegean. White-washed villages, blue waters, legendary sunsets.</div>
           </div>
         </div>
       </div>
+      <button class="trips-nav next" id="tripsNext">&#8250;</button>
     </div>
+    <div style="height:60px;"></div>
+  </div>
 
-    <!-- CTA -->
-    <div class="cta-section">
-      <h2>Ready to plan?</h2>
-      <p>1 credit = 1 complete travel itinerary with flights, hotels, and interactive map.</p>
-      <a href="pricing.html" class="btn-cta">Buy Credits</a>
-      <a href="voyagepilot-app.html" class="btn-outline" id="launchBtn">Launch VoyagePilot &rarr;</a>
+  <!-- HOW IT WORKS -->
+  <div class="how-section">
+    <div class="section">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>Three steps to your perfect trip.</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <h3>Describe your trip</h3>
+          <p>Tell VoyagePilot your destinations, dates, budget, and travel style — in plain English.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <h3>AI plans everything</h3>
+          <p>VoyagePilot finds real flights, builds day-by-day itineraries, and plots your route on an interactive map.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <h3>Download &amp; go</h3>
+          <p>Export your full itinerary as a standalone HTML file with maps, flights, and daily plans included.</p>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- FEATURES -->
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Built for real travelers</h2>
+      <p>Everything you need to plan complex, multi-city trips.</p>
+    </div>
     <div class="features">
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
         <h3>Natural language planning</h3>
-        <p>Describe your trip in plain English. VoyagePilot handles the rest.</p>
+        <p>Describe your trip in plain English. VoyagePilot understands context, preferences, and constraints.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
         <h3>Real flight data</h3>
-        <p>Live prices from hundreds of airlines worldwide via Amadeus.</p>
+        <p>Live prices from hundreds of airlines worldwide via Amadeus. No fake estimates.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
         <h3>Multi-city routing</h3>
-        <p>Build complex itineraries with multiple stops and layovers.</p>
+        <p>Build complex itineraries with multiple stops, layovers, and one-way flights.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        </div>
         <h3>Interactive route map</h3>
-        <p>Visualize your entire journey on a Leaflet.js interactive map.</p>
+        <p>Visualize your entire journey on a Leaflet.js interactive map with flight paths and pins.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <h3>Day-by-day itinerary</h3>
-        <p>Get detailed daily plans with activities, transit, and timing.</p>
+        <p>Get detailed daily plans with activities, transit times, restaurant picks, and local tips.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
         <h3>Download &amp; share</h3>
-        <p>Export as a standalone HTML file with interactive map included.</p>
+        <p>Export as a standalone HTML file. Open anywhere, share with anyone, no login needed.</p>
       </div>
     </div>
+  </div>
 
-  </main>
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Ready to explore?</h2>
+    <p>1 credit = 1 complete travel itinerary with real flights, hotels, daily plans, and an interactive route map.</p>
+    <div class="hero-buttons">
+      <a href="pricing.html" class="btn-hero">Buy Credits</a>
+      <a href="voyagepilot-app.html" class="btn-outline launch-btn" style="display:none;">Launch VoyagePilot &rarr;</a>
+    </div>
+  </div>
 
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-inner">
       <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
@@ -191,5 +391,17 @@
   <script src="js/common.js"></script>
   <script src="js/voyagepilot.js"></script>
   <script src="js/premium.js"></script>
+  <script>
+    /* Gallery navigation */
+    (function() {
+      var track = document.getElementById('tripsTrack');
+      var prev = document.getElementById('tripsPrev');
+      var next = document.getElementById('tripsNext');
+      if (!track || !prev || !next) return;
+      var scrollAmt = 370;
+      prev.addEventListener('click', function() { track.scrollBy({ left: -scrollAmt, behavior: 'smooth' }); });
+      next.addEventListener('click', function() { track.scrollBy({ left: scrollAmt, behavior: 'smooth' }); });
+    })();
+  </script>
 </body>
 </html>
