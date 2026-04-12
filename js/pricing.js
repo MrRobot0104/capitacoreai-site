@@ -1,16 +1,17 @@
 // Nav is handled by common.js — only handle pricing-specific UI here
 sb.auth.onAuthStateChange(async function(event, session) {
+  var authPrompt = document.getElementById('authPrompt');
+  var balanceBar = document.getElementById('balanceBar');
+
   if (session) {
-    document.getElementById('authPrompt').style.display = 'none';
-    document.getElementById('pricingSection').style.display = 'block';
-    document.getElementById('balanceBar').style.display = 'flex';
+    if (authPrompt) authPrompt.style.display = 'none';
+    if (balanceBar) balanceBar.style.display = 'flex';
     document.getElementById('userEmail').textContent = session.user.email;
     var result = await sb.from('profiles').select('token_balance').eq('id', session.user.id).single();
     document.getElementById('userBalance').textContent = result.data ? result.data.token_balance : 0;
   } else {
-    document.getElementById('authPrompt').style.display = 'block';
-    document.getElementById('pricingSection').style.display = 'none';
-    document.getElementById('balanceBar').style.display = 'none';
+    if (authPrompt) authPrompt.style.display = 'block';
+    if (balanceBar) balanceBar.style.display = 'none';
   }
 });
 
@@ -39,6 +40,7 @@ async function buyPackage(pkg) {
     console.error('buyPackage error:', msg);
   }
 
+  // Check if logged in first
   var session;
   try {
     var result = await sb.auth.getSession();
@@ -49,8 +51,13 @@ async function buyPackage(pkg) {
   }
 
   if (!session) {
-    showError('Not logged in. Redirecting to login...');
-    setTimeout(function(){ window.location.href = 'account.html'; }, 1500);
+    // Not logged in — redirect to account page to sign up/login
+    buyInProgress = false;
+    btns.forEach(function(b) { b.disabled = false; });
+    document.querySelectorAll('.btn-buy[data-package]').forEach(function(b) {
+      b.textContent = 'Buy ' + b.getAttribute('data-package').charAt(0).toUpperCase() + b.getAttribute('data-package').slice(1);
+    });
+    window.location.href = 'account.html';
     return;
   }
 
@@ -102,10 +109,8 @@ window.addEventListener('pageshow', function(event) {
 // Bind buy buttons immediately (scripts are at end of body, DOM is ready)
 (function() {
   var buttons = document.querySelectorAll('.btn-buy[data-package]');
-  console.log('[DashPilot] Found ' + buttons.length + ' buy buttons');
   buttons.forEach(function(btn) {
     btn.addEventListener('click', function() {
-      console.log('[DashPilot] Buy clicked:', this.getAttribute('data-package'));
       buyPackage(this.getAttribute('data-package'));
     });
   });

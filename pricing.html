@@ -89,11 +89,18 @@
 
     @media (max-width: 768px) {
       .nav-links, .nav .btn-nav { display: none; }
-      .pricing-grid { grid-template-columns: 1fr; }
-      .how-it-works { grid-template-columns: 1fr; }
+      .page { padding: 110px 20px 60px; }
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .price-card { padding: 20px 16px; }
+      .price-card .pkg-price { font-size: 28px; }
+      .how-it-works { grid-template-columns: 1fr; gap: 12px; }
       .balance-bar { flex-direction: column; gap: 8px; text-align: center; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
       .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+      .page { padding: 100px 16px 48px; }
     }
     .price-card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
@@ -156,8 +163,8 @@
       </div>
     </div>
 
-    <!-- Pricing cards (shown when logged in) -->
-    <div id="pricingSection" style="display:none;">
+    <!-- Pricing cards (always visible) -->
+    <div id="pricingSection">
       <h2 class="pricing-title">Choose Your Plan</h2>
       <p class="pricing-desc">All plans are one-time purchases. Credits never expire.</p>
       <div class="pricing-grid">
