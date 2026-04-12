@@ -45,9 +45,9 @@
       } catch (e) { /* skip */ }
     }
 
-    // Buttons
+    // Buttons — appear immediately with quick fade
     if (heroButtons) {
-      gsap.from(heroButtons, { opacity: 0, y: 20, duration: 0.6, ease: 'power2.out', delay: 1.6 });
+      gsap.from(heroButtons, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out', delay: 0.15 });
     }
   }
 
