@@ -97,11 +97,12 @@
     /* ========== SERVICES ========== */
     .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 64px; }
     .service-card .icon-box {
-      width: 52px; height: 52px; border-radius: 16px; background: rgba(255,106,0,0.08);
+      width: 52px; height: 52px; border-radius: 16px; background: #FF6A00;
       display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
-      transition: background 0.3s;
+      transition: background 0.3s; box-shadow: 0 4px 16px rgba(255,106,0,0.3);
     }
-    .service-card:hover .icon-box { background: rgba(255,106,0,0.15); }
+    .service-card .icon-box svg { color: #ffffff; }
+    .service-card:hover .icon-box { background: #FF8000; box-shadow: 0 6px 20px rgba(255,106,0,0.4); }
     .service-card h3 { font-size: 18px; font-weight: 600; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 12px; }
     .service-card p { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; }
 
