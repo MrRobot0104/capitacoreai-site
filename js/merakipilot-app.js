@@ -227,24 +227,35 @@ async function gatherNetworkContext() {
   }
 }
 
-// ─── Execute Actions from Claude ──────────────────────────────────
+// ─── Execute Fetches (Claude requests data) ──────────────────────
+async function executeFetches(fetches) {
+  var results = {};
+  var promises = fetches.map(function(f) {
+    return merakiGet(f.path).then(function(data) {
+      results[f.path] = data;
+    }).catch(function(e) {
+      results[f.path] = { _error: e.message };
+    });
+  });
+  await Promise.all(promises);
+  return results;
+}
+
+// ─── Execute Actions (Claude makes changes) ──────────────────────
 async function executeActions(actions) {
-  var results = [];
+  var results = {};
   for (var i = 0; i < actions.length; i++) {
-    var action = actions[i];
+    var a = actions[i];
     try {
-      switch (action.type) {
-        case 'reboot': await merakiPost('/devices/' + action.serial + '/reboot', {}); results.push('Reboot sent to ' + action.serial); break;
-        case 'blink': await merakiPost('/devices/' + action.serial + '/blinkLeds', { duration: 20 }); results.push('LEDs blinking on ' + action.serial); break;
-        case 'enable_ids': await merakiPut('/networks/' + action.networkId + '/appliance/security/intrusion', { mode: action.mode || 'prevention', idsRulesets: 'balanced' }); results.push('IDS enabled'); break;
-        case 'enable_malware': await merakiPut('/networks/' + action.networkId + '/appliance/security/malware', { mode: 'enabled' }); results.push('Malware protection enabled'); break;
-        case 'enable_ssid': await merakiPut('/networks/' + action.networkId + '/wireless/ssids/' + action.ssidNumber, { enabled: true }); results.push('SSID enabled'); break;
-        case 'disable_ssid': await merakiPut('/networks/' + action.networkId + '/wireless/ssids/' + action.ssidNumber, { enabled: false }); results.push('SSID disabled'); break;
-        default: results.push('Unknown action: ' + action.type);
-      }
-    } catch (e) { results.push('Failed: ' + action.type + ' — ' + e.message); }
+      var method = (a.method || 'GET').toUpperCase();
+      var data;
+      if (method === 'POST') data = await merakiPost(a.path, a.body || {});
+      else if (method === 'PUT') data = await merakiPut(a.path, a.body || {});
+      else data = await merakiGet(a.path);
+      results[a.path] = data;
+    } catch (e) { results[a.path] = { _error: e.message }; }
   }
-  if (results.length > 0) await loadDashboard();
+  await loadDashboard();
   return results;
 }
 
@@ -331,54 +342,77 @@ async function handleSend() {
 
   try {
     var networkContext = await gatherNetworkContext();
+    var maxLoops = 5; // Safety: max fetch-loop iterations
 
-    var resp = await fetch('/api/merakipilot-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-      body: JSON.stringify({ action: 'chat', messages: chatHistory, networkContext: networkContext }),
-    });
+    // ─── Conversation Loop: Claude can fetch data and keep going ───
+    for (var loop = 0; loop < maxLoops; loop++) {
+      var resp = await fetch('/api/merakipilot-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+        body: JSON.stringify({ action: 'chat', messages: chatHistory, networkContext: loop === 0 ? networkContext : null }),
+      });
 
-    hideTyping();
-
-    if (resp.status === 402) {
-      creditBalance = 0;
-      refreshCredits();
-      showLimitBar();
-      return;
-    }
-
-    if (!resp.ok) {
-      var err = {};
-      try { err = await resp.json(); } catch(e) {}
-      addMessage('Something went wrong: ' + (err.error || 'Unknown error') + '. Try again.', 'bot');
-      return;
-    }
-
-    var data = await resp.json();
-    addMessage(mdToHtml(data.response), 'bot');
-    chatHistory.push({ role: 'assistant', content: data.response });
-    msgCount++;
-
-    // Check limit after response
-    if (msgCount >= msgLimit) {
-      showLimitBar();
-    }
-
-    // Execute any actions Claude instructed
-    if (data.actions && data.actions.length > 0) {
-      var results = await executeActions(data.actions);
-      if (results.length > 0) {
-        addMessage('<strong>Actions executed:</strong><br>' + results.map(function(r) { return '&bull; ' + r; }).join('<br>'), 'bot');
+      if (resp.status === 402) {
+        hideTyping(); creditBalance = 0; refreshCredits(); showLimitBar(); return;
       }
+      if (!resp.ok) {
+        hideTyping();
+        var err = {}; try { err = await resp.json(); } catch(e) {}
+        addMessage('Something went wrong: ' + (err.error || 'Unknown error') + '. Try again.', 'bot');
+        return;
+      }
+
+      var data = await resp.json();
+
+      // If Claude wants to fetch data, execute and loop back
+      if (data.fetches && data.fetches.length > 0) {
+        // Show Claude's status message to the user
+        if (data.response) {
+          hideTyping();
+          addMessage(mdToHtml(data.response), 'bot');
+          showTyping();
+        }
+
+        // Execute all fetches in parallel
+        var fetchResults = await executeFetches(data.fetches);
+
+        // Add Claude's response + fetch results to history for next loop
+        chatHistory.push({ role: 'assistant', content: data.response || 'Fetching data...' });
+        chatHistory.push({ role: 'user', content: '<fetch_results>\n' + JSON.stringify(fetchResults, null, 2) + '\n</fetch_results>' });
+
+        // Execute any actions that came with the fetches
+        if (data.actions && data.actions.length > 0) {
+          var actionResults = await executeActions(data.actions);
+          chatHistory.push({ role: 'user', content: '<action_results>\n' + JSON.stringify(actionResults, null, 2) + '\n</action_results>' });
+        }
+
+        continue; // Loop back to Claude with the results
+      }
+
+      // No more fetches — show final response
+      hideTyping();
+      if (data.response) {
+        addMessage(mdToHtml(data.response), 'bot');
+        chatHistory.push({ role: 'assistant', content: data.response });
+      }
+      msgCount++;
+
+      if (msgCount >= msgLimit) { showLimitBar(); }
+
+      // Execute any final actions
+      if (data.actions && data.actions.length > 0) {
+        var actionResults = await executeActions(data.actions);
+        var resultSummary = Object.keys(actionResults).map(function(path) {
+          var r = actionResults[path];
+          return r && r._error ? '&bull; ' + path + ': Failed — ' + r._error : '&bull; ' + path + ': Done';
+        }).join('<br>');
+        addMessage('<strong>Changes applied:</strong><br>' + resultSummary, 'bot');
+      }
+
+      break; // Done
     }
 
-    // Refresh dashboard contextually
-    var lower = text.toLowerCase();
-    if (lower.includes('refresh') || lower.includes('device') || lower.includes('show')) {
-      await loadDashboard();
-    }
-
-    if (chatHistory.length > 30) chatHistory = chatHistory.slice(-20);
+    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-30);
 
   } catch (e) {
     hideTyping();
