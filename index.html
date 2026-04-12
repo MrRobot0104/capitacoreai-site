@@ -384,6 +384,19 @@
     .chat-send:hover { background: #FF8000; }
     .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* PREMIUM: Button glow pulse */
+    @keyframes btnGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,106,0,0.2); }
+      50% { box-shadow: 0 0 35px rgba(255,106,0,0.4); }
+    }
+
+    /* PREMIUM: Glass card upgrades */
+    .service-card, .product-card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .service-card:hover, .product-card:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 0 30px rgba(255,106,0,0.08); transform: translateY(-4px); }
+
+    /* PREMIUM: Ensure hero elements start hidden for GSAP (no flash) */
+    .hero h1, .hero > .hero-inner > p, .hero-buttons { will-change: opacity, transform; }
+
     @media (max-width: 768px) {
       .chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 12px; max-height: 80vh; }
       .chat-fab { bottom: 16px; right: 16px; }
@@ -589,7 +602,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/umd/index.min.js"></script>
   <script src="js/common.js"></script>
   <script src="js/index.js"></script>
+  <script src="js/premium.js"></script>
 </body>
 </html>

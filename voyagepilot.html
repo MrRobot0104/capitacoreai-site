@@ -76,6 +76,7 @@
       .preview-leg-row { grid-template-columns: 1fr; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
     }
+    .feature { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
 </head>
 <body>
@@ -185,7 +186,10 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="js/common.js"></script>
   <script src="js/voyagepilot.js"></script>
+  <script src="js/premium.js"></script>
 </body>
 </html>

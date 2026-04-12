@@ -60,10 +60,11 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
     }
     .agent-card {
-      background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); padding: 28px;
+      background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,106,0,0.1); padding: 28px;
       transition: all 0.3s; text-decoration: none; color: inherit; display: block;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
-    .agent-card:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 4px 20px rgba(255,106,0,0.06); transform: translateY(-2px); }
+    .agent-card:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 0 30px rgba(255,106,0,0.08); transform: translateY(-4px); }
     .agent-card .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .agent-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: rgba(255,255,255,0.5); }
     .agent-card .status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; }
@@ -232,8 +233,11 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="js/common.js"></script>
   <script src="js/agents.js"></script>
+  <script src="js/premium.js"></script>
 
 </body>
 </html>
