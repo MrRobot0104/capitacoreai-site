@@ -7,39 +7,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #111111; -webkit-font-smoothing: antialiased; }
-    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
     .nav-brand img { width: 38px; height: 38px; }
     .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
     .nav-brand .wordmark .w-capita { font-weight: 300; }
     .nav-brand .wordmark .w-core { font-weight: 700; }
     .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover { color: #111111; }
-    .nav-links a.active { color: #111111; border-bottom: 2px solid #111111; padding-bottom: 2px; }
-    .btn-nav { background: #111111; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #ffffff; }
+    .nav-links a.active { color: #FF6A00; border-bottom: 2px solid #FF6A00; padding-bottom: 2px; }
+    .btn-nav { background: #FF6A00; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
-    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #111111; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.3); }
     .mobile-menu.active { right: 0; }
-    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
-    .mobile-menu a:hover { color: #111111; }
-    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .mobile-menu a:hover { color: #ffffff; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; }
     .mobile-overlay.active { display: block; }
     .page { max-width: 768px; margin: 0 auto; padding: 140px 32px 80px; }
-    .page h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
-    .page .updated { font-size: 13px; color: #999999; margin-bottom: 40px; }
-    .page h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
-    .page p, .page li { font-size: 15px; color: #555555; line-height: 1.8; margin-bottom: 12px; }
+    .page h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; color: #ffffff; }
+    .page .updated { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
+    .page h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; color: #ffffff; }
+    .page p, .page li { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.8; margin-bottom: 12px; }
+    .page a { color: #FF6A00; }
     .page ul { padding-left: 20px; margin-bottom: 16px; }
-    .footer { background: #fff; border-top: 1px solid #eeeeee; }
+    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
-    .footer-inner p { font-size: 12px; color: #999999; }
+    .footer-inner p { font-size: 12px; color: rgba(255,255,255,0.4); }
     .footer-nav { display: flex; gap: 24px; }
-    .footer-nav a { font-size: 12px; color: #999999; text-decoration: none; }
-    .footer-nav a:hover { color: #111111; }
+    .footer-nav a { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; }
+    .footer-nav a:hover { color: #FF6A00; }
     @media (max-width: 768px) {
       .nav-inner { height: 68px; padding: 0 20px; }
       .nav-links, .nav .btn-nav { display: none; }
@@ -61,7 +62,7 @@
       </div>
       <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
       <button class="hamburger" aria-label="Menu">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="7" r="2" fill="#ffffff" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="13" r="2" fill="#ffffff" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="19" r="2" fill="#ffffff" stroke="none"/></svg>
       </button>
     </div>
   </header>

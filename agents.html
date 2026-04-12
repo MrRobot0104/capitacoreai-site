@@ -9,49 +9,50 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #ffffff;
-      color: #111111;
+      background: #0a0a0a;
+      color: #ffffff;
       -webkit-font-smoothing: antialiased;
     }
 
     /* NAV */
     .nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(255,255,255,0.88);
+      background: rgba(10,10,10,0.88);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .nav-inner {
       max-width: 1152px; margin: 0 auto; padding: 0 32px;
       height: 80px; display: flex; align-items: center; justify-content: space-between;
     }
-    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
     .nav-brand img { width: 38px; height: 38px; }
     .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
     .nav-brand .wordmark .w-capita { font-weight: 300; }
     .nav-brand .wordmark .w-core { font-weight: 700; }
     .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: #111111; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #ffffff; }
+    .nav-links a.active { color: #FF6A00; }
     .btn-nav {
-      background: #111111; color: #fff; font-size: 14px; font-weight: 500;
+      background: #FF6A00; color: #fff; font-size: 14px; font-weight: 500;
       padding: 10px 24px; border-radius: 999px; text-decoration: none; transition: background 0.2s;
     }
-    .btn-nav:hover { background: #222222; }
+    .btn-nav:hover { background: #FF8000; }
 
     /* PAGE */
     .page { max-width: 1152px; margin: 0 auto; padding: 140px 32px 80px; }
     .page-label {
       font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em;
-      font-weight: 500; color: #999999; margin-bottom: 12px;
+      font-weight: 500; color: rgba(255,255,255,0.5); margin-bottom: 12px;
     }
     .page-title {
       font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700;
-      color: #111111; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px;
+      color: #ffffff; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px;
     }
     .page-desc {
-      font-size: 15px; color: #999999; line-height: 1.7; max-width: 520px; margin-bottom: 48px;
+      font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; max-width: 520px; margin-bottom: 48px;
     }
 
     /* AGENT GRID */
@@ -59,47 +60,47 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
     }
     .agent-card {
-      background: #fff; border-radius: 16px; border: 1px solid #eeeeee; padding: 28px;
+      background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); padding: 28px;
       transition: all 0.3s; text-decoration: none; color: inherit; display: block;
     }
-    .agent-card:hover { border-color: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transform: translateY(-2px); }
+    .agent-card:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 4px 20px rgba(255,106,0,0.06); transform: translateY(-2px); }
     .agent-card .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .agent-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: #999999; }
+    .agent-card .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: rgba(255,255,255,0.5); }
     .agent-card .status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; }
     .status-live { color: #10b981; }
     .status-live .status-dot { background: #34d399; }
     .status-soon { color: #f59e0b; }
     .status-soon .status-dot { background: #f59e0b; }
-    .agent-card h3 { font-size: 17px; font-weight: 600; color: #111111; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .agent-card .tagline { font-size: 14px; color: #999999; line-height: 1.65; margin-bottom: 20px; }
+    .agent-card h3 { font-size: 17px; font-weight: 600; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .agent-card .tagline { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.65; margin-bottom: 20px; }
     .agent-card ul { list-style: none; margin-bottom: 20px; }
-    .agent-card li { font-size: 13px; color: #999999; padding: 4px 0; display: flex; align-items: center; gap: 10px; }
-    .agent-card li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(17,17,17,0.15); flex-shrink: 0; }
-    .agent-card .price { font-size: 14px; font-weight: 600; color: #111111; }
-    .agent-card .price span { font-size: 12px; font-weight: 400; color: #999999; }
+    .agent-card li { font-size: 13px; color: rgba(255,255,255,0.5); padding: 4px 0; display: flex; align-items: center; gap: 10px; }
+    .agent-card li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+    .agent-card .price { font-size: 14px; font-weight: 600; color: #FF6A00; }
+    .agent-card .price span { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.5); }
 
     /* FOOTER */
-    .footer { background: #fff; border-top: 1px solid #eeeeee; }
+    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); }
     .footer-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; }
     .footer-top { padding: 48px 0; display: flex; justify-content: space-between; align-items: center; }
-    .footer-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #111111; margin-bottom: 12px; }
+    .footer-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #ffffff; margin-bottom: 12px; }
     .footer-brand img { width: 24px; height: 24px; }
     .footer-brand span { font-weight: 600; font-size: 14px; }
-    .footer-desc { font-size: 13px; color: #999999; }
+    .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); }
     .footer-nav { display: flex; gap: 32px; }
-    .footer-nav a { font-size: 13px; color: #999999; text-decoration: none; transition: color 0.2s; }
-    .footer-nav a:hover { color: #111111; }
-    .footer-bottom { border-top: 1px solid #eeeeee; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
-    .footer-bottom p { font-size: 12px; color: #999999; }
-    .footer-bottom .built { color: #cccccc; }
+    .footer-nav a { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    .footer-nav a:hover { color: #FF6A00; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .footer-bottom .built { color: rgba(255,255,255,0.25); }
 
     .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
-    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #111111; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.3); }
     .mobile-menu.active { right: 0; }
-    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
-    .mobile-menu a:hover { color: #111111; }
-    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .mobile-menu a:hover { color: #ffffff; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; }
     .mobile-overlay.active { display: block; }
 
     @media (max-width: 768px) {
@@ -128,7 +129,7 @@
       </div>
       <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
       <button class="hamburger" aria-label="Menu">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="7" r="2" fill="#ffffff" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="13" r="2" fill="#ffffff" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#ffffff" stroke="none"/><circle cx="22" cy="19" r="2" fill="#ffffff" stroke="none"/></svg>
       </button>
     </div>
   </header>
@@ -139,10 +140,10 @@
     <a href="/#contact">Contact</a>
     <a href="agents.html">Agents</a>
     <a href="pricing.html">Pricing</a>
-    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;">Log In / Sign Up</a></div>
     <div id="menuMyAgents" style="display:none;padding-top:24px;">
       <div id="menuAgentsList"></div>
-      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
+      <button style="display:block;width:100%;padding:12px;margin-top:8px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
     </div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay"></div>
