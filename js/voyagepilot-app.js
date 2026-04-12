@@ -28,7 +28,7 @@ function fetchCityPhoto(query, callback, fallbackQuery) {
   if (cityPhotoCache[query]) { callback(cityPhotoCache[query]); return; }
 
   var apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&titles=' +
-    encodeURIComponent(query) + '&prop=pageimages&format=json&pithumbsize=800&origin=*';
+    encodeURIComponent(query) + '&prop=pageimages&format=json&pithumbsize=1600&origin=*';
 
   fetch(apiUrl)
     .then(function(r) { return r.json(); })
@@ -235,8 +235,10 @@ function formatShortDate(dateStr) {
 function renderFlightNode(flight, isReturn) {
   var from = encodeURIComponent(flight.fromCode || flight.from || '');
   var to = encodeURIComponent(flight.toCode || flight.to || '');
-  var dateParam = flight.date ? '+on+' + encodeURIComponent(flight.date) : '';
-  var bookUrl = 'https://www.google.com/travel/flights?q=flights+from+' + from + '+to+' + to + dateParam;
+  var bookUrl = 'https://www.google.com/travel/flights/search?tfs=CBwQAhooEgoyMDI2' +
+    '&hl=en&curr=USD&departure_id=' + from + '&arrival_id=' + to +
+    (flight.date ? '&outbound_date=' + encodeURIComponent(flight.date) : '') +
+    '&type=2';
   var iconClass = isReturn ? 'return' : 'flight';
   var label = isReturn ? 'Return Home' : 'Depart';
 

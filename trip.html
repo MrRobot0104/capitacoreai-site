@@ -164,7 +164,8 @@
         renderSharedTrip(data.trip);
       })
       .catch(function(err) {
-        document.getElementById('content').innerHTML = '<div class="error-msg">Could not load trip: ' + err.message + '</div>';
+        var safeMsg = (err.message || 'Unknown error').replace(/[<>&"']/g, function(c) { return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; });
+        document.getElementById('content').innerHTML = '<div class="error-msg">Could not load trip: ' + safeMsg + '</div>';
       });
     }
 
