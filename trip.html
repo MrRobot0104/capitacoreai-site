@@ -53,8 +53,8 @@
     .photo-gallery { display: grid; gap: 6px; margin-bottom: 16px; border-radius: 14px; overflow: hidden; }
     .photo-gallery.two { grid-template-columns: 2fr 1fr; }
     .photo-gallery.three { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
-    .gallery-photo { background: #e2e8f0; background-size: cover; background-position: center; min-height: 100px; }
-    .photo-gallery.three .gallery-photo:first-child { grid-row: 1 / -1; min-height: 200px; }
+    .gallery-photo { background: #e2e8f0; background-size: cover; background-position: center; min-height: 140px; }
+    .photo-gallery.three .gallery-photo:first-child { grid-row: 1 / -1; min-height: 280px; }
 
     .hotel-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; display: flex; margin-bottom: 16px; }
     .hotel-photo { width: 130px; min-height: 130px; background: #e2e8f0; background-size: cover; background-position: center; flex-shrink: 0; }
@@ -70,9 +70,13 @@
     .hotel-reason { margin-top: auto; padding: 10px 12px; background: #f0fdf4; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.55; }
     .hotel-reason::before { content: '\U0001f4a1 '; }
 
-    .day-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
-    .day-card-header { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; }
-    .day-card-thumb { width: 56px; height: 56px; border-radius: 10px; background: #e2e8f0; background-size: cover; background-position: center; flex-shrink: 0; }
+    .day-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+    .day-photo { width: 100%; height: 200px; background: #e2e8f0; background-size: cover; background-position: center; position: relative; }
+    .day-photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 18px 14px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.55)); color: #fff; }
+    .day-photo-overlay .day-badge { color: #fff; font-size: 12px; font-weight: 700; opacity: 0.9; }
+    .day-photo-overlay .day-badge .act-count, .day-photo-overlay .day-badge .day-date { color: rgba(255,255,255,0.75); }
+    .day-photo-overlay .day-card-title { color: #fff; font-size: 16px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .day-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; }
     .day-card-info { flex: 1; min-width: 0; }
     .day-badge { font-size: 11px; font-weight: 700; color: #2563eb; margin-bottom: 3px; }
     .day-badge .act-count { color: #94a3b8; font-weight: 500; font-size: 10px; margin-left: 6px; }
@@ -293,10 +297,13 @@
 
         cityDays.forEach(function(day, dayIdx) {
           var actCount = (day.activities || []).length;
-          html += '<div class="day-card' + (di === 0 && dayIdx === 0 ? ' open' : '') + '"><div class="day-card-header">' +
-            '<div class="day-card-thumb" id="day-thumb-' + di + '-' + dayIdx + '" style="background:' + cityGradient((day.dayPhoto || day.title || '') + dayIdx) + ';"></div>' +
-            '<div class="day-card-info"><div class="day-badge">Day ' + (day.day || dayIdx+1) + '<span class="act-count">' + actCount + ' activit' + (actCount === 1 ? 'y' : 'ies') + '</span>' + (day.weather ? '<span class="day-date">' + esc(day.weather) + '</span>' : '') + '</div>' +
-            '<div class="day-card-title">' + esc(day.title || '') + '</div></div><span class="day-card-arrow">\u25bc</span></div>' +
+          var isFirst = (di === 0 && dayIdx === 0);
+          var photoStyle = day.photoUrl ? 'background-image:url(' + day.photoUrl + ');background-size:cover;background-position:center;' : 'background:' + cityGradient((day.dayPhoto || day.title || '') + dayIdx) + ';';
+          html += '<div class="day-card' + (isFirst ? ' open' : '') + '">' +
+            '<div class="day-photo" id="day-photo-' + di + '-' + dayIdx + '" style="' + photoStyle + '">' +
+              '<div class="day-photo-overlay"><div class="day-badge">Day ' + (day.day || dayIdx+1) + ' <span class="act-count">' + actCount + ' activit' + (actCount === 1 ? 'y' : 'ies') + '</span>' + (day.weather ? ' <span class="day-date">' + esc(day.weather) + '</span>' : '') + '</div>' +
+              '<div class="day-card-title">' + esc(day.title || '') + '</div></div></div>' +
+            '<div class="day-card-header"><div style="font-size:12px;color:#64748b;">Tap to ' + (isFirst ? 'collapse' : 'expand') + ' activities</div><span class="day-card-arrow">\u25bc</span></div>' +
             '<div class="day-card-body">';
           (day.activities || []).forEach(function(a) {
             var desc = a.description || a;
@@ -364,20 +371,25 @@
           heroEl.style.backgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.55)), url(' + url + ')';
           heroEl.style.backgroundSize = 'cover'; heroEl.style.backgroundPosition = 'center';
         });
-        (dest.landmarks || []).forEach(function(lm) {
-          var g = document.getElementById('gallery-' + di);
-          if (!g) return;
-          g.querySelectorAll('.gallery-photo[data-query="' + lm.replace(/"/g, '\\"') + '"]').forEach(function(el) {
-            fetchCityPhoto(lm, function(url) { el.style.background = 'url(' + url + ') center/cover'; }, dest.city);
+        // Gallery — prefer server photos, fall back to Wikipedia
+        var gEl = document.getElementById('gallery-' + di);
+        if (gEl) {
+          var sPhotos = dest.photos || [];
+          gEl.querySelectorAll('.gallery-photo').forEach(function(el, pi) {
+            if (sPhotos[pi]) { el.style.background = 'url(' + sPhotos[pi] + ') center/cover'; }
+            else if (el.dataset.query) fetchCityPhoto(el.dataset.query, function(url) { el.style.background = 'url(' + url + ') center/cover'; }, dest.city);
           });
-        });
+        }
         var hp = document.getElementById('hotel-photo-' + di);
         if (hp) fetchCityPhoto(dest.city, function(url) { hp.style.background = 'url(' + url + ') center/cover'; });
+        // Day photos — only Wikipedia fallback if no server photo
         var cityDays = (trip.itinerary || []).filter(function(d) { return d.city === dest.city; });
         cityDays.forEach(function(day, dayIdx) {
-          var t = document.getElementById('day-thumb-' + di + '-' + dayIdx);
-          if (t && day.dayPhoto) fetchCityPhoto(day.dayPhoto, function(url) { t.style.background = 'url(' + url + ') center/cover'; }, dest.city);
-          else if (t) fetchCityPhoto(dest.city, function(url) { t.style.background = 'url(' + url + ') center/cover'; });
+          if (day.photoUrl) return; // server already provided
+          var pEl = document.getElementById('day-photo-' + di + '-' + dayIdx);
+          if (!pEl) return;
+          if (day.dayPhoto) fetchCityPhoto(day.dayPhoto, function(url) { pEl.style.background = 'url(' + url + ') center/cover'; }, dest.city);
+          else fetchCityPhoto(dest.city, function(url) { pEl.style.background = 'url(' + url + ') center/cover'; });
         });
       });
 

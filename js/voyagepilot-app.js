@@ -297,23 +297,33 @@ function renderDestinationNode(dest, cityDays, hotel, startDay, endDay, startDat
     '</div>';
   }
 
-  // Day cards
+  // Day cards — full-width hero photos
   cityDays.forEach(function(day, di) {
     var actCount = (day.activities || []).length;
     var isFirst = (idx === 0 && di === 0);
-    html += '<div class="day-card' + (isFirst ? ' open' : '') + '">' +
-      '<div class="day-card-header">' +
-        '<div class="day-card-thumb" id="day-thumb-' + idx + '-' + di + '" style="background:' + cityGradient((day.dayPhoto || day.title || '') + di) + ';"></div>' +
-        '<div class="day-card-info">' +
-          '<div class="day-badge">Day ' + (day.day || di+1) +
-            '<span class="act-count">' + actCount + ' activit' + (actCount === 1 ? 'y' : 'ies') + '</span>' +
-            (day.weather ? '<span class="day-date">' + escapeHtml(day.weather) + '</span>' : '') +
-          '</div>' +
-          '<div class="day-card-title">' + escapeHtml(day.title || '') + '</div>' +
+    var hasServerPhoto = !!day.photoUrl;
+    var dayId = 'day-photo-' + idx + '-' + di;
+
+    html += '<div class="day-card' + (isFirst ? ' open' : '') + '">';
+
+    // Full-width photo with title overlay
+    html += '<div class="day-photo" id="' + dayId + '" style="background:' + cityGradient((day.dayPhoto || day.title || '') + di) + ';' +
+      (hasServerPhoto ? 'background-image:url(' + day.photoUrl + ');background-size:cover;background-position:center;' : '') + '">' +
+      '<div class="day-photo-overlay">' +
+        '<div class="day-badge">Day ' + (day.day || di+1) +
+          ' <span class="act-count">' + actCount + ' activit' + (actCount === 1 ? 'y' : 'ies') + '</span>' +
+          (day.weather ? ' <span class="day-date">' + escapeHtml(day.weather) + '</span>' : '') +
         '</div>' +
-        '<span class="day-card-arrow">\u25bc</span>' +
+        '<div class="day-card-title">' + escapeHtml(day.title || '') + '</div>' +
       '</div>' +
-      '<div class="day-card-body">';
+    '</div>';
+
+    // Expand/collapse header (slim, just arrow)
+    html += '<div class="day-card-header">' +
+      '<div class="day-card-info" style="font-size:12px;color:#64748b;">Tap to ' + (isFirst ? 'collapse' : 'expand') + ' activities</div>' +
+      '<span class="day-card-arrow">\u25bc</span>' +
+    '</div>' +
+    '<div class="day-card-body">';
     (day.activities || []).forEach(function(a) {
       var desc = a.description || a;
       var ratingHtml = a.rating ? '<span class="act-rating">\u2605 ' + a.rating + (a.reviews ? ' <span class="act-reviews">(' + a.reviews.toLocaleString() + ')</span>' : '') + '</span>' : '';
@@ -407,17 +417,24 @@ function renderTimeline(trip) {
       });
     }
 
-    // Gallery landmark photos — fallback to city photo if landmark not found
-    (dest.landmarks || []).forEach(function(lm) {
-      var galleryEl = document.getElementById('gallery-' + di);
-      if (!galleryEl) return;
-      var photos = galleryEl.querySelectorAll('.gallery-photo[data-query="' + lm.replace(/"/g, '\\"') + '"]');
-      photos.forEach(function(el) {
-        fetchCityPhoto(lm, function(url) {
-          el.style.background = 'url(' + url + ') center/cover';
-        }, dest.city);
+    // Gallery photos — use server-provided dest.photos if available, else Wikipedia
+    var galleryEl = document.getElementById('gallery-' + di);
+    if (galleryEl) {
+      var serverPhotos = dest.photos || [];
+      var galleryItems = galleryEl.querySelectorAll('.gallery-photo');
+      galleryItems.forEach(function(el, pi) {
+        if (serverPhotos[pi]) {
+          el.style.background = 'url(' + serverPhotos[pi] + ') center/cover';
+        } else {
+          var lm = el.dataset.query;
+          if (lm) {
+            fetchCityPhoto(lm, function(url) {
+              el.style.background = 'url(' + url + ') center/cover';
+            }, dest.city);
+          }
+        }
       });
-    });
+    }
 
     // Hotel photo — use the city photo (reliable) not "city skyline"
     var hotelPhotoEl = document.getElementById('hotel-photo-' + di);
@@ -427,18 +444,27 @@ function renderTimeline(trip) {
       });
     }
 
-    // Day card thumbnail photos — fallback to city photo if landmark not found
+    // Day card full-width photos — only fetch Wikipedia fallback if no server photo
     var cityDays = days.filter(function(d) { return d.city === dest.city; });
     cityDays.forEach(function(day, dayIdx) {
-      var thumbEl = document.getElementById('day-thumb-' + di + '-' + dayIdx);
-      if (thumbEl && day.dayPhoto) {
+      var photoEl = document.getElementById('day-photo-' + di + '-' + dayIdx);
+      if (!photoEl) return;
+      if (day.photoUrl) {
+        // Server already provided a Google Images URL — already set in HTML
+        return;
+      }
+      // No server photo — fall back to Wikipedia
+      if (day.dayPhoto) {
         fetchCityPhoto(day.dayPhoto, function(url) {
-          thumbEl.style.background = 'url(' + url + ') center/cover';
+          photoEl.style.backgroundImage = 'url(' + url + ')';
+          photoEl.style.backgroundSize = 'cover';
+          photoEl.style.backgroundPosition = 'center';
         }, dest.city);
-      } else if (thumbEl) {
-        // No dayPhoto field — use city photo
+      } else {
         fetchCityPhoto(dest.city, function(url) {
-          thumbEl.style.background = 'url(' + url + ') center/cover';
+          photoEl.style.backgroundImage = 'url(' + url + ')';
+          photoEl.style.backgroundSize = 'cover';
+          photoEl.style.backgroundPosition = 'center';
         });
       }
     });

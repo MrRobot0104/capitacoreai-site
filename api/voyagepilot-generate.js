@@ -188,6 +188,32 @@ async function searchFlights(from, to, date, travelers) {
   }
 }
 
+// ============ SerpAPI Google Images ============
+async function searchPhotos(query) {
+  const serpKey = process.env.SERPAPI_KEY;
+  if (!serpKey) return null;
+  const params = new URLSearchParams({
+    engine: 'google_images',
+    q: query + ' travel photography',
+    ijn: '0',
+    num: '3',
+    api_key: serpKey,
+  });
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch('https://serpapi.com/search?' + params.toString(), { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.images_results || data.images_results.length === 0) return null;
+    return data.images_results.slice(0, 3).map(img => img.original || img.thumbnail);
+  } catch (e) {
+    console.error('SerpAPI Images error:', e.message);
+    return null;
+  }
+}
+
 // ============ MAIN HANDLER ============
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -438,6 +464,50 @@ module.exports = async (req, res) => {
 
       // Tag whether real flight data was used
       tripPlan.liveFlights = Object.keys(realFlights).length > 0;
+
+      // ===== STEP 4: Fetch Google Images for destinations + day photos =====
+      try {
+        const photoCache = {};
+        const photoPromises = [];
+
+        // Destination city photos (1 per city)
+        (tripPlan.destinations || []).forEach(function(dest, di) {
+          const q = dest.city + ' skyline travel';
+          photoPromises.push(
+            searchPhotos(q).then(function(urls) {
+              if (urls) tripPlan.destinations[di].photos = urls;
+            })
+          );
+        });
+
+        // Day photos — deduplicate by dayPhoto value
+        const dayPhotoQueries = {};
+        (tripPlan.itinerary || []).forEach(function(day, i) {
+          if (day.dayPhoto && !dayPhotoQueries[day.dayPhoto]) {
+            dayPhotoQueries[day.dayPhoto] = [];
+          }
+          if (day.dayPhoto) dayPhotoQueries[day.dayPhoto].push(i);
+        });
+
+        Object.entries(dayPhotoQueries).forEach(function([landmark, indices]) {
+          const city = tripPlan.itinerary[indices[0]].city || '';
+          const q = landmark + ' ' + city;
+          photoPromises.push(
+            searchPhotos(q).then(function(urls) {
+              if (urls && urls[0]) {
+                indices.forEach(function(i) {
+                  tripPlan.itinerary[i].photoUrl = urls[0];
+                });
+              }
+            })
+          );
+        });
+
+        await Promise.all(photoPromises);
+      } catch (photoErr) {
+        console.error('Photo enrichment error:', photoErr.message);
+        // Non-fatal — trip still works without photos
+      }
 
       // Log usage
       await fetch(supabaseUrl + '/rest/v1/usage_log', {

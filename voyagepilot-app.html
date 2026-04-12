@@ -122,9 +122,9 @@
     .photo-gallery { display: grid; gap: 6px; margin-bottom: 16px; border-radius: 14px; overflow: hidden; }
     .photo-gallery.two { grid-template-columns: 2fr 1fr; }
     .photo-gallery.three { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
-    .gallery-photo { background: #e2e8f0; background-size: cover; background-position: center; min-height: 100px; transition: transform 0.3s; }
+    .gallery-photo { background: #e2e8f0; background-size: cover; background-position: center; min-height: 140px; transition: transform 0.3s; }
     .gallery-photo:hover { transform: scale(1.02); }
-    .photo-gallery.three .gallery-photo:first-child { grid-row: 1 / -1; min-height: 200px; }
+    .photo-gallery.three .gallery-photo:first-child { grid-row: 1 / -1; min-height: 280px; }
 
     /* HOTEL CARD */
     .hotel-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; display: flex; margin-bottom: 16px; transition: box-shadow 0.2s; }
@@ -143,16 +143,20 @@
     .hotel-reason::before { content: '💡 '; }
 
     /* DAY CARDS */
-    .day-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 10px; transition: box-shadow 0.2s, border-color 0.2s; }
-    .day-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
-    .day-card-header { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; user-select: none; }
-    .day-card-thumb { width: 56px; height: 56px; border-radius: 10px; background: #e2e8f0; background-size: cover; background-position: center; flex-shrink: 0; }
+    .day-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 12px; transition: box-shadow 0.2s, border-color 0.2s; }
+    .day-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .day-photo { width: 100%; height: 200px; background: #e2e8f0; background-size: cover; background-position: center; position: relative; }
+    .day-photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 18px 14px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.55)); color: #fff; }
+    .day-photo-overlay .day-badge { color: #fff; font-size: 12px; font-weight: 700; opacity: 0.9; }
+    .day-photo-overlay .day-badge .act-count, .day-photo-overlay .day-badge .day-date { color: rgba(255,255,255,0.75); }
+    .day-photo-overlay .day-card-title { color: #fff; font-size: 16px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .day-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; }
+    .day-card-header.no-photo { padding: 14px 18px; }
     .day-card-info { flex: 1; min-width: 0; }
     .day-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #2563eb; margin-bottom: 3px; }
     .day-badge .act-count { color: #94a3b8; font-weight: 500; font-size: 10px; }
     .day-badge .day-date { color: #94a3b8; font-weight: 400; font-size: 10px; }
     .day-card-title { font-size: 14px; font-weight: 600; color: #1e293b; line-height: 1.35; }
-    .day-card-weather { font-size: 12px; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
     .day-card-arrow { color: #cbd5e1; font-size: 10px; padding-right: 4px; transition: transform 0.2s; }
     .day-card.open .day-card-arrow { transform: rotate(180deg); }
     .day-card-body { display: none; padding: 0 16px 14px; border-top: 1px solid #f1f5f9; font-size: 13px; color: #64748b; line-height: 1.7; }
@@ -225,6 +229,7 @@
       .timeline-node { break-inside: avoid; }
       .dest-hero { height: 140px !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       .photo-gallery { display: none !important; }
+      .day-photo { height: 120px !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       .hotel-card { break-inside: avoid; }
       .day-card { break-inside: avoid; }
       .timeline-icon { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
