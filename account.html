@@ -59,16 +59,17 @@
     .btn-logout { font-size: 13px; color: #FF6A00; background: transparent; border: 1px solid rgba(255,106,0,0.3); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
     .btn-logout:hover { background: rgba(255,106,0,0.1); border-color: #FF6A00; }
 
-    .agent-card-dash { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .agent-card-dash { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
     .agent-card-dash:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 4px 20px rgba(255,106,0,0.06); }
+    .agent-card-dash .agent-info { flex: 1; min-width: 0; }
     .agent-card-dash .agent-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
     .agent-card-dash .agent-info p { font-size: 13px; color: rgba(255,255,255,0.5); }
-    .agent-card-dash .agent-actions { display: flex; gap: 8px; align-items: center; }
-    .btn-launch { padding: 10px 20px; background: #FF6A00; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; }
+    .agent-card-dash .agent-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+    .btn-launch { padding: 10px 20px; background: #FF6A00; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
     .btn-launch:hover { background: #FF8000; }
-    .btn-buy-small { padding: 10px 20px; background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; }
-    .btn-buy-small:hover { color: #FF6A00; border-color: #FF6A00; }
-    .credits-badge { font-size: 12px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 999px; }
+    .btn-buy-small { padding: 10px 20px; background: transparent; color: #FF6A00; border: 1px solid rgba(255,106,0,0.3); border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+    .btn-buy-small:hover { background: rgba(255,106,0,0.08); border-color: #FF6A00; }
+    .credits-badge { font-size: 12px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
 
     .no-agents { text-align: center; padding: 40px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 14px; }
     .no-agents p { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
@@ -86,7 +87,8 @@
       .nav-links, .nav .btn-nav { display: none; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
       .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
-      .agent-card-dash { flex-direction: column; gap: 16px; align-items: flex-start; }
+      .agent-card-dash { flex-direction: column; gap: 12px; align-items: stretch; }
+      .agent-card-dash .agent-actions { justify-content: flex-start; }
     }
   </style>
 </head>
