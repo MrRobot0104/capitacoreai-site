@@ -11,6 +11,10 @@
       "memory": 1024,
       "maxDuration": 300
     },
+    "api/merakipilot-chat.js": {
+      "memory": 512,
+      "maxDuration": 120
+    },
     "api/*.js": {
       "memory": 256,
       "maxDuration": 60

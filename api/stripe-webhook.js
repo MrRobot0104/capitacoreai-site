@@ -14,6 +14,11 @@ function verifySignature(payload, signature, secret) {
     const elements = signature.split(',');
     const timestamp = elements.find(e => e.startsWith('t=')).split('=')[1];
     const expectedSig = elements.find(e => e.startsWith('v1=')).split('=')[1];
+
+    // Reject events older than 5 minutes (replay protection)
+    const age = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
+    if (age > 300) return false;
+
     const signedPayload = timestamp + '.' + payload.toString('utf8');
     const computed = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(expectedSig, 'hex'), Buffer.from(computed, 'hex'));
@@ -29,15 +34,26 @@ async function handler(req, res) {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  // Verify webhook signature if secret is configured
-  if (webhookSecret && sig) {
-    if (!verifySignature(rawBody, sig, webhookSecret)) {
-      console.error('Webhook signature verification failed');
-      return res.status(400).json({ error: 'Invalid signature' });
-    }
+  // Signature verification is MANDATORY
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured');
+    return res.status(500).json({ error: 'Webhook not configured' });
+  }
+  if (!sig) {
+    return res.status(400).json({ error: 'Missing stripe-signature header' });
+  }
+  if (!verifySignature(rawBody, sig, webhookSecret)) {
+    console.error('Webhook signature verification failed');
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  const event = JSON.parse(rawBody.toString('utf8'));
+  let event;
+  try {
+    event = JSON.parse(rawBody.toString('utf8'));
+  } catch (e) {
+    console.error('Webhook body is not valid JSON');
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
 
   if (event.type !== 'checkout.session.completed') {
     return res.status(200).json({ received: true });
@@ -62,6 +78,48 @@ async function handler(req, res) {
   }
 
   try {
+    // Idempotency: check if this session was already processed
+    const checkRes = await fetch(
+      supabaseUrl + '/rest/v1/transactions?stripe_session_id=eq.' + session.id + '&select=id',
+      { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
+    );
+    if (checkRes.ok) {
+      const existing = await checkRes.json();
+      if (existing && existing.length > 0) {
+        console.log('Webhook already processed for session:', session.id);
+        return res.status(200).json({ received: true, already_processed: true });
+      }
+    }
+
+    // Log transaction FIRST (acts as idempotency lock)
+    const txRes = await fetch(supabaseUrl + '/rest/v1/transactions', {
+      method: 'POST',
+      headers: {
+        'apikey': serviceKey,
+        'Authorization': 'Bearer ' + serviceKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        package: pkg,
+        tokens_purchased: tokens,
+        amount_cents: session.amount_total,
+        stripe_session_id: session.id,
+      }),
+    });
+
+    if (!txRes.ok) {
+      const txErr = await txRes.text();
+      // If insert fails due to unique constraint, it's a duplicate
+      if (txErr.includes('duplicate') || txErr.includes('unique')) {
+        console.log('Duplicate transaction insert for session:', session.id);
+        return res.status(200).json({ received: true, already_processed: true });
+      }
+      console.error('Failed to log transaction:', txErr);
+      return res.status(500).json({ error: 'Failed to log transaction' });
+    }
+
     // Credit tokens via RPC function
     const creditRes = await fetch(supabaseUrl + '/rest/v1/rpc/credit_tokens', {
       method: 'POST',
@@ -78,24 +136,6 @@ async function handler(req, res) {
       console.error('Failed to credit tokens:', err);
       return res.status(500).json({ error: 'Failed to credit tokens' });
     }
-
-    // Log transaction
-    await fetch(supabaseUrl + '/rest/v1/transactions', {
-      method: 'POST',
-      headers: {
-        'apikey': serviceKey,
-        'Authorization': 'Bearer ' + serviceKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        package: pkg,
-        tokens_purchased: tokens,
-        amount_cents: session.amount_total,
-        stripe_session_id: session.id,
-      }),
-    });
 
     res.status(200).json({ received: true, tokens_credited: tokens });
   } catch (err) {

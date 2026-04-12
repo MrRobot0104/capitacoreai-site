@@ -163,6 +163,19 @@ module.exports = async (req, res) => {
   if (action === 'generate') {
     if (!Array.isArray(history) || history.length === 0) return res.status(400).json({ error: 'No conversation history.' });
 
+    // Server-side generation limit: check user has credits (balance > 0 or admin)
+    if (!isAdmin) {
+      const balCheck = await fetch(
+        supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=token_balance',
+        { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
+      );
+      const balData = await balCheck.json();
+      const balance = balData[0]?.token_balance || 0;
+      if (balance <= 0) {
+        return res.status(402).json({ error: 'No credits remaining. Purchase more to continue.' });
+      }
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
