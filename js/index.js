@@ -19,15 +19,17 @@ function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSiz
     var x1 = cx + Math.sin(t) * amplitude;
     var x2 = cx + Math.sin(t + Math.PI) * amplitude;
 
+    // Rung connecting the two strands
     ctx.beginPath();
     ctx.moveTo(x1, y);
     ctx.lineTo(x2, y);
-    ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.25) + ')';
+    ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.2) + ')';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 6]);
     ctx.stroke();
     ctx.setLineDash([]);
 
+    // Strand lines connecting to next node
     if (i < nodeCount - 1) {
       var nextT = (time * speed) + ((i + 1) * 0.4) + phase;
       var nextY = startY + ((i + 1) * spacing);
@@ -37,26 +39,35 @@ function drawDNA(cx, startY, length, nodeCount, amplitude, speed, phase, nodeSiz
       ctx.beginPath();
       ctx.moveTo(x1, y);
       ctx.lineTo(nextX1, nextY);
-      ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.4) + ')';
+      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.35) + ')';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.beginPath();
       ctx.moveTo(x2, y);
       ctx.lineTo(nextX2, nextY);
-      ctx.strokeStyle = 'rgba(17, 17, 17, ' + (opacity * 0.4) + ')';
+      ctx.strokeStyle = 'rgba(255, 106, 0, ' + (opacity * 0.35) + ')';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
 
+    // Node dots
     ctx.beginPath();
     ctx.arc(x1, y, nodeSize, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(17, 17, 17, ' + (opacity * 0.6) + ')';
+    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.6) + ')';
     ctx.fill();
+
+    // Glow on primary nodes
+    if (opacity > 0.2) {
+      ctx.beginPath();
+      ctx.arc(x1, y, nodeSize * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.08) + ')';
+      ctx.fill();
+    }
 
     ctx.beginPath();
     ctx.arc(x2, y, nodeSize * 0.8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(17, 17, 17, ' + (opacity * 0.45) + ')';
+    ctx.fillStyle = 'rgba(255, 106, 0, ' + (opacity * 0.45) + ')';
     ctx.fill();
   }
 }
@@ -66,10 +77,21 @@ function animate() {
   time += 0.008;
 
   var scrollY = window.scrollY * 0.15;
+  var w = canvas.width;
+  var h = canvas.height;
 
-  drawDNA(canvas.width - 120, -100 - scrollY, canvas.height + 400, 22, 80, 0.6, 0, 4, 0.35);
-  drawDNA(100, 50 - scrollY * 0.7, canvas.height + 300, 18, 60, 0.5, 2, 3.5, 0.2);
-  drawDNA(canvas.width * 0.65, 200 - scrollY * 0.5, canvas.height, 14, 50, 0.4, 4, 3, 0.12);
+  // Primary strand — right side, bold
+  drawDNA(w - 120, -100 - scrollY, h + 400, 22, 80, 0.6, 0, 4, 0.4);
+  // Secondary strand — left side
+  drawDNA(100, 50 - scrollY * 0.7, h + 300, 18, 60, 0.5, 2, 3.5, 0.25);
+  // Center-right — subtle
+  drawDNA(w * 0.65, 200 - scrollY * 0.5, h, 14, 50, 0.4, 4, 3, 0.15);
+  // Far left — ghost
+  drawDNA(w * 0.25, -50 - scrollY * 0.4, h + 200, 16, 45, 0.35, 1.5, 2.5, 0.1);
+  // Center — very subtle
+  drawDNA(w * 0.45, 100 - scrollY * 0.6, h + 100, 12, 35, 0.45, 3, 2, 0.07);
+  // Far right edge
+  drawDNA(w - 30, -200 - scrollY * 0.3, h + 500, 20, 30, 0.55, 5, 2, 0.08);
 
   requestAnimationFrame(animate);
 }
@@ -151,7 +173,7 @@ function disableChat(msg) {
   p.textContent = msg;
   var a = document.createElement('a');
   a.href = '#contact';
-  a.style.cssText = 'display:inline-block;padding:10px 20px;background:#111111;color:#fff;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;';
+  a.style.cssText = 'display:inline-block;padding:10px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;';
   a.textContent = 'Contact Us \u2192';
   a.addEventListener('click', toggleChat);
   div.appendChild(p);
@@ -264,9 +286,9 @@ async function checkMenuAuth(session) {
     var hasAccess = isAdmin || balance > 0;
     var list = document.getElementById('menuAgentsList');
     if (hasAccess) {
-      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:#999999;">' + (isAdmin ? '\u221E' : balance) + ' credits remaining</span></div><a href="dashpilot-app.html" class="agent-link">Launch \u2192</a></div>';
+      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:rgba(255,255,255,0.5);">' + (isAdmin ? '\u221E' : balance) + ' credits remaining</span></div><a href="dashpilot-app.html" class="agent-link">Launch \u2192</a></div>';
     } else {
-      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:#999999;">No credits</span></div><a href="pricing.html" class="agent-link">Buy \u2192</a></div>';
+      list.innerHTML = '<div class="agent-item"><div><span class="agent-name">DashPilot</span><br><span style="font-size:12px;color:rgba(255,255,255,0.5);">No credits</span></div><a href="pricing.html" class="agent-link">Buy \u2192</a></div>';
     }
   } else {
     authDiv.style.display = 'block';
