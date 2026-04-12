@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
 
     /* NAV */
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -125,19 +125,53 @@
 
     @media (max-width: 768px) {
       .nav-links, .nav .btn-nav { display: none; }
-      .hero h1 { font-size: 2.2rem; }
-      .hero-stats { gap: 24px; }
+      .nav-inner { padding: 0 20px; height: 64px; }
+      .hero { min-height: 92vh; }
+      .hero-bg { background-image: url('https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=800&q=70'); }
+      .hero-inner { padding: 0 20px; }
+      .hero h1 { font-size: 2rem; margin-bottom: 16px; }
+      .hero-inner > p { font-size: 15px; margin-bottom: 28px; }
+      .hero-buttons { gap: 12px; margin-bottom: 36px; }
+      .hero-stats { gap: 28px; }
       .hero-stat .hs-val { font-size: 20px; }
-      .dest-grid { grid-template-columns: repeat(2, 1fr); }
-      .how-grid { grid-template-columns: 1fr; }
-      .features { grid-template-columns: 1fr; }
-      .trip-card { flex: 0 0 290px; }
-      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+      .section { padding: 64px 20px; }
+      .section-header { margin-bottom: 32px; }
+      .dest-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .dest-info { padding: 16px; }
+      .dest-info h3 { font-size: 16px; }
+      .dest-info .dest-country { font-size: 12px; margin-bottom: 6px; }
+      .trips-wrap { padding: 0 20px; }
+      .trips-track { touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+      .trip-card { flex: 0 0 280px; }
+      .trip-card-img { height: 160px; }
+      .trips-nav { display: none; }
+      .how-grid { grid-template-columns: 1fr; gap: 16px; }
+      .how-step { padding: 24px 20px; }
+      .features { grid-template-columns: 1fr; gap: 16px; }
+      .feature { padding: 22px; }
+      .cta-section { padding: 64px 20px 80px; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; padding: 20px; }
     }
     @media (max-width: 480px) {
-      .dest-grid { grid-template-columns: 1fr; }
-      .hero-stats { flex-direction: column; gap: 12px; }
-      .hero-buttons { flex-direction: column; align-items: center; }
+      .hero h1 { font-size: 1.75rem; }
+      .hero-inner > p { font-size: 14px; }
+      .hero-badge { font-size: 11px; padding: 5px 12px; margin-bottom: 20px; }
+      .hero-buttons { flex-direction: column; align-items: stretch; }
+      .btn-hero, .btn-outline { justify-content: center; padding: 14px 24px; }
+      .hero-stats { gap: 20px; }
+      .hero-stat .hs-val { font-size: 18px; }
+      .hero-stat .hs-label { font-size: 10px; }
+      .section { padding: 48px 16px; }
+      .section-header h2 { font-size: 1.35rem; }
+      .section-header p { font-size: 14px; }
+      .dest-grid { grid-template-columns: 1fr; gap: 16px; }
+      .dest-card { aspect-ratio: 16/10; }
+      .trips-wrap { padding: 0 16px; }
+      .trip-card { flex: 0 0 260px; }
+      .trip-card-body { padding: 16px; }
+      .trip-route { font-size: 14px; }
+      .trip-meta { gap: 12px; font-size: 12px; }
+      .cta-section { padding: 48px 16px 64px; }
     }
   </style>
 </head>
