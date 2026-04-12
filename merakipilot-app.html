@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MerakiPilot — AI Network Operations | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden; }
+
+    /* TOPBAR */
+    .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #1e293b; font-weight: 600; font-size: 14px; }
+    .topbar-left a img { width: 24px; height: 24px; }
+    .topbar-left .sep { width: 1px; height: 20px; background: #e2e8f0; }
+    .topbar-left .app-name { font-size: 14px; font-weight: 600; color: #10b981; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .topbar-btn:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+    .status-chip { font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid #d1fae5; background: #ecfdf5; color: #059669; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .status-chip .pulse { width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .status-chip.disconnected { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
+    .status-chip.disconnected .pulse { background: #ef4444; animation: none; }
+
+    /* LAYOUT */
+    .app-layout { display: flex; height: calc(100vh - 56px); }
+
+    /* CHAT PANEL */
+    .chat-panel { width: 400px; min-width: 400px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: #fff; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .msg { max-width: 92%; }
+    .msg.user { align-self: flex-end; }
+    .msg.bot { align-self: flex-start; }
+    .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.65; }
+    .msg.user .msg-bubble { background: #111111; color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot .msg-bubble { background: #f1f5f9; color: #334155; border-bottom-left-radius: 4px; }
+    .msg.bot .msg-bubble strong { color: #1e293b; }
+    .msg.bot .msg-bubble code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; }
+    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; animation: bounce 1.4s infinite ease-in-out both; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* INPUT */
+    .chat-input-area { padding: 16px; border-top: 1px solid #e2e8f0; }
+    .input-wrapper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; display: flex; align-items: flex-end; padding: 8px 8px 8px 16px; gap: 8px; transition: border-color 0.2s; }
+    .input-wrapper:focus-within { border-color: #111111; box-shadow: 0 0 0 3px rgba(17,17,17,0.06); }
+    .chat-textarea { flex: 1; background: none; border: none; color: #1e293b; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
+    .chat-textarea::placeholder { color: #94a3b8; }
+    .send-btn { width: 36px; height: 36px; border-radius: 10px; border: none; background: #111111; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .send-btn:hover { background: #333; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* NETWORK PANEL */
+    .network-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc; }
+    .network-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .network-empty-inner { text-align: center; max-width: 400px; padding: 32px; }
+    .network-empty-inner h2 { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    .network-empty-inner p { font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 24px; }
+    .network-empty-inner .hint { font-size: 12px; color: #cbd5e1; }
+
+    /* NETWORK DASHBOARD */
+    .network-scroll { flex: 1; overflow-y: auto; padding: 24px; }
+    .network-scroll::-webkit-scrollbar { width: 4px; }
+    .network-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .dash-header { margin-bottom: 24px; }
+    .dash-header h2 { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .dash-header p { font-size: 13px; color: #94a3b8; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+    .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 500; margin-bottom: 6px; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 800; color: #1e293b; }
+    .stat-card .stat-value.green { color: #10b981; }
+    .stat-card .stat-value.red { color: #ef4444; }
+    .stat-card .stat-value.amber { color: #f59e0b; }
+    .device-table { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .device-table-header { display: grid; grid-template-columns: 40px 2fr 1fr 1fr 1fr; gap: 8px; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 600; }
+    .device-row { display: grid; grid-template-columns: 40px 2fr 1fr 1fr 1fr; gap: 8px; padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; align-items: center; transition: background 0.15s; }
+    .device-row:last-child { border-bottom: none; }
+    .device-row:hover { background: #f8fafc; }
+    .device-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .device-dot.online { background: #34d399; }
+    .device-dot.offline { background: #ef4444; }
+    .device-dot.alerting { background: #f59e0b; }
+    .device-name { font-weight: 600; color: #1e293b; }
+    .device-model { color: #64748b; }
+    .device-ip { color: #94a3b8; font-family: monospace; font-size: 12px; }
+    .device-status { font-size: 12px; font-weight: 500; text-transform: capitalize; }
+    .device-status.online { color: #10b981; }
+    .device-status.offline { color: #ef4444; }
+    .device-status.alerting { color: #f59e0b; }
+
+    /* ALERT LOG */
+    .alert-section { margin-top: 24px; }
+    .alert-section h3 { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
+    .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px; font-size: 13px; }
+    .alert-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .alert-icon.critical { background: #fef2f2; }
+    .alert-icon.warning { background: #fffbeb; }
+    .alert-icon.info { background: #eff6ff; }
+    .alert-icon.action { background: #ecfdf5; }
+    .alert-text { flex: 1; }
+    .alert-text .alert-title { font-weight: 600; color: #1e293b; }
+    .alert-text .alert-time { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    @media (max-width: 768px) {
+      .chat-panel { width: 100%; min-width: 100%; }
+      .network-panel { display: none; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .device-table-header, .device-row { grid-template-columns: 30px 1fr 1fr; }
+      .device-ip, .device-model { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/"><img src="logo.svg" alt="CapitaCoreAI">CapitaCoreAI</a>
+      <div class="sep"></div>
+      <span class="app-name">MerakiPilot</span>
+    </div>
+    <div class="topbar-right">
+      <div class="status-chip disconnected" id="statusChip">
+        <span class="pulse"></span>
+        <span id="statusText">Not Connected</span>
+      </div>
+      <a href="merakipilot.html" class="topbar-btn">About</a>
+      <a href="agents.html" class="topbar-btn">All Agents</a>
+    </div>
+  </div>
+
+  <!-- APP LAYOUT -->
+  <div class="app-layout">
+
+    <!-- CHAT -->
+    <div class="chat-panel">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg bot">
+          <div class="msg-bubble">
+            <strong>Welcome to MerakiPilot.</strong><br><br>
+            I'm your AI network operations agent. Connect your Meraki API key and I'll monitor, troubleshoot, and manage your infrastructure.<br><br>
+            To get started, paste your <strong>Meraki API key</strong> below.<br><br>
+            <span style="font-size:12px;color:#94a3b8;">Your key is encrypted and never stored in plaintext.</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Paste your Meraki API key or ask a question..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NETWORK PANEL -->
+    <div class="network-panel">
+      <div class="network-empty" id="networkEmpty">
+        <div class="network-empty-inner">
+          <h2>No Network Connected</h2>
+          <p>Paste your Meraki API key in the chat to connect. MerakiPilot will discover your organization, networks, and devices automatically.</p>
+          <p class="hint">Try: "Show me my devices" or "Run a health scan"</p>
+        </div>
+      </div>
+      <div class="network-scroll" id="networkDash" style="display:none;">
+        <div class="dash-header">
+          <h2 id="orgName">Organization</h2>
+          <p id="orgMeta">Loading...</p>
+        </div>
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card"><div class="stat-label">Total Devices</div><div class="stat-value" id="statDevices">--</div></div>
+          <div class="stat-card"><div class="stat-label">Online</div><div class="stat-value green" id="statOnline">--</div></div>
+          <div class="stat-card"><div class="stat-label">Offline</div><div class="stat-value red" id="statOffline">--</div></div>
+          <div class="stat-card"><div class="stat-label">Networks</div><div class="stat-value" id="statNetworks">--</div></div>
+        </div>
+        <div class="device-table" id="deviceTable">
+          <div class="device-table-header">
+            <span></span><span>Device</span><span>Model</span><span>IP</span><span>Status</span>
+          </div>
+          <div id="deviceRows"></div>
+        </div>
+        <div class="alert-section" id="alertSection" style="display:none;">
+          <h3>Recent Agent Activity</h3>
+          <div id="alertLog"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    // ─── State ──────────────────────────────────────────────────────
+    let connected = false;
+    let apiKey = null;
+    let orgData = null;
+    let chatHistory = [];
+
+    const MERAKI_BASE = 'https://api.meraki.com/api/v1';
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // ─── Chat UI ────────────────────────────────────────────────────
+    function addMessage(text, sender = 'bot') {
+      const div = document.createElement('div');
+      div.className = `msg ${sender}`;
+      div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.id = 'typingMsg';
+      div.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function hideTyping() {
+      const el = document.getElementById('typingMsg');
+      if (el) el.remove();
+    }
+
+    // ──�� Meraki API (proxied through user's browser) ────────────────
+    async function merakiGet(path) {
+      try {
+        const resp = await fetch(`${MERAKI_BASE}${path}`, {
+          headers: { 'X-Cisco-Meraki-API-Key': apiKey }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.error('Meraki API error:', e);
+        return null;
+      }
+    }
+
+    // ─── Connect Flow ───────────────────────────────────────────────
+    async function connectMeraki(key) {
+      apiKey = key.trim();
+      showTyping();
+
+      const orgs = await merakiGet('/organizations');
+      hideTyping();
+
+      if (!orgs || orgs.length === 0) {
+        addMessage("That API key didn't work. I couldn't find any organizations. Double-check the key and try again.", 'bot');
+        apiKey = null;
+        return;
+      }
+
+      orgData = orgs[0];
+      connected = true;
+
+      // Update status chip
+      const chip = document.getElementById('statusChip');
+      chip.className = 'status-chip';
+      chip.querySelector('#statusText').textContent = orgData.name;
+
+      addMessage(`Connected to <strong>${orgData.name}</strong>. Loading your network...`, 'bot');
+
+      await loadDashboard();
+
+      addMessage(
+        `Your dashboard is ready. I found your devices and networks on the right panel.<br><br>` +
+        `Try asking me:<br>` +
+        `<code>Show offline devices</code><br>` +
+        `<code>Run a health scan</code><br>` +
+        `<code>Are my networks secure?</code><br>` +
+        `<code>Reboot the warehouse switch</code>`,
+        'bot'
+      );
+    }
+
+    // ─── Load Dashboard ─────────────────────────────────────────────
+    async function loadDashboard() {
+      document.getElementById('networkEmpty').style.display = 'none';
+      document.getElementById('networkDash').style.display = 'block';
+      document.getElementById('orgName').textContent = orgData.name;
+
+      // Fetch devices + statuses + networks in parallel
+      const [devices, statuses, networks] = await Promise.all([
+        merakiGet(`/organizations/${orgData.id}/devices`),
+        merakiGet(`/organizations/${orgData.id}/devices/statuses`),
+        merakiGet(`/organizations/${orgData.id}/networks`),
+      ]);
+
+      const statusMap = {};
+      (statuses || []).forEach(s => { statusMap[s.serial] = s; });
+
+      const total = (devices || []).length;
+      const online = (statuses || []).filter(s => s.status === 'online').length;
+      const offline = total - online;
+      const netCount = (networks || []).length;
+
+      document.getElementById('statDevices').textContent = total;
+      document.getElementById('statOnline').textContent = online;
+      document.getElementById('statOffline').textContent = offline;
+      document.getElementById('statNetworks').textContent = netCount;
+      document.getElementById('orgMeta').textContent = `${netCount} network${netCount !== 1 ? 's' : ''} \u00B7 ${total} device${total !== 1 ? 's' : ''}`;
+
+      // Device rows
+      const rowsEl = document.getElementById('deviceRows');
+      rowsEl.innerHTML = '';
+      (devices || []).forEach(d => {
+        const s = statusMap[d.serial] || {};
+        const status = s.status || 'offline';
+        const row = document.createElement('div');
+        row.className = 'device-row';
+        row.innerHTML = `
+          <span><span class="device-dot ${status}"></span></span>
+          <span class="device-name">${d.name || d.model || d.serial}</span>
+          <span class="device-model">${d.model || '--'}</span>
+          <span class="device-ip">${d.lanIp || '--'}</span>
+          <span class="device-status ${status}">${status}</span>
+        `;
+        rowsEl.appendChild(row);
+      });
+    }
+
+    // ─── Handle User Input ──────────────────────────────────────────
+    async function handleSend() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      addMessage(text, 'user');
+
+      // Check if this looks like an API key
+      if (!connected && text.length > 30 && !text.includes(' ')) {
+        await connectMeraki(text);
+        return;
+      }
+
+      if (!connected) {
+        addMessage("I need your Meraki API key first. Paste it here and I'll connect to your network.", 'bot');
+        return;
+      }
+
+      // Process commands
+      showTyping();
+      await processCommand(text);
+      hideTyping();
+    }
+
+    async function processCommand(text) {
+      const lower = text.toLowerCase();
+
+      // Health / status
+      if (lower.includes('health') || lower.includes('status') || lower.includes('overview')) {
+        const statuses = await merakiGet(`/organizations/${orgData.id}/devices/statuses`);
+        const online = (statuses || []).filter(s => s.status === 'online').length;
+        const offline = (statuses || []).filter(s => s.status !== 'online');
+        let msg = `<strong>Health Summary for ${orgData.name}</strong><br><br>`;
+        msg += `Devices online: <strong>${online}</strong><br>`;
+        msg += `Devices offline: <strong>${offline.length}</strong><br><br>`;
+        if (offline.length > 0) {
+          msg += `<strong>Offline devices:</strong><br>`;
+          offline.forEach(d => { msg += `&bull; ${d.name || d.serial} (${d.model || '?'})<br>`; });
+          msg += `<br>Want me to reboot any of these?`;
+        } else {
+          msg += `All devices are healthy.`;
+        }
+        addMessage(msg, 'bot');
+        return;
+      }
+
+      // Devices
+      if (lower.includes('device') || lower.includes('inventory') || lower.includes('show')) {
+        await loadDashboard();
+        addMessage("Dashboard refreshed. Check the panel on the right for your current device inventory.", 'bot');
+        return;
+      }
+
+      // Security
+      if (lower.includes('secur') || lower.includes('ids') || lower.includes('malware') || lower.includes('firewall')) {
+        const networks = await merakiGet(`/organizations/${orgData.id}/networks`);
+        let msg = `<strong>Security Check</strong><br><br>`;
+        let issues = 0;
+        for (const net of (networks || [])) {
+          if (!(net.productTypes || []).includes('appliance')) continue;
+          const [ids, mal] = await Promise.all([
+            merakiGet(`/networks/${net.id}/appliance/security/intrusion`),
+            merakiGet(`/networks/${net.id}/appliance/security/malware`),
+          ]);
+          const idsOk = ids && ids.mode && ids.mode !== 'disabled';
+          const malOk = mal && mal.mode && mal.mode !== 'disabled';
+          if (!idsOk || !malOk) {
+            issues++;
+            msg += `<strong>${net.name}</strong><br>`;
+            if (!idsOk) msg += `&bull; IDS: <strong style="color:#ef4444">Disabled</strong><br>`;
+            if (!malOk) msg += `&bull; Malware Protection: <strong style="color:#ef4444">Disabled</strong><br>`;
+            msg += `<br>`;
+          }
+        }
+        if (issues === 0) {
+          msg += `All appliance networks have IDS and malware protection enabled. Looking good.`;
+        } else {
+          msg += `Found <strong>${issues}</strong> network(s) with security gaps. Want me to enable protection on these?`;
+        }
+        addMessage(msg, 'bot');
+        return;
+      }
+
+      // Clients
+      if (lower.includes('client') || lower.includes('user') || lower.includes('connected')) {
+        const networks = await merakiGet(`/organizations/${orgData.id}/networks`);
+        let totalClients = 0;
+        let msg = `<strong>Connected Clients (24h)</strong><br><br>`;
+        for (const net of (networks || []).slice(0, 5)) {
+          const clients = await merakiGet(`/networks/${net.id}/clients?timespan=86400`);
+          const count = (clients || []).length;
+          totalClients += count;
+          msg += `<strong>${net.name}</strong>: ${count} client${count !== 1 ? 's' : ''}<br>`;
+        }
+        msg += `<br>Total: <strong>${totalClients}</strong> clients across your networks.`;
+        addMessage(msg, 'bot');
+        return;
+      }
+
+      // Refresh
+      if (lower.includes('refresh') || lower.includes('reload')) {
+        await loadDashboard();
+        addMessage("Dashboard refreshed with latest data.", 'bot');
+        return;
+      }
+
+      // Fallback
+      addMessage(
+        `I understand you said: "<em>${text}</em>"<br><br>` +
+        `Here's what I can help with right now:<br>` +
+        `<code>health scan</code> — check device status<br>` +
+        `<code>show devices</code> — refresh device list<br>` +
+        `<code>security audit</code> — check IDS &amp; malware<br>` +
+        `<code>show clients</code> — connected clients<br>` +
+        `<code>refresh</code> — reload dashboard<br><br>` +
+        `<span style="font-size:12px;color:#94a3b8;">Full natural language support coming with the Claude AI integration.</span>`,
+        'bot'
+      );
+    }
+
+    // ─── Event Listeners ────────────────────────────────────────────
+    sendBtn.addEventListener('click', handleSend);
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    });
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = chatInput.scrollHeight + 'px';
+    });
+  </script>
+</body>
+</html>
