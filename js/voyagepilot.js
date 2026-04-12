@@ -2,11 +2,10 @@
 sb.auth.onAuthStateChange(async function(event, session) {
   var btns = document.querySelectorAll('.launch-btn');
   if (session) {
-    var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
-    var data = result.data;
-    var hasAccess = (data && data.is_admin) || (data && data.token_balance > 0);
-    btns.forEach(function(b) { b.style.display = hasAccess ? 'inline-flex' : 'none'; });
+    // Show launch button for any logged-in user
+    btns.forEach(function(b) { b.style.display = 'inline-flex'; });
   } else {
+    // Hide launch button when not logged in
     btns.forEach(function(b) { b.style.display = 'none'; });
   }
 });
