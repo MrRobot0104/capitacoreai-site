@@ -1,4 +1,5 @@
 var MSGS_PER_CREDIT = 5;
+var CREDIT_COST = 1;
 var connected = false;
 var merakiKey = null;
 var orgData = null;
@@ -56,8 +57,8 @@ function showLimitBar() {
   var bar = document.getElementById('limitBar');
   bar.style.display = 'block';
   if (creditBalance > 0) {
-    document.getElementById('limitMsg').textContent = 'You\'ve used all ' + MSGS_PER_CREDIT + ' messages for this credit.';
-    document.getElementById('continueBtn').style.display = 'inline-block';
+    document.getElementById('limitMsg').textContent = 'You\'ve used all ' + MSGS_PER_CREDIT + ' messages. Continue for ' + CREDIT_COST + ' credit.';
+    document.getElementById('continueBtn').style.display = creditBalance >= CREDIT_COST ? 'inline-block' : 'none';
   } else {
     document.getElementById('limitMsg').textContent = 'No credits remaining.';
     document.getElementById('continueBtn').style.display = 'none';

@@ -135,37 +135,26 @@ async function showDashboard(user) {
   var balance = (data && data.token_balance) || 0;
   var hasAccess = isAdmin || balance > 0;
 
+  var agents = [
+    { name: 'DashPilot', desc: 'AI-powered dashboard builder', url: 'dashpilot-app.html', cost: 3 },
+    { name: 'VoyagePilot', desc: 'AI-powered travel planner', url: 'voyagepilot-app.html', cost: 2 },
+    { name: 'MerakiPilot', desc: 'AI-powered Meraki network agent', url: 'merakipilot-app.html', cost: 1 },
+  ];
   var html = '';
-  html += '<div class="agent-card-dash"><div class="agent-info"><h3>DashPilot</h3><p>AI-powered dashboard builder</p></div><div class="agent-actions">';
-  if (hasAccess) {
-    html += '<span class="credits-badge">' + (isAdmin ? '\u221E' : balance) + ' credits</span>';
-    html += '<a href="dashpilot-app.html" class="btn-launch">Launch \u2192</a>';
-  } else {
-    html += '<span class="credits-badge">No credits</span>';
-    html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
-  }
-  html += '</div></div>';
-
-  // VoyagePilot
-  html += '<div class="agent-card-dash"><div class="agent-info"><h3>VoyagePilot</h3><p>AI-powered travel planner</p></div><div class="agent-actions">';
-  if (hasAccess) {
-    html += '<span class="credits-badge">' + (isAdmin ? '\u221E' : balance) + ' credits</span>';
-    html += '<a href="voyagepilot-app.html" class="btn-launch">Launch \u2192</a>';
-  } else {
-    html += '<span class="credits-badge">No credits</span>';
-    html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
-  }
-  html += '</div></div>';
-  // MerakiPilot
-  html += '<div class="agent-card-dash"><div class="agent-info"><h3>MerakiPilot</h3><p>AI-powered Meraki network agent</p></div><div class="agent-actions">';
-  if (hasAccess) {
-    html += '<span class="credits-badge">' + (isAdmin ? '\u221E' : balance) + ' credits</span>';
-    html += '<a href="merakipilot-app.html" class="btn-launch">Launch \u2192</a>';
-  } else {
-    html += '<span class="credits-badge">No credits</span>';
-    html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
-  }
-  html += '</div></div>';
+  agents.forEach(function(agent) {
+    html += '<div class="agent-card-dash"><div class="agent-info"><h3>' + agent.name + '</h3><p>' + agent.desc + '</p></div><div class="agent-actions">';
+    if (isAdmin) {
+      html += '<span class="credits-badge">\u221E credits</span>';
+      html += '<a href="' + agent.url + '" class="btn-launch">Launch \u2192</a>';
+    } else if (balance >= agent.cost) {
+      html += '<span class="credits-badge">' + balance + ' credits \u00B7 ' + agent.cost + '/use</span>';
+      html += '<a href="' + agent.url + '" class="btn-launch">Launch \u2192</a>';
+    } else {
+      html += '<span class="credits-badge">' + balance + ' credits \u00B7 needs ' + agent.cost + '</span>';
+      html += '<a href="pricing.html" class="btn-buy-small">Buy Credits \u2192</a>';
+    }
+    html += '</div></div>';
+  });
 
   list.innerHTML = html;
 }

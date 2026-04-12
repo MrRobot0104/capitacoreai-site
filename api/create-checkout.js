@@ -1,7 +1,7 @@
 const PACKAGES = {
-  starter:    { name: 'CapitaCoreAI — Starter (10 Credits)',     tokens: 10,  price: 1499 },
-  growth:     { name: 'CapitaCoreAI — Growth (30 Credits)',      tokens: 30,  price: 3999 },
-  pro:        { name: 'CapitaCoreAI — Pro (75 Credits)',         tokens: 75,  price: 9499 },
+  starter:    { name: 'CapitaCoreAI — Starter (10 Credits)',     tokens: 10,  price: 1999 },
+  growth:     { name: 'CapitaCoreAI — Growth (30 Credits)',      tokens: 30,  price: 4999 },
+  pro:        { name: 'CapitaCoreAI — Pro (75 Credits)',         tokens: 75,  price: 9999 },
   enterprise: { name: 'CapitaCoreAI — Enterprise (200 Credits)', tokens: 200, price: 24999 },
 };
 

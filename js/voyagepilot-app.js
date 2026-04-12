@@ -1,4 +1,5 @@
 var GENS_PER_CREDIT = 5;
+var CREDIT_COST = 2;
 var currentUser = null;
 var conversationHistory = [];
 var genCount = 0;
@@ -616,10 +617,16 @@ function showLimitBar() {
   document.getElementById('chatInputArea').style.display = 'none';
   var bar = document.getElementById('limitBar');
   bar.style.display = 'block';
-  document.getElementById('limitMsg').textContent = creditBalance > 0
-    ? "You've used all 5 trip plans for this credit."
-    : "No credits remaining.";
-  document.getElementById('continueBtn').style.display = creditBalance > 0 ? 'inline-block' : 'none';
+  if (creditBalance >= CREDIT_COST) {
+    document.getElementById('limitMsg').textContent = "You've used all 5 trip plans. Continue for " + CREDIT_COST + " credits.";
+    document.getElementById('continueBtn').style.display = 'inline-block';
+  } else if (creditBalance > 0) {
+    document.getElementById('limitMsg').textContent = "You need " + CREDIT_COST + " credits to continue. You have " + creditBalance + ".";
+    document.getElementById('continueBtn').style.display = 'none';
+  } else {
+    document.getElementById('limitMsg').textContent = "No credits remaining.";
+    document.getElementById('continueBtn').style.display = 'none';
+  }
 }
 
 function updateGenCounter() {
@@ -630,7 +637,7 @@ function updateGenCounter() {
 
 // ==================== TRIP CONTROL ====================
 async function startNewTrip() {
-  if (creditBalance <= 0) { window.location.href = 'voyagepilot.html'; return; }
+  if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
   var result = await sb.auth.getSession();
   var session = result.data.session;
   var res = await fetch('/api/voyagepilot-generate', {
@@ -683,7 +690,7 @@ async function sendMessage() {
   if (!message) return;
 
   if (!conversationStarted) {
-    if (creditBalance <= 0) { window.location.href = 'voyagepilot.html'; return; }
+    if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
     var authResult = await sb.auth.getSession();
     var res = await fetch('/api/voyagepilot-generate', {
       method: 'POST',

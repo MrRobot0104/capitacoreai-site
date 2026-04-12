@@ -1,4 +1,5 @@
 var GENS_PER_CREDIT = 5;
+var CREDIT_COST = 3;
 var currentUser = null;
 var conversationHistory = [];
 var genCount = 0;
@@ -45,8 +46,8 @@ async function refreshCredits() {
   isAdmin = data && data.is_admin === true;
   creditBalance = isAdmin ? 9999 : (data ? data.token_balance : 0);
   document.getElementById('creditDisplay').textContent = isAdmin ? '\u221E' : creditBalance;
-  if (creditBalance <= 0 && !conversationStarted) {
-    addBotMessage("You don't have any credits. Purchase some to start building dashboards.");
+  if (creditBalance < CREDIT_COST && !conversationStarted) {
+    addBotMessage("DashPilot requires " + CREDIT_COST + " credits per use. You have " + creditBalance + ". <a href='pricing.html' style='color:#111;text-decoration:underline;'>Buy credits</a> to get started.");
     disableInput();
   }
 }
@@ -156,8 +157,9 @@ function showLimitBar() {
   var bar = document.getElementById('limitBar');
   bar.style.display = 'block';
   if (creditBalance > 0) {
-    document.getElementById('limitMsg').textContent = "You've used all 5 dashboard generations for this credit. Add another credit to keep refining.";
-    document.getElementById('continueBtn').style.display = 'inline-block';
+    document.getElementById('limitMsg').textContent = "You've used all 5 generations. Continue for " + CREDIT_COST + " credits.";
+    document.getElementById('continueBtn').style.display = creditBalance >= CREDIT_COST ? 'inline-block' : 'none';
+    if (creditBalance < CREDIT_COST && creditBalance > 0) document.getElementById('limitMsg').textContent = "You need " + CREDIT_COST + " credits to continue. You have " + creditBalance + ".";
   } else {
     document.getElementById('limitMsg').textContent = "No credits remaining. Purchase more to continue building dashboards.";
     document.getElementById('continueBtn').style.display = 'none';
@@ -172,7 +174,7 @@ function updateGenCounter() {
 
 // CONVERSATION CONTROL
 async function startNewDashboard() {
-  if (creditBalance <= 0) { window.location.href = 'dashpilot.html'; return; }
+  if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
   var result = await sb.auth.getSession();
   var session = result.data.session;
   var res = await fetch('/api/dashpilot-generate', {
@@ -200,7 +202,7 @@ async function startNewDashboard() {
   document.getElementById('downloadBtn').style.display = 'none';
   enableInput();
   updateGenCounter();
-  addBotMessage("New dashboard started! You have 5 generations. Be as descriptive as possible — tell me the data, metrics, chart types, colors, and style you want. Upload a CSV/Excel file or describe your dashboard to begin.");
+  addBotMessage("New dashboard started (" + CREDIT_COST + " credits used)! You have 5 generations. Be as descriptive as possible — tell me the data, metrics, chart types, colors, and style you want. Upload a CSV/Excel file or describe your dashboard to begin.");
   await refreshCredits();
 }
 
@@ -220,7 +222,7 @@ async function continueConversation() {
   genLimit += GENS_PER_CREDIT;
   enableInput();
   updateGenCounter();
-  addBotMessage("5 more generations added! Keep refining your dashboard.");
+  addBotMessage(CREDIT_COST + " credits used — 5 more generations added! Keep refining your dashboard.");
   await refreshCredits();
 }
 
@@ -231,7 +233,7 @@ async function sendMessage() {
   if (!message && !uploadedFileData) return;
 
   if (!conversationStarted) {
-    if (creditBalance <= 0) { window.location.href = 'dashpilot.html'; return; }
+    if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
     var authResult = await sb.auth.getSession();
     var authSession = authResult.data.session;
     var res = await fetch('/api/dashpilot-generate', {
