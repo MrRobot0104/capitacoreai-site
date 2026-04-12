@@ -111,7 +111,7 @@
     if (prefersReduced || window.innerWidth < 768) return;
 
     var glow = document.createElement('div');
-    glow.style.cssText = 'position:fixed;top:0;left:0;width:600px;height:600px;pointer-events:none;z-index:1;border-radius:50%;background:radial-gradient(circle,rgba(255,106,0,0.05) 0%,transparent 70%);transform:translate(-50%,-50%);opacity:0;transition:opacity 0.4s;will-change:transform;';
+    glow.style.cssText = 'position:fixed;top:0;left:0;width:200px;height:200px;pointer-events:none;z-index:1;border-radius:50%;background:radial-gradient(circle,rgba(255,106,0,0.06) 0%,transparent 70%);transform:translate(-50%,-50%);opacity:0;transition:opacity 0.4s;will-change:transform;';
     document.body.appendChild(glow);
 
     var mx = 0, my = 0, gx = 0, gy = 0, visible = false;
@@ -125,7 +125,7 @@
     function tick() {
       gx += (mx - gx) * 0.07;
       gy += (my - gy) * 0.07;
-      glow.style.transform = 'translate(' + (gx - 300) + 'px,' + (gy - 300) + 'px)';
+      glow.style.transform = 'translate(' + (gx - 100) + 'px,' + (gy - 100) + 'px)';
       requestAnimationFrame(tick);
     }
     tick();
