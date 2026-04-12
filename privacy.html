@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
     .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
     .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
@@ -45,6 +45,7 @@
       .nav-inner { height: 68px; padding: 0 20px; }
       .nav-links, .nav .btn-nav { display: none; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+      .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
     }
   </style>
 </head>

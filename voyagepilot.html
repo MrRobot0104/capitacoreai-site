@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
 
     /* NAV */
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -151,6 +151,7 @@
       .feature { padding: 22px; }
       .cta-section { padding: 64px 20px 80px; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; padding: 20px; }
+      .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
     }
     @media (max-width: 480px) {
       .hero h1 { font-size: 1.75rem; }
