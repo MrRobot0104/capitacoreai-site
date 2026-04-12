@@ -70,9 +70,27 @@
     .trip-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc; }
     .trip-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
     .trip-empty-inner { text-align: center; }
-    .trip-empty-inner svg { opacity: 0.15; margin-bottom: 16px; }
+    .trip-empty-inner svg { display: none; }
     .trip-empty-inner p { font-size: 14px; color: #94a3b8; }
     .trip-empty-inner p.sub { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
+
+    /* TRIP PREVIEW */
+    .demo-trip { width: 100%; max-width: 420px; text-align: left; }
+    .demo-trip-hero { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+    .demo-trip-hero img { width: 100%; height: 180px; object-fit: cover; display: block; }
+    .demo-trip-hero-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 18px; }
+    .demo-trip-hero-overlay h3 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+    .demo-trip-hero-overlay p { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .demo-badge { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; background: rgba(37,99,235,0.1); padding: 3px 8px; border-radius: 999px; margin-bottom: 8px; }
+    .demo-timeline { border-left: 2px solid #e2e8f0; padding-left: 16px; margin-left: 8px; }
+    .demo-day { position: relative; padding-bottom: 14px; display: flex; gap: 10px; align-items: flex-start; }
+    .demo-day::before { content: ''; position: absolute; left: -21px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #2563eb; border: 2px solid #f8fafc; }
+    .demo-day-num { font-size: 11px; font-weight: 700; color: #2563eb; background: rgba(37,99,235,0.08); padding: 2px 8px; border-radius: 6px; flex-shrink: 0; margin-top: 1px; }
+    .demo-day div { font-size: 13px; color: #334155; line-height: 1.5; }
+    .demo-day div strong { color: #1e293b; font-weight: 600; }
+    .demo-day div span { font-size: 12px; color: #94a3b8; }
+    .demo-day.dim { opacity: 0.5; }
+    .demo-cta-v { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 16px; }
     .trip-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(37,99,235,0.25) transparent; }
     .trip-scroll::-webkit-scrollbar { width: 5px; }
     .trip-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -243,13 +261,26 @@
     }
 
     @media (max-width: 900px) {
-      .app-layout { flex-direction: column; }
+      .topbar { height: 48px; padding: 0 12px; }
+      .topbar-left a img { width: 20px; height: 20px; }
+      .topbar-left a { font-size: 12px; gap: 6px; }
+      .topbar-left .sep { display: none; }
+      .topbar-left .app-name { font-size: 12px; }
+      .topbar-right .topbar-btn:not(.primary) { display: none; }
+      .credits-chip { font-size: 10px; }
+      .app-layout { flex-direction: column; height: calc(100vh - 48px); }
       .chat-panel { width: 100%; min-width: auto; height: 45vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
       .trip-panel { height: 55vh; }
       .hotel-card { flex-direction: column; }
       .hotel-photo { width: 100%; min-height: 120px; }
       .dest-hero { height: 160px; }
       .photo-gallery.three .gallery-photo:first-child { min-height: 140px; }
+    }
+    @media (max-width: 480px) {
+      .topbar-left a { font-size: 0; }
+      .topbar-left a img { width: 22px; height: 22px; }
+      .demo-trip-hero img { height: 140px; }
+      .demo-trip-hero-overlay h3 { font-size: 17px; }
     }
   </style>
 </head>
@@ -311,9 +342,24 @@ Each credit gives you 5 trip plans. Ready when you are.</div></div>
       <!-- EMPTY STATE -->
       <div class="trip-empty" id="tripEmpty">
         <div class="trip-empty-inner">
-          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <p>Your trip will appear here</p>
-          <p class="sub">Describe your trip to get started</p>
+          <div class="demo-trip">
+            <div class="demo-trip-hero">
+              <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" alt="Tokyo" loading="lazy">
+              <div class="demo-trip-hero-overlay">
+                <span class="demo-badge">Sample Itinerary</span>
+                <h3>Miami &rarr; Tokyo</h3>
+                <p>7 days &middot; Round trip &middot; from $1,240</p>
+              </div>
+            </div>
+            <div class="demo-timeline">
+              <div class="demo-day"><span class="demo-day-num">1</span><div><strong>Arrival in Tokyo</strong><br><span>Check into Shinjuku hotel &middot; Evening at Kabukicho</span></div></div>
+              <div class="demo-day"><span class="demo-day-num">2</span><div><strong>Shibuya &amp; Harajuku</strong><br><span>Shibuya Crossing &middot; Meiji Shrine &middot; Takeshita St</span></div></div>
+              <div class="demo-day"><span class="demo-day-num">3</span><div><strong>Asakusa &amp; Akihabara</strong><br><span>Senso-ji Temple &middot; Nakamise &middot; Electric Town</span></div></div>
+              <div class="demo-day"><span class="demo-day-num">4</span><div><strong>Day Trip: Mt. Fuji</strong><br><span>Lake Kawaguchi &middot; 5th Station &middot; Onsen</span></div></div>
+              <div class="demo-day dim"><span class="demo-day-num">5-7</span><div><strong>+ 3 more days planned...</strong><br><span>Tsukiji &middot; Odaiba &middot; Departure</span></div></div>
+            </div>
+            <p class="demo-cta-v">Tell VoyagePilot where you want to go</p>
+          </div>
         </div>
       </div>
 

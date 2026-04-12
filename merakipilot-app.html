@@ -88,7 +88,28 @@
     .neural-status-text.analyzing { color: rgba(255,106,0,0.9); }
     .neural-status-text.acting { color: rgba(255,140,51,0.9); }
 
+    /* NETWORK PREVIEW */
+    .preview-net { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 90%; max-width: 560px; }
+    .pn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .pn-card { background: rgba(10,10,10,0.8); border: 1px solid rgba(255,106,0,0.15); border-radius: 10px; padding: 14px; backdrop-filter: blur(12px); }
+    .pn-card-head { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .pn-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .pn-dot.offline { background: #ef4444; }
+    .pn-card-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+    .pn-card-ip { font-size: 11px; color: rgba(255,106,0,0.5); margin-top: 6px; font-family: 'Inter', monospace; }
+    .pn-card.alert { border-color: rgba(239,68,68,0.2); }
+    .pn-label { text-align: center; font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 0.02em; }
+
     @media (max-width: 768px) {
+      .topbar { height: 48px; padding: 0 12px; }
+      .topbar-left a img { width: 20px; height: 20px; }
+      .topbar-left a { font-size: 12px; gap: 6px; }
+      .topbar-left .sep { display: none; }
+      .topbar-left .app-name { font-size: 12px; }
+      .topbar-right .topbar-btn { display: none; }
+      .status-chip { font-size: 10px; padding: 4px 8px; }
+      .credits-chip { font-size: 10px; padding: 4px 8px; }
+      .app-layout { height: calc(100vh - 48px); }
       .chat-panel { width: 100%; min-width: 100%; }
       .network-panel { display: none; }
     }
@@ -150,6 +171,15 @@
           <div class="neural-stat"><div class="ns-val" id="statOnline">0</div><div class="ns-label">Online</div></div>
           <div class="neural-stat"><div class="ns-val offline" id="statOffline">0</div><div class="ns-label">Offline</div></div>
           <div class="neural-stat"><div class="ns-val total" id="statNetworks">0</div><div class="ns-label">Networks</div></div>
+        </div>
+        <div class="preview-net" id="previewNet">
+          <div class="pn-grid">
+            <div class="pn-card"><div class="pn-card-head"><span class="pn-dot"></span>MX250-HQ</div><div class="pn-card-sub">Security Appliance</div><div class="pn-card-ip">WAN: 203.0.113.10</div></div>
+            <div class="pn-card"><div class="pn-card-head"><span class="pn-dot"></span>MS350-Core</div><div class="pn-card-sub">Switch &middot; 48 ports</div><div class="pn-card-ip">LAN: 10.0.1.1</div></div>
+            <div class="pn-card"><div class="pn-card-head"><span class="pn-dot"></span>MR56-Floor2</div><div class="pn-card-sub">Wireless AP</div><div class="pn-card-ip">42 clients connected</div></div>
+            <div class="pn-card alert"><div class="pn-card-head"><span class="pn-dot offline"></span>MS120-Conf</div><div class="pn-card-sub">Switch &middot; Offline</div><div class="pn-card-ip">Last seen: 2m ago</div></div>
+          </div>
+          <div class="pn-label">Sample network preview &middot; Connect your API key for live data</div>
         </div>
         <div class="neural-status">
           <div class="neural-status-text" id="neuralStatus">Awaiting connection...</div>
