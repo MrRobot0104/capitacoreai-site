@@ -30,9 +30,11 @@
 
     /* CHAT */
     .chat-panel { width: 360px; min-width: 360px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: #fff; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; scrollbar-color: rgba(37,99,235,0.25) transparent; }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.25); border-radius: 10px; }
+    .chat-messages::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.4); }
     .msg { max-width: 90%; }
     .msg.user { align-self: flex-end; }
     .msg.bot { align-self: flex-start; }
@@ -49,7 +51,8 @@
     .chat-input-area { padding: 16px; border-top: 1px solid #e2e8f0; }
     .input-wrapper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; display: flex; align-items: flex-end; padding: 8px 8px 8px 16px; gap: 8px; transition: border-color 0.2s; }
     .input-wrapper:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
-    .chat-textarea { flex: 1; background: none; border: none; color: #1e293b; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
+    .chat-textarea { flex: 1; background: none; border: none; color: #1e293b; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; scrollbar-width: none; }
+    .chat-textarea::-webkit-scrollbar { display: none; }
     .chat-textarea::placeholder { color: #94a3b8; }
     .btn-icon { width: 36px; height: 36px; border-radius: 10px; border: none; background: transparent; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-icon.send { background: #2563eb; color: #fff; }
@@ -70,9 +73,11 @@
     .trip-empty-inner svg { opacity: 0.15; margin-bottom: 16px; }
     .trip-empty-inner p { font-size: 14px; color: #94a3b8; }
     .trip-empty-inner p.sub { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
-    .trip-scroll { flex: 1; overflow-y: auto; }
-    .trip-scroll::-webkit-scrollbar { width: 4px; }
-    .trip-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .trip-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(37,99,235,0.25) transparent; }
+    .trip-scroll::-webkit-scrollbar { width: 5px; }
+    .trip-scroll::-webkit-scrollbar-track { background: transparent; }
+    .trip-scroll::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.25); border-radius: 10px; }
+    .trip-scroll::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.4); }
 
     /* TRIP HERO */
     .trip-hero { padding: 32px 28px; color: #fff; position: relative; min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
@@ -287,7 +292,7 @@ Each credit gives you 5 trip plans. Ready when you are.</div></div>
           <textarea class="chat-textarea" id="chatTextarea" rows="1" placeholder="Where do you want to go?"></textarea>
           <div class="input-actions">
             <button class="btn-icon send" id="sendBtn" title="Send">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
             </button>
           </div>
         </div>
