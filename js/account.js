@@ -277,9 +277,14 @@ async function saveProfile() {
       }
     }
 
-    var result = await sb.from('profiles').update({ first_name: newName, username: newUsername }).eq('id', session.user.id);
+    var result = await sb.from('profiles').update({ first_name: newName, username: newUsername }).eq('id', session.user.id).select();
+    console.log('Profile update result:', JSON.stringify(result));
     if (result.error) {
       errEl.textContent = result.error.message || 'Failed to update profile.';
+      errEl.style.display = 'block';
+    } else if (!result.data || result.data.length === 0) {
+      // RLS blocked the update — no rows returned
+      errEl.textContent = 'Update blocked by permissions. Try logging out and back in.';
       errEl.style.display = 'block';
     } else {
       // Update view mode
