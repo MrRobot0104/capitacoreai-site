@@ -330,7 +330,129 @@
       });
     }
 
-    // ─── Handle User Input ──────────────────────────────────────────
+    // ─── Gather Network Context for Claude ────────────────────────
+    async function gatherNetworkContext() {
+      if (!connected || !orgData) return null;
+
+      try {
+        const [devices, statuses, networks] = await Promise.all([
+          merakiGet(`/organizations/${orgData.id}/devices`),
+          merakiGet(`/organizations/${orgData.id}/devices/statuses`),
+          merakiGet(`/organizations/${orgData.id}/networks`),
+        ]);
+
+        const statusMap = {};
+        (statuses || []).forEach(s => { statusMap[s.serial] = s; });
+
+        // Build compact device list with status
+        const deviceList = (devices || []).map(d => {
+          const s = statusMap[d.serial] || {};
+          return {
+            name: d.name || d.model || d.serial,
+            model: d.model,
+            serial: d.serial,
+            lanIp: d.lanIp,
+            status: s.status || 'unknown',
+            networkId: d.networkId,
+          };
+        });
+
+        // Build compact network list
+        const networkList = (networks || []).map(n => ({
+          id: n.id,
+          name: n.name,
+          productTypes: n.productTypes,
+        }));
+
+        return {
+          orgName: orgData.name,
+          orgId: orgData.id,
+          totalDevices: deviceList.length,
+          onlineDevices: deviceList.filter(d => d.status === 'online').length,
+          offlineDevices: deviceList.filter(d => d.status !== 'online'),
+          devices: deviceList,
+          networks: networkList,
+        };
+      } catch (e) {
+        console.error('Failed to gather context:', e);
+        return { orgName: orgData.name, orgId: orgData.id, error: 'Failed to fetch network data' };
+      }
+    }
+
+    // ─── Execute Actions from Claude ────────────────────────────────
+    async function executeActions(actions) {
+      const results = [];
+      for (const action of actions) {
+        try {
+          let result;
+          switch (action.type) {
+            case 'reboot':
+              result = await merakiPost(`/devices/${action.serial}/reboot`, {});
+              results.push(`Reboot sent to ${action.serial}`);
+              break;
+            case 'blink':
+              result = await merakiPost(`/devices/${action.serial}/blinkLeds`, { duration: 20 });
+              results.push(`LEDs blinking on ${action.serial}`);
+              break;
+            case 'enable_ids':
+              result = await merakiPut(`/networks/${action.networkId}/appliance/security/intrusion`, { mode: action.mode || 'prevention', idsRulesets: 'balanced' });
+              results.push(`IDS enabled on network ${action.networkId}`);
+              break;
+            case 'enable_malware':
+              result = await merakiPut(`/networks/${action.networkId}/appliance/security/malware`, { mode: 'enabled' });
+              results.push(`Malware protection enabled on ${action.networkId}`);
+              break;
+            case 'enable_ssid':
+              result = await merakiPut(`/networks/${action.networkId}/wireless/ssids/${action.ssidNumber}`, { enabled: true });
+              results.push(`SSID ${action.ssidNumber} enabled`);
+              break;
+            case 'disable_ssid':
+              result = await merakiPut(`/networks/${action.networkId}/wireless/ssids/${action.ssidNumber}`, { enabled: false });
+              results.push(`SSID ${action.ssidNumber} disabled`);
+              break;
+            default:
+              results.push(`Unknown action: ${action.type}`);
+          }
+        } catch (e) {
+          results.push(`Failed: ${action.type} — ${e.message}`);
+        }
+      }
+      if (results.length > 0) {
+        await loadDashboard(); // Refresh after actions
+      }
+      return results;
+    }
+
+    async function merakiPost(path, data) {
+      const resp = await fetch(`${MERAKI_BASE}${path}`, {
+        method: 'POST',
+        headers: { 'X-Cisco-Meraki-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await resp.json();
+    }
+
+    async function merakiPut(path, data) {
+      const resp = await fetch(`${MERAKI_BASE}${path}`, {
+        method: 'PUT',
+        headers: { 'X-Cisco-Meraki-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await resp.json();
+    }
+
+    // ─── Markdown to HTML ───────────────────────────────────────────
+    function mdToHtml(text) {
+      return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/^- (.+)$/gm, '&bull; $1<br>')
+        .replace(/^### (.+)$/gm, '<strong style="font-size:15px;">$1</strong><br>')
+        .replace(/^## (.+)$/gm, '<strong style="font-size:16px;">$1</strong><br>')
+        .replace(/\n/g, '<br>');
+    }
+
+    // ─── Handle User Input (Claude-powered) ─────────────────────────
     async function handleSend() {
       const text = chatInput.value.trim();
       if (!text) return;
@@ -350,106 +472,64 @@
         return;
       }
 
-      // Process commands
+      // Add to conversation history
+      chatHistory.push({ role: 'user', content: text });
+
       showTyping();
-      await processCommand(text);
-      hideTyping();
-    }
 
-    async function processCommand(text) {
-      const lower = text.toLowerCase();
+      try {
+        // Gather live network data for Claude
+        const networkContext = await gatherNetworkContext();
 
-      // Health / status
-      if (lower.includes('health') || lower.includes('status') || lower.includes('overview')) {
-        const statuses = await merakiGet(`/organizations/${orgData.id}/devices/statuses`);
-        const online = (statuses || []).filter(s => s.status === 'online').length;
-        const offline = (statuses || []).filter(s => s.status !== 'online');
-        let msg = `<strong>Health Summary for ${orgData.name}</strong><br><br>`;
-        msg += `Devices online: <strong>${online}</strong><br>`;
-        msg += `Devices offline: <strong>${offline.length}</strong><br><br>`;
-        if (offline.length > 0) {
-          msg += `<strong>Offline devices:</strong><br>`;
-          offline.forEach(d => { msg += `&bull; ${d.name || d.serial} (${d.model || '?'})<br>`; });
-          msg += `<br>Want me to reboot any of these?`;
-        } else {
-          msg += `All devices are healthy.`;
+        // Send to Claude via our API
+        const resp = await fetch('/api/merakipilot-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: chatHistory,
+            networkContext: networkContext,
+          }),
+        });
+
+        hideTyping();
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          addMessage(`Something went wrong: ${err.error || 'Unknown error'}. Try again.`, 'bot');
+          return;
         }
-        addMessage(msg, 'bot');
-        return;
-      }
 
-      // Devices
-      if (lower.includes('device') || lower.includes('inventory') || lower.includes('show')) {
-        await loadDashboard();
-        addMessage("Dashboard refreshed. Check the panel on the right for your current device inventory.", 'bot');
-        return;
-      }
+        const data = await resp.json();
 
-      // Security
-      if (lower.includes('secur') || lower.includes('ids') || lower.includes('malware') || lower.includes('firewall')) {
-        const networks = await merakiGet(`/organizations/${orgData.id}/networks`);
-        let msg = `<strong>Security Check</strong><br><br>`;
-        let issues = 0;
-        for (const net of (networks || [])) {
-          if (!(net.productTypes || []).includes('appliance')) continue;
-          const [ids, mal] = await Promise.all([
-            merakiGet(`/networks/${net.id}/appliance/security/intrusion`),
-            merakiGet(`/networks/${net.id}/appliance/security/malware`),
-          ]);
-          const idsOk = ids && ids.mode && ids.mode !== 'disabled';
-          const malOk = mal && mal.mode && mal.mode !== 'disabled';
-          if (!idsOk || !malOk) {
-            issues++;
-            msg += `<strong>${net.name}</strong><br>`;
-            if (!idsOk) msg += `&bull; IDS: <strong style="color:#ef4444">Disabled</strong><br>`;
-            if (!malOk) msg += `&bull; Malware Protection: <strong style="color:#ef4444">Disabled</strong><br>`;
-            msg += `<br>`;
+        // Display Claude's response
+        addMessage(mdToHtml(data.response), 'bot');
+        chatHistory.push({ role: 'assistant', content: data.response });
+
+        // Execute any actions Claude instructed
+        if (data.actions && data.actions.length > 0) {
+          const results = await executeActions(data.actions);
+          if (results.length > 0) {
+            const actionMsg = results.map(r => `&bull; ${r}`).join('<br>');
+            addMessage(`<strong>Actions executed:</strong><br>${actionMsg}`, 'bot');
           }
         }
-        if (issues === 0) {
-          msg += `All appliance networks have IDS and malware protection enabled. Looking good.`;
-        } else {
-          msg += `Found <strong>${issues}</strong> network(s) with security gaps. Want me to enable protection on these?`;
+
+        // Refresh dashboard if conversation mentions devices/status
+        const lower = text.toLowerCase();
+        if (lower.includes('refresh') || lower.includes('device') || lower.includes('show')) {
+          await loadDashboard();
         }
-        addMessage(msg, 'bot');
-        return;
-      }
 
-      // Clients
-      if (lower.includes('client') || lower.includes('user') || lower.includes('connected')) {
-        const networks = await merakiGet(`/organizations/${orgData.id}/networks`);
-        let totalClients = 0;
-        let msg = `<strong>Connected Clients (24h)</strong><br><br>`;
-        for (const net of (networks || []).slice(0, 5)) {
-          const clients = await merakiGet(`/networks/${net.id}/clients?timespan=86400`);
-          const count = (clients || []).length;
-          totalClients += count;
-          msg += `<strong>${net.name}</strong>: ${count} client${count !== 1 ? 's' : ''}<br>`;
+        // Keep history manageable
+        if (chatHistory.length > 30) {
+          chatHistory = chatHistory.slice(-20);
         }
-        msg += `<br>Total: <strong>${totalClients}</strong> clients across your networks.`;
-        addMessage(msg, 'bot');
-        return;
-      }
 
-      // Refresh
-      if (lower.includes('refresh') || lower.includes('reload')) {
-        await loadDashboard();
-        addMessage("Dashboard refreshed with latest data.", 'bot');
-        return;
+      } catch (e) {
+        hideTyping();
+        console.error('Chat error:', e);
+        addMessage("Lost connection to the AI. Check your internet and try again.", 'bot');
       }
-
-      // Fallback
-      addMessage(
-        `I understand you said: "<em>${text}</em>"<br><br>` +
-        `Here's what I can help with right now:<br>` +
-        `<code>health scan</code> — check device status<br>` +
-        `<code>show devices</code> — refresh device list<br>` +
-        `<code>security audit</code> — check IDS &amp; malware<br>` +
-        `<code>show clients</code> — connected clients<br>` +
-        `<code>refresh</code> — reload dashboard<br><br>` +
-        `<span style="font-size:12px;color:#94a3b8;">Full natural language support coming with the Claude AI integration.</span>`,
-        'bot'
-      );
     }
 
     // ─── Event Listeners ────────────────────────────────────────────
