@@ -1,17 +1,24 @@
 // ============ STEP 1: Extract travel intent ============
-const INTENT_PROMPT = `Extract the travel request into JSON. Output ONLY JSON.
+const INTENT_PROMPT = `You are a JSON extractor. Read the travel request and output ONLY a valid JSON object. No explanation, no markdown, just JSON starting with { and ending with }.
 
-Example 1 — multi-city with flights:
-{"origin":{"city":"Miami","code":"MIA","lat":25.76,"lng":-80.19},"destinations":[{"city":"London","code":"LHR","lat":51.51,"lng":-0.13,"days":3},{"city":"Tirana","code":"TIA","lat":41.33,"lng":19.82,"days":5}],"departure_date":"2026-06-15","travelers":1,"budget":"mid-range","flexible":false,"hasFlights":false,"accommodation":null}
+Example 1 — user needs flights:
+{"origin":{"city":"Miami","code":"MIA","lat":25.76,"lng":-80.19},"destinations":[{"city":"London","code":"LHR","lat":51.51,"lng":-0.13,"days":3},{"city":"Tirana","code":"TIA","lat":41.33,"lng":19.82,"days":5}],"departure_date":"2026-06-15","travelers":1,"budget":"mid-range","hasFlights":false,"accommodation":null}
 
-Example 2 — already at destination, no flights needed:
-{"origin":null,"destinations":[{"city":"Seoul","code":"ICN","lat":37.55,"lng":126.99,"days":15}],"departure_date":"2026-05-08","travelers":1,"budget":"mid-range","flexible":false,"hasFlights":true,"accommodation":"AirBnB at 22-31 Samcheong-Ro"}
+Example 2 — user already has flights / is already there:
+{"origin":null,"destinations":[{"city":"Seoul","code":"ICN","lat":37.55,"lng":126.99,"days":14}],"departure_date":"2026-05-08","travelers":1,"budget":"mid-range","hasFlights":true,"accommodation":"AirBnB at 22-31 Samcheong-Ro"}
 
-Rules: Use IATA codes. Real lat/lng. If no date, use 2 weeks from now (today is ${new Date().toISOString().split('T')[0]}). Default budget "mid-range", travelers 1.
-- If user says they already have flights or are already at the destination, set "hasFlights":true and "origin":null.
-- If user mentions specific accommodation (AirBnB, hotel name, address), put it in "accommodation" field.
-- Calculate "days" from date ranges if given (e.g. May 8-22 = 14 days).
-Start with { end with }.`;
+Example 3 — single city, itinerary only:
+{"origin":null,"destinations":[{"city":"Tokyo","code":"NRT","lat":35.68,"lng":139.69,"days":7}],"departure_date":"2026-04-01","travelers":2,"budget":"mid-range","hasFlights":true,"accommodation":null}
+
+Rules:
+- IATA airport codes, real lat/lng coordinates
+- Today is ${new Date().toISOString().split('T')[0]}. If no date given, use 2 weeks from now.
+- Default: budget="mid-range", travelers=1
+- hasFlights=true means user ALREADY has flights or is already at the destination. Set origin to null.
+- hasFlights=false means user NEEDS flights. Include origin with city/code/lat/lng.
+- Calculate days from date ranges (May 8 to May 22 = 14 days)
+- If user mentions accommodation (AirBnB, hotel name, address), include in "accommodation" field
+- Output ONLY the JSON object. No text before or after.`;
 
 // ============ STEP 2: Build trip with real flight data ============
 const PLAN_PROMPT = `You are a travel planning AI. You receive REAL flight data from Google Flights plus the user's preferences. Build a complete trip plan as JSON. Output ONLY JSON.
@@ -293,10 +300,20 @@ module.exports = async (req, res) => {
       }
 
       function extractJson(text) {
+        // Strip markdown code fences
         text = text.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+        // Try direct parse
         try { return JSON.parse(text); } catch (e) {}
+        // Extract JSON object from surrounding text
         var m = text.match(/\{[\s\S]*\}/);
-        if (m) { try { return JSON.parse(m[0]); } catch (e) {} }
+        if (m) {
+          var jsonStr = m[0];
+          try { return JSON.parse(jsonStr); } catch (e) {}
+          // Fix common LLM JSON issues: trailing commas, single quotes
+          jsonStr = jsonStr.replace(/,\s*([\]}])/g, '$1');
+          jsonStr = jsonStr.replace(/'/g, '"');
+          try { return JSON.parse(jsonStr); } catch (e) {}
+        }
         return null;
       }
 
@@ -320,7 +337,26 @@ module.exports = async (req, res) => {
       if (!intentData.content || !intentData.content[0]) {
         return res.status(500).json({ error: 'Could not understand your trip request. Please try again.' });
       }
-      const intent = extractJson(intentData.content[0].text);
+      let intent = extractJson(intentData.content[0].text);
+      if (!intent) {
+        console.error('Haiku raw response:', intentData.content[0].text.substring(0, 500));
+        // Retry once with a simpler prompt
+        const retryRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 2000,
+            system: 'Extract travel details as JSON. Output ONLY a JSON object, nothing else. Required fields: destinations (array with city, code (IATA), lat, lng, days), departure_date, travelers (default 1), budget (default "mid-range"), hasFlights (true if user already has flights), accommodation (if mentioned), origin (null if user is already there). Today is ' + new Date().toISOString().split('T')[0],
+            messages: messages,
+          }),
+        });
+        const retryData = await safeJson(retryRes, 'Haiku-retry');
+        if (retryData && retryData.content && retryData.content[0]) {
+          intent = extractJson(retryData.content[0].text);
+          if (!intent) console.error('Haiku retry raw:', retryData.content[0].text.substring(0, 500));
+        }
+      }
       if (!intent) {
         return res.status(500).json({ error: 'Could not parse trip details. Please be more specific about your cities and dates.' });
       }
