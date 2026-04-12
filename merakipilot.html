@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MerakiPilot — AI Network Operations Agent | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #111111; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111111; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
+    .nav-brand .wordmark .w-capita { font-weight: 300; }
+    .nav-brand .wordmark .w-core { font-weight: 700; }
+    .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: #999999; text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: #111111; }
+    .btn-nav { background: #111111; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+
+    .page { max-width: 1152px; margin: 0 auto; padding: 140px 32px 80px; }
+
+    /* HERO */
+    .hero-row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; margin-bottom: 80px; }
+    .hero-text h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 16px; }
+    .hero-text p { font-size: 15px; color: #999999; line-height: 1.7; margin-bottom: 24px; }
+    .hero-preview { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 16px; padding: 24px; position: relative; min-height: 300px; }
+    .hero-preview .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 28px; font-weight: 700; color: rgba(17,17,17,0.04); letter-spacing: 0.1em; }
+
+    /* Network preview mockup */
+    .net-status-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+    .net-stat { background: #fff; border: 1px solid #eeeeee; border-radius: 10px; padding: 16px; }
+    .net-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #999999; margin-bottom: 4px; }
+    .net-stat .value { font-size: 20px; font-weight: 700; color: #111111; }
+    .net-stat .value.green { color: #10b981; }
+    .net-stat .value.amber { color: #f59e0b; }
+    .net-device { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #eeeeee; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+    .net-device .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .net-device .dot.online { background: #34d399; }
+    .net-device .dot.offline { background: #ef4444; }
+    .net-device .name { font-weight: 600; color: #111111; flex: 1; }
+    .net-device .model { color: #999999; font-size: 12px; }
+
+    /* CTA */
+    .cta-section { text-align: center; max-width: 620px; margin: 0 auto 80px; }
+    .cta-section h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+    .cta-section p { font-size: 15px; color: #999999; line-height: 1.7; margin-bottom: 24px; }
+    .btn-cta { display: inline-flex; align-items: center; gap: 8px; background: #111111; color: #fff; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: background 0.2s; }
+    .btn-cta:hover { background: #222222; }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; color: #999999; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; margin-left: 12px; }
+    .btn-outline:hover { color: #111111; border-color: #cccccc; }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-bottom: 80px; }
+    .feature { padding: 24px; border: 1px solid #eeeeee; border-radius: 14px; }
+    .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .feature p { font-size: 13px; color: #999999; line-height: 1.6; }
+
+    /* HOW IT WORKS */
+    .how-section { margin-bottom: 80px; }
+    .how-section h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
+    .how-sub { font-size: 14px; color: #999999; text-align: center; margin-bottom: 40px; }
+    .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .how-step { text-align: center; padding: 32px 24px; }
+    .how-step .step-num { width: 40px; height: 40px; border-radius: 50%; background: #111111; color: #fff; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .how-step h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .how-step p { font-size: 13px; color: #999999; line-height: 1.6; }
+
+    /* USE CASES */
+    .usecases { margin-bottom: 80px; }
+    .usecases h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
+    .usecases .usecases-sub { font-size: 14px; color: #999999; text-align: center; margin-bottom: 40px; }
+    .usecase-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .usecase-card { border: 1px solid #eeeeee; border-radius: 14px; padding: 28px; }
+    .usecase-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .usecase-card p { font-size: 13px; color: #999999; line-height: 1.6; }
+    .usecase-card .tag { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; color: #999999; background: #f5f5f5; padding: 4px 10px; border-radius: 6px; margin-bottom: 12px; }
+
+    .footer { background: #fff; border-top: 1px solid #eeeeee; margin-top: 80px; }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: #999999; }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: #999999; text-decoration: none; }
+    .footer-nav a:hover { color: #111111; }
+
+    .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #fff; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.08); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: #999999; text-decoration: none; padding: 16px 0; border-bottom: 1px solid #eeeeee; }
+    .mobile-menu a:hover { color: #111111; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(17,17,17,0.4); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+
+    @media (max-width: 768px) {
+      .nav-links, .nav .btn-nav { display: none; }
+      .hero-row { grid-template-columns: 1fr; gap: 32px; }
+      .features { grid-template-columns: 1fr; }
+      .net-status-row { grid-template-columns: 1fr; }
+      .how-steps { grid-template-columns: 1fr; }
+      .usecase-grid { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="logo.svg" alt="CapitaCoreAI"><span class="wordmark"><span class="w-capita">Capita</span><span class="w-core">Core</span><span class="w-ai">AI</span></span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+        <a href="agents.html" class="active">Agents</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="account.html" id="navMyAgents" style="display:none;">My Agents</a>
+      </div>
+      <a href="account.html" id="navLoginBtn" class="btn-nav">Log In</a>
+      <button class="hamburger" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="7" r="2" fill="#111111" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="13" r="2" fill="#111111" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#111111" stroke="none"/><circle cx="22" cy="19" r="2" fill="#111111" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/#services">Services</a><a href="/#about">About</a><a href="/#contact">Contact</a><a href="agents.html">Agents</a><a href="pricing.html">Pricing</a>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#111111;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;text-decoration:none;">Log In / Sign Up</a></div>
+    <div id="menuLoggedIn" style="display:none;padding-top:24px;">
+      <a href="account.html" style="display:block;padding:12px 20px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;text-align:center;text-decoration:none;margin-bottom:8px;">My Agents</a>
+      <button style="display:block;width:100%;padding:12px;background:#fff;color:#111111;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
+    </div>
+  </div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <main class="page">
+    <!-- HERO -->
+    <div class="hero-row">
+      <div class="hero-text">
+        <h1>Meet MerakiPilot</h1>
+        <p>Your AI-powered Cisco Meraki network operations agent. MerakiPilot monitors your networks 24/7, detects issues before they become outages, and manages your infrastructure through natural language — via Webex or fully autonomous.</p>
+        <p style="font-size:13px;color:#999999;">Built for MSPs. Powered by AI. By CapitaCoreAI.</p>
+      </div>
+      <div class="hero-preview">
+        <div class="watermark">MERAKIPILOT</div>
+        <div class="net-status-row">
+          <div class="net-stat"><div class="label">Devices</div><div class="value">47</div></div>
+          <div class="net-stat"><div class="label">Online</div><div class="value green">44</div></div>
+          <div class="net-stat"><div class="label">Alerts</div><div class="value amber">3</div></div>
+        </div>
+        <div class="net-device"><span class="dot online"></span><span class="name">HQ-MX67C</span><span class="model">MX67C</span></div>
+        <div class="net-device"><span class="dot online"></span><span class="name">Office-AP-1</span><span class="model">MR46</span></div>
+        <div class="net-device"><span class="dot offline"></span><span class="name">Warehouse-SW</span><span class="model">MS120-8</span></div>
+        <div class="net-device"><span class="dot online"></span><span class="name">Branch-MX</span><span class="model">MX68</span></div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <h2>Manage your networks with AI</h2>
+      <p>Connect your Meraki API key and MerakiPilot handles the rest — monitoring, troubleshooting, security enforcement, and automated remediation. Talk to it through Webex or let it run autonomously.</p>
+      <a href="pricing.html" class="btn-cta">Get Started</a>
+      <a href="agents.html" class="btn-outline">View All Agents</a>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feature">
+        <h3>Natural language operations</h3>
+        <p>Tell MerakiPilot what you need in plain English. "Reboot the warehouse switch." "Show me offline devices." "Run a security audit."</p>
+      </div>
+      <div class="feature">
+        <h3>24/7 autonomous monitoring</h3>
+        <p>Scans your networks every 10 minutes. Detects offline devices, security gaps, firmware issues, and unusual client behavior automatically.</p>
+      </div>
+      <div class="feature">
+        <h3>Smart auto-remediation</h3>
+        <p>Configurable policies per client. Auto-reboot stuck devices, auto-enable IDS, enforce security baselines — or alert only. Your call.</p>
+      </div>
+      <div class="feature">
+        <h3>Multi-org MSP support</h3>
+        <p>Connect multiple Meraki organizations. Switch between clients instantly. Each org gets its own policies, alerts, and audit trail.</p>
+      </div>
+      <div class="feature">
+        <h3>Webex bot interface</h3>
+        <p>Chat with MerakiPilot through Cisco Webex. Get health reports, troubleshoot clients, toggle SSIDs, and manage devices — all from a message.</p>
+      </div>
+      <div class="feature">
+        <h3>Confirmation-gated actions</h3>
+        <p>Every write action (reboot, config change, SSID toggle) requires explicit confirmation. No surprises, full audit trail.</p>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how-section">
+      <h2>How It Works</h2>
+      <p class="how-sub">Three steps to AI-managed networks.</p>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="step-num">1</div>
+          <h3>Connect your Meraki API key</h3>
+          <p>Paste your API key into the Webex bot or the agent CLI. MerakiPilot discovers your orgs, networks, and devices automatically.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-num">2</div>
+          <h3>Set your policies</h3>
+          <p>Choose what MerakiPilot should monitor, what it can auto-fix, and where to send alerts. Configurable per client org.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <h3>Let it run</h3>
+          <p>MerakiPilot monitors 24/7, takes action per your policies, and reports back. Jump in via Webex anytime for hands-on control.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- USE CASES -->
+    <div class="usecases">
+      <h2>Built For</h2>
+      <p class="usecases-sub">MerakiPilot handles real network operations work.</p>
+      <div class="usecase-grid">
+        <div class="usecase-card">
+          <span class="tag">MSPs</span>
+          <h3>Managed Service Providers</h3>
+          <p>Manage dozens of client orgs from one agent. Automated monitoring, per-client policies, and instant Webex access. Scale your NOC without scaling your team.</p>
+        </div>
+        <div class="usecase-card">
+          <span class="tag">IT Teams</span>
+          <h3>Internal Network Admins</h3>
+          <p>Stop babysitting dashboards. MerakiPilot watches your network and alerts you when something actually needs attention. Ask it to troubleshoot in plain English.</p>
+        </div>
+        <div class="usecase-card">
+          <span class="tag">Security</span>
+          <h3>Security Enforcement</h3>
+          <p>Ensure IDS, malware protection, and firewall rules are always enabled across every network. MerakiPilot detects and fixes security drift automatically.</p>
+        </div>
+        <div class="usecase-card">
+          <span class="tag">Operations</span>
+          <h3>NOC Automation</h3>
+          <p>First-line triage on autopilot. Device down? MerakiPilot reboots it, logs the action, and alerts your team — all before anyone opens a ticket.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/common.js"></script>
+</body>
+</html>
