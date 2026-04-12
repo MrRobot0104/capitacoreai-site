@@ -65,56 +65,27 @@
     .network-empty-inner p { font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 24px; }
     .network-empty-inner .hint { font-size: 12px; color: #cbd5e1; }
 
-    /* NETWORK DASHBOARD */
-    .network-scroll { flex: 1; overflow-y: auto; padding: 24px; }
-    .network-scroll::-webkit-scrollbar { width: 4px; }
-    .network-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-    .dash-header { margin-bottom: 24px; }
-    .dash-header h2 { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
-    .dash-header p { font-size: 13px; color: #94a3b8; }
-    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
-    .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 500; margin-bottom: 6px; }
-    .stat-card .stat-value { font-size: 28px; font-weight: 800; color: #1e293b; }
-    .stat-card .stat-value.green { color: #10b981; }
-    .stat-card .stat-value.red { color: #ef4444; }
-    .stat-card .stat-value.amber { color: #f59e0b; }
-    .device-table { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-    .device-table-header { display: grid; grid-template-columns: 40px 2fr 1fr 1fr 1fr; gap: 8px; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 600; }
-    .device-row { display: grid; grid-template-columns: 40px 2fr 1fr 1fr 1fr; gap: 8px; padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; align-items: center; transition: background 0.15s; }
-    .device-row:last-child { border-bottom: none; }
-    .device-row:hover { background: #f8fafc; }
-    .device-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .device-dot.online { background: #34d399; }
-    .device-dot.offline { background: #ef4444; }
-    .device-dot.alerting { background: #f59e0b; }
-    .device-name { font-weight: 600; color: #1e293b; }
-    .device-model { color: #64748b; }
-    .device-ip { color: #94a3b8; font-family: monospace; font-size: 12px; }
-    .device-status { font-size: 12px; font-weight: 500; text-transform: capitalize; }
-    .device-status.online { color: #10b981; }
-    .device-status.offline { color: #ef4444; }
-    .device-status.alerting { color: #f59e0b; }
-
-    /* ALERT LOG */
-    .alert-section { margin-top: 24px; }
-    .alert-section h3 { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
-    .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px; font-size: 13px; }
-    .alert-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-    .alert-icon.critical { background: #fef2f2; }
-    .alert-icon.warning { background: #fffbeb; }
-    .alert-icon.info { background: #eff6ff; }
-    .alert-icon.action { background: #ecfdf5; }
-    .alert-text { flex: 1; }
-    .alert-text .alert-title { font-weight: 600; color: #1e293b; }
-    .alert-text .alert-time { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    /* NEURAL CANVAS */
+    .network-panel { background: #0a0e17; position: relative; }
+    #neuralCanvas { width: 100%; height: 100%; display: block; }
+    .neural-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+    .neural-org { position: absolute; top: 20px; left: 24px; }
+    .neural-org h2 { font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: -0.02em; }
+    .neural-org p { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .neural-stats { position: absolute; top: 20px; right: 24px; display: flex; gap: 16px; }
+    .neural-stat { text-align: right; }
+    .neural-stat .ns-val { font-size: 22px; font-weight: 800; color: #10b981; font-family: 'Inter', monospace; }
+    .neural-stat .ns-val.offline { color: #ef4444; }
+    .neural-stat .ns-val.total { color: rgba(255,255,255,0.7); }
+    .neural-stat .ns-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); }
+    .neural-status { position: absolute; bottom: 20px; left: 24px; right: 24px; }
+    .neural-status-text { font-size: 11px; color: rgba(16,185,129,0.7); font-family: 'Inter', monospace; letter-spacing: 0.02em; }
+    .neural-status-text.analyzing { color: rgba(59,130,246,0.8); }
+    .neural-status-text.acting { color: rgba(245,158,11,0.8); }
 
     @media (max-width: 768px) {
       .chat-panel { width: 100%; min-width: 100%; }
       .network-panel { display: none; }
-      .stat-grid { grid-template-columns: repeat(2, 1fr); }
-      .device-table-header, .device-row { grid-template-columns: 30px 1fr 1fr; }
-      .device-ip, .device-model { display: none; }
     }
   </style>
 </head>
@@ -161,35 +132,22 @@
       </div>
     </div>
 
-    <!-- NETWORK PANEL -->
+    <!-- NEURAL VISUALIZATION PANEL -->
     <div class="network-panel">
-      <div class="network-empty" id="networkEmpty">
-        <div class="network-empty-inner">
-          <h2>No Network Connected</h2>
-          <p>Paste your Meraki API key in the chat to connect. MerakiPilot will discover your organization, networks, and devices automatically.</p>
-          <p class="hint">Try: "Show me my devices" or "Run a health scan"</p>
+      <canvas id="neuralCanvas"></canvas>
+      <div class="neural-overlay">
+        <div class="neural-org">
+          <h2 id="orgName">MerakiPilot</h2>
+          <p id="orgMeta">Connect your API key to begin</p>
         </div>
-      </div>
-      <div class="network-scroll" id="networkDash" style="display:none;">
-        <div class="dash-header">
-          <h2 id="orgName">Organization</h2>
-          <p id="orgMeta">Loading...</p>
+        <div class="neural-stats" id="neuralStats" style="display:none;">
+          <div class="neural-stat"><div class="ns-val total" id="statDevices">0</div><div class="ns-label">Devices</div></div>
+          <div class="neural-stat"><div class="ns-val" id="statOnline">0</div><div class="ns-label">Online</div></div>
+          <div class="neural-stat"><div class="ns-val offline" id="statOffline">0</div><div class="ns-label">Offline</div></div>
+          <div class="neural-stat"><div class="ns-val total" id="statNetworks">0</div><div class="ns-label">Networks</div></div>
         </div>
-        <div class="stat-grid" id="statGrid">
-          <div class="stat-card"><div class="stat-label">Total Devices</div><div class="stat-value" id="statDevices">--</div></div>
-          <div class="stat-card"><div class="stat-label">Online</div><div class="stat-value green" id="statOnline">--</div></div>
-          <div class="stat-card"><div class="stat-label">Offline</div><div class="stat-value red" id="statOffline">--</div></div>
-          <div class="stat-card"><div class="stat-label">Networks</div><div class="stat-value" id="statNetworks">--</div></div>
-        </div>
-        <div class="device-table" id="deviceTable">
-          <div class="device-table-header">
-            <span></span><span>Device</span><span>Model</span><span>IP</span><span>Status</span>
-          </div>
-          <div id="deviceRows"></div>
-        </div>
-        <div class="alert-section" id="alertSection" style="display:none;">
-          <h3>Recent Agent Activity</h3>
-          <div id="alertLog"></div>
+        <div class="neural-status">
+          <div class="neural-status-text" id="neuralStatus">Awaiting connection...</div>
         </div>
       </div>
     </div>
@@ -198,6 +156,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/common.js"></script>
+  <script src="js/neural-viz.js"></script>
   <script src="js/merakipilot-app.js"></script>
 </body>
 </html>

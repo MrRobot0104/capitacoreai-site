@@ -155,10 +155,8 @@ async function connectMeraki(key) {
   );
 }
 
-// ─── Load Dashboard ───────────────────────────────────────────────
+// ─── Load Dashboard → Feed Neural Viz ─────────────────────────────
 async function loadDashboard() {
-  document.getElementById('networkEmpty').style.display = 'none';
-  document.getElementById('networkDash').style.display = 'block';
   document.getElementById('orgName').textContent = orgData.name;
 
   var results = await Promise.all([
@@ -180,22 +178,20 @@ async function loadDashboard() {
   document.getElementById('statOnline').textContent = online;
   document.getElementById('statOffline').textContent = offline;
   document.getElementById('statNetworks').textContent = netCount;
+  document.getElementById('neuralStats').style.display = 'flex';
   document.getElementById('orgMeta').textContent = netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' + total + ' device' + (total !== 1 ? 's' : '');
 
-  var rowsEl = document.getElementById('deviceRows');
-  rowsEl.innerHTML = '';
-  (devices || []).forEach(function(d) {
+  // Build device list with status for neural viz
+  var deviceList = (devices || []).map(function(d) {
     var s = statusMap[d.serial] || {};
-    var status = s.status || 'offline';
-    var row = document.createElement('div');
-    row.className = 'device-row';
-    row.innerHTML = '<span><span class="device-dot ' + status + '"></span></span>' +
-      '<span class="device-name">' + (d.name || d.model || d.serial) + '</span>' +
-      '<span class="device-model">' + (d.model || '--') + '</span>' +
-      '<span class="device-ip">' + (d.lanIp || '--') + '</span>' +
-      '<span class="device-status ' + status + '">' + status + '</span>';
-    rowsEl.appendChild(row);
+    return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'offline', networkId: d.networkId };
   });
+  var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
+
+  // Feed the neural visualization
+  if (window.neuralVizUpdate) {
+    window.neuralVizUpdate({ devices: deviceList, networks: networkList });
+  }
 }
 
 // ─── Gather Network Context for Claude ────────────────────────────
@@ -340,6 +336,7 @@ async function handleSend() {
 
   chatHistory.push({ role: 'user', content: text });
   showTyping();
+  if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Processing: ' + text.substring(0, 60) + (text.length > 60 ? '...' : ''));
 
   try {
     var networkContext = await gatherNetworkContext();
@@ -375,6 +372,7 @@ async function handleSend() {
         }
 
         // Execute all fetches in parallel
+        if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Fetching ' + data.fetches.length + ' endpoint' + (data.fetches.length > 1 ? 's' : '') + '...');
         var fetchResults = await executeFetches(data.fetches);
 
         // Add Claude's response + fetch results to history for next loop
@@ -400,8 +398,11 @@ async function handleSend() {
 
       if (msgCount >= msgLimit) { showLimitBar(); }
 
+      if (window.neuralVizDone) window.neuralVizDone();
+
       // Execute any final actions
       if (data.actions && data.actions.length > 0) {
+        if (window.neuralVizAction) window.neuralVizAction('Executing ' + data.actions.length + ' change' + (data.actions.length > 1 ? 's' : '') + '...');
         var actionResults = await executeActions(data.actions);
         var resultSummary = Object.keys(actionResults).map(function(path) {
           var r = actionResults[path];
