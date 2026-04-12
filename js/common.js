@@ -38,21 +38,13 @@ function updateMobileMenuAuth(session) {
 
       if (agentsDiv) {
         var html = '';
+        // My Account link
+        html += '<a href="account.html" style="display:block;padding:12px 0;font-size:14px;font-weight:500;color:rgba(255,255,255,0.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.08);">My Account</a>';
         // Credits display
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:8px;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);">';
         html += '<span style="font-size:13px;color:rgba(255,255,255,0.5);">Credits</span>';
         html += '<span style="font-size:16px;font-weight:700;color:#FF6A00;">' + (isAdmin ? '\u221E' : balance) + '</span>';
         html += '</div>';
-        // My Account link
-        html += '<a href="account.html" style="display:block;padding:12px 0;font-size:14px;font-weight:500;color:rgba(255,255,255,0.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.08);">My Account</a>';
-        // Agent list
-        if (agentsDiv.querySelector('#menuAgentsList')) {
-          // Page already has agent list (index.html) - just update credits
-        } else {
-          html += '<a href="dashpilot-app.html" style="display:block;padding:10px 0;font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05);">DashPilot <span style="float:right;color:#FF6A00;">3 cr</span></a>';
-          html += '<a href="voyagepilot-app.html" style="display:block;padding:10px 0;font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05);">VoyagePilot <span style="float:right;color:#FF6A00;">2 cr</span></a>';
-          html += '<a href="merakipilot-app.html" style="display:block;padding:10px 0;font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05);">MerakiPilot <span style="float:right;color:#FF6A00;">1 cr</span></a>';
-        }
         // Buy credits + logout
         html += '<a href="pricing.html" style="display:block;margin-top:12px;padding:12px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;text-decoration:none;">Buy Credits</a>';
         html += '<button style="display:block;width:100%;padding:12px;margin-top:8px;background:transparent;color:#FF6A00;border:1px solid rgba(255,106,0,0.3);border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>';
