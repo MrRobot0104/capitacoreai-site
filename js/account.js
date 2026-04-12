@@ -178,11 +178,9 @@ function updateNav(loggedIn) {
   var n = document.getElementById('navMyAgents');
   var l = document.getElementById('navLoginBtn');
   var ma = document.getElementById('menuAuth');
-  var mw = document.getElementById('menuLogoutWrap');
   if (n) { n.style.display = loggedIn ? 'inline' : 'none'; if (loggedIn) n.classList.add('active'); }
   if (l) l.style.display = loggedIn ? 'none' : 'inline-block';
   if (ma) ma.style.display = loggedIn ? 'none' : 'block';
-  if (mw) mw.style.display = loggedIn ? 'block' : 'none';
 }
 
 // ─── Profile Edit ─────────────────────────────────────────────────

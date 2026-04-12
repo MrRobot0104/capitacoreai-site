@@ -1,6 +1,6 @@
 function updateNav(session) {
   var n = document.getElementById('navMyAgents'), l = document.getElementById('navLoginBtn');
-  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuLoggedIn');
+  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuMyAgents');
   if (session) {
     if (n) n.style.display = 'inline';
     if (l) l.style.display = 'none';

@@ -1,6 +1,6 @@
 sb.auth.onAuthStateChange(async function(event, session) {
   var n = document.getElementById('navMyAgents'), l = document.getElementById('navLoginBtn');
-  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuLoggedIn');
+  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuMyAgents');
   var lb = document.getElementById('launchBtn');
   if (session) {
     if (n) n.style.display = 'inline';

@@ -1,7 +1,7 @@
 async function checkNav(session) {
   if (session === undefined) { var r = await sb.auth.getSession(); session = r.data.session; }
   var n = document.getElementById('navMyAgents'), l = document.getElementById('navLoginBtn');
-  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuLoggedIn');
+  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuMyAgents');
   if (session) {
     if (n) n.style.display = 'inline'; if (l) l.style.display = 'none';
     if (ma) ma.style.display = 'none'; if (ml) ml.style.display = 'block';
