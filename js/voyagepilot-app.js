@@ -51,6 +51,30 @@ function fetchCityPhoto(query, callback, fallbackQuery) {
   }
 }
 
+// Try loading an image URL; if it fails (hotlink blocked), try fallbacks
+function loadImageWithFallback(el, urls, wikiQuery, cityFallback) {
+  if (!urls || urls.length === 0) {
+    // No server URLs — go straight to Wikipedia
+    if (wikiQuery) fetchCityPhoto(wikiQuery, function(url) { el.style.background = 'url(' + url + ') center/cover'; }, cityFallback);
+    return;
+  }
+  var img = new Image();
+  var currentIdx = 0;
+  img.onload = function() {
+    el.style.background = 'url(' + urls[currentIdx] + ') center/cover';
+  };
+  img.onerror = function() {
+    currentIdx++;
+    if (currentIdx < urls.length) {
+      img.src = urls[currentIdx];
+    } else if (wikiQuery) {
+      // All server URLs failed — fall back to Wikipedia
+      fetchCityPhoto(wikiQuery, function(url) { el.style.background = 'url(' + url + ') center/cover'; }, cityFallback);
+    }
+  };
+  img.src = urls[0];
+}
+
 // ==================== MAP ====================
 function initMap() {
   if (map) return;
@@ -417,22 +441,18 @@ function renderTimeline(trip) {
       });
     }
 
-    // Gallery photos — use server-provided dest.photos if available, else Wikipedia
+    // Gallery photos — try server photo → server thumb → Wikipedia
     var galleryEl = document.getElementById('gallery-' + di);
     if (galleryEl) {
       var serverPhotos = dest.photos || [];
+      var serverThumbs = dest.photoThumbs || [];
       var galleryItems = galleryEl.querySelectorAll('.gallery-photo');
       galleryItems.forEach(function(el, pi) {
-        if (serverPhotos[pi]) {
-          el.style.background = 'url(' + serverPhotos[pi] + ') center/cover';
-        } else {
-          var lm = el.dataset.query;
-          if (lm) {
-            fetchCityPhoto(lm, function(url) {
-              el.style.background = 'url(' + url + ') center/cover';
-            }, dest.city);
-          }
-        }
+        var urls = [];
+        if (serverPhotos[pi]) urls.push(serverPhotos[pi]);
+        if (serverThumbs[pi]) urls.push(serverThumbs[pi]);
+        var lm = el.dataset.query || dest.city;
+        loadImageWithFallback(el, urls, lm, dest.city);
       });
     }
 
@@ -444,27 +464,24 @@ function renderTimeline(trip) {
       });
     }
 
-    // Day card full-width photos — only fetch Wikipedia fallback if no server photo
+    // Day card full-width photos — try server URL → thumb → Wikipedia
     var cityDays = days.filter(function(d) { return d.city === dest.city; });
     cityDays.forEach(function(day, dayIdx) {
       var photoEl = document.getElementById('day-photo-' + di + '-' + dayIdx);
       if (!photoEl) return;
-      if (day.photoUrl) {
-        // Server already provided a Google Images URL — already set in HTML
-        return;
-      }
-      // No server photo — fall back to Wikipedia
-      if (day.dayPhoto) {
+      var urls = [];
+      if (day.photoUrl) urls.push(day.photoUrl);
+      if (day.photoThumb) urls.push(day.photoThumb);
+      var wikiQuery = day.dayPhoto || dest.city;
+      if (urls.length > 0) {
+        loadImageWithFallback(photoEl, urls, wikiQuery, dest.city);
+      } else if (day.dayPhoto) {
         fetchCityPhoto(day.dayPhoto, function(url) {
-          photoEl.style.backgroundImage = 'url(' + url + ')';
-          photoEl.style.backgroundSize = 'cover';
-          photoEl.style.backgroundPosition = 'center';
+          photoEl.style.background = 'url(' + url + ') center/cover';
         }, dest.city);
       } else {
         fetchCityPhoto(dest.city, function(url) {
-          photoEl.style.backgroundImage = 'url(' + url + ')';
-          photoEl.style.backgroundSize = 'cover';
-          photoEl.style.backgroundPosition = 'center';
+          photoEl.style.background = 'url(' + url + ') center/cover';
         });
       }
     });

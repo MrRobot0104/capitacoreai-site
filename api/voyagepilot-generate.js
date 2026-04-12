@@ -214,7 +214,10 @@ async function searchPhotos(query) {
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.images_results || data.images_results.length === 0) return null;
-    return data.images_results.slice(0, 3).map(img => img.original || img.thumbnail);
+    return data.images_results.slice(0, 3).map(img => ({
+      url: img.original || img.thumbnail,
+      thumb: img.thumbnail || img.original,
+    }));
   } catch (e) {
     console.error('SerpAPI Images error:', e.message);
     return null;
@@ -510,8 +513,9 @@ module.exports = async (req, res) => {
         (tripPlan.destinations || []).forEach(function(dest, di) {
           const q = dest.city + ' skyline travel';
           photoPromises.push(
-            searchPhotos(q).then(function(urls) {
-              if (urls) tripPlan.destinations[di].photos = urls;
+            searchPhotos(q).then(function(results) {
+              if (results) tripPlan.destinations[di].photos = results.map(r => r.url);
+              if (results) tripPlan.destinations[di].photoThumbs = results.map(r => r.thumb);
             })
           );
         });
@@ -529,10 +533,11 @@ module.exports = async (req, res) => {
           const city = tripPlan.itinerary[indices[0]].city || '';
           const q = landmark + ' ' + city;
           photoPromises.push(
-            searchPhotos(q).then(function(urls) {
-              if (urls && urls[0]) {
+            searchPhotos(q).then(function(results) {
+              if (results && results[0]) {
                 indices.forEach(function(i) {
-                  tripPlan.itinerary[i].photoUrl = urls[0];
+                  tripPlan.itinerary[i].photoUrl = results[0].url;
+                  tripPlan.itinerary[i].photoThumb = results[0].thumb;
                 });
               }
             })
