@@ -80,18 +80,19 @@ function animate() {
   var w = canvas.width;
   var h = canvas.height;
 
-  // Primary strand — right side, bold
-  drawDNA(w - 120, -100 - scrollY, h + 400, 22, 80, 0.6, 0, 4, 0.7);
-  // Secondary strand — left side
-  drawDNA(100, 50 - scrollY * 0.7, h + 300, 18, 60, 0.5, 2, 3.5, 0.5);
-  // Center-right
-  drawDNA(w * 0.65, 200 - scrollY * 0.5, h, 14, 50, 0.4, 4, 3, 0.3);
-  // Far left
-  drawDNA(w * 0.25, -50 - scrollY * 0.4, h + 200, 16, 45, 0.35, 1.5, 2.5, 0.22);
-  // Center — subtle
-  drawDNA(w * 0.45, 100 - scrollY * 0.6, h + 100, 12, 35, 0.45, 3, 2, 0.15);
-  // Far right edge
-  drawDNA(w - 30, -200 - scrollY * 0.3, h + 500, 20, 30, 0.55, 5, 2, 0.18);
+  if (w <= 768) {
+    // Mobile — just 2 subtle strands
+    drawDNA(w - 60, -80 - scrollY, h + 300, 16, 40, 0.5, 0, 3, 0.4);
+    drawDNA(40, 100 - scrollY * 0.6, h + 200, 12, 35, 0.4, 2, 2.5, 0.25);
+  } else {
+    // Desktop — full 6 strands
+    drawDNA(w - 120, -100 - scrollY, h + 400, 22, 80, 0.6, 0, 4, 0.7);
+    drawDNA(100, 50 - scrollY * 0.7, h + 300, 18, 60, 0.5, 2, 3.5, 0.5);
+    drawDNA(w * 0.65, 200 - scrollY * 0.5, h, 14, 50, 0.4, 4, 3, 0.3);
+    drawDNA(w * 0.25, -50 - scrollY * 0.4, h + 200, 16, 45, 0.35, 1.5, 2.5, 0.22);
+    drawDNA(w * 0.45, 100 - scrollY * 0.6, h + 100, 12, 35, 0.45, 3, 2, 0.15);
+    drawDNA(w - 30, -200 - scrollY * 0.3, h + 500, 20, 30, 0.55, 5, 2, 0.18);
+  }
 
   requestAnimationFrame(animate);
 }
