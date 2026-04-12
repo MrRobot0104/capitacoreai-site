@@ -56,8 +56,8 @@
     .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
     .dash-header h2 { font-size: 22px; font-weight: 700; }
     .dash-header .user-info { font-size: 13px; color: rgba(255,255,255,0.5); }
-    .btn-logout { font-size: 13px; color: rgba(255,255,255,0.5); background: transparent; border: 1px solid rgba(255,255,255,0.12); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; }
-    .btn-logout:hover { background: rgba(255,255,255,0.05); }
+    .btn-logout { font-size: 13px; color: #FF6A00; background: transparent; border: 1px solid rgba(255,106,0,0.3); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .btn-logout:hover { background: rgba(255,106,0,0.1); border-color: #FF6A00; }
 
     .agent-card-dash { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
     .agent-card-dash:hover { border-color: rgba(255,106,0,0.3); box-shadow: 0 4px 20px rgba(255,106,0,0.06); }
@@ -111,7 +111,7 @@
     <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;text-decoration:none;">Log In / Sign Up</a></div>
     <div id="menuLogoutWrap" style="display:none;padding-top:24px;">
       <a href="account.html" style="display:block;padding:12px 20px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);border-radius:10px;font-size:14px;text-align:center;text-decoration:none;margin-bottom:8px;">My Agents</a>
-      <button style="display:block;width:100%;padding:12px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
+      <button style="display:block;width:100%;padding:12px;background:transparent;color:#FF6A00;border:1px solid rgba(255,106,0,0.3);border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;" data-action="menuLogout">Log Out</button>
     </div>
   </div>
   <div class="mobile-overlay" id="mobileOverlay"></div>
