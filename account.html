@@ -183,22 +183,54 @@
       </div>
       <!-- PROFILE CARD -->
       <div id="profileCard" class="agent-card-dash" style="margin-bottom:24px;padding:24px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Name</div>
-            <div id="profileName" style="font-size:15px;font-weight:600;color:#fff;">—</div>
+        <!-- VIEW MODE -->
+        <div id="profileView">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Name</div>
+              <div id="profileName" style="font-size:15px;font-weight:600;color:#fff;">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Username</div>
+              <div id="profileUsername" style="font-size:15px;font-weight:600;color:#fff;">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Email</div>
+              <div id="profileEmail" style="font-size:15px;color:rgba(255,255,255,0.7);">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Credits</div>
+              <div id="profileCredits" style="font-size:22px;font-weight:800;color:#FF6A00;">0</div>
+            </div>
           </div>
-          <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Username</div>
-            <div id="profileUsername" style="font-size:15px;font-weight:600;color:#fff;">—</div>
+          <button id="editProfileBtn" style="margin-top:16px;padding:8px 20px;background:transparent;color:#FF6A00;border:1px solid rgba(255,106,0,0.3);border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all 0.2s;">Edit Profile</button>
+        </div>
+        <!-- EDIT MODE -->
+        <div id="profileEdit" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);display:block;margin-bottom:4px;">Name</label>
+              <input id="editName" type="text" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.2s;" />
+            </div>
+            <div>
+              <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);display:block;margin-bottom:4px;">Username</label>
+              <input id="editUsername" type="text" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.2s;" />
+              <div id="editUsernameStatus" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
+            </div>
+            <div>
+              <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);display:block;margin-bottom:4px;">Email</label>
+              <div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:rgba(255,255,255,0.35);font-size:14px;" id="editEmailDisplay">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Credits</div>
+              <div id="profileCreditsEdit" style="font-size:22px;font-weight:800;color:#FF6A00;">0</div>
+            </div>
           </div>
-          <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Email</div>
-            <div id="profileEmail" style="font-size:15px;color:rgba(255,255,255,0.7);">—</div>
-          </div>
-          <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Credits</div>
-            <div id="profileCredits" style="font-size:22px;font-weight:800;color:#FF6A00;">0</div>
+          <div id="profileEditError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;font-size:13px;"></div>
+          <div id="profileEditSuccess" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(16,185,129,0.1);color:#34d399;border-radius:8px;font-size:13px;"></div>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button id="saveProfileBtn" style="padding:8px 20px;background:#FF6A00;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:background 0.2s;">Save Changes</button>
+            <button id="cancelProfileBtn" style="padding:8px 20px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;">Cancel</button>
           </div>
         </div>
       </div>

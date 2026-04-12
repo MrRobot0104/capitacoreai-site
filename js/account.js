@@ -185,6 +185,119 @@ function updateNav(loggedIn) {
   if (mw) mw.style.display = loggedIn ? 'block' : 'none';
 }
 
+// ─── Profile Edit ─────────────────────────────────────────────────
+var editUsernameTimer = null;
+var editUsernameOk = true;
+var originalUsername = '';
+
+function showProfileEdit() {
+  document.getElementById('profileView').style.display = 'none';
+  document.getElementById('profileEdit').style.display = 'block';
+  document.getElementById('profileEditError').style.display = 'none';
+  document.getElementById('profileEditSuccess').style.display = 'none';
+  // Populate inputs with current values
+  var name = document.getElementById('profileName').textContent;
+  var username = document.getElementById('profileUsername').textContent.replace('@', '');
+  document.getElementById('editName').value = name === '—' ? '' : name;
+  document.getElementById('editUsername').value = username === '—' ? '' : username;
+  document.getElementById('editEmailDisplay').textContent = document.getElementById('profileEmail').textContent;
+  document.getElementById('profileCreditsEdit').textContent = document.getElementById('profileCredits').textContent;
+  originalUsername = username === '—' ? '' : username;
+  editUsernameOk = true;
+}
+
+function cancelProfileEdit() {
+  document.getElementById('profileView').style.display = 'block';
+  document.getElementById('profileEdit').style.display = 'none';
+}
+
+function checkEditUsername(val) {
+  var status = document.getElementById('editUsernameStatus');
+  var clean = val.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  document.getElementById('editUsername').value = clean;
+  if (clean.length < 3) {
+    status.innerHTML = '<span style="color:rgba(255,255,255,0.4);">Min 3 characters</span>';
+    editUsernameOk = false;
+    return;
+  }
+  if (clean === originalUsername) {
+    status.innerHTML = '<span style="color:rgba(255,255,255,0.4);">Current username</span>';
+    editUsernameOk = true;
+    return;
+  }
+  status.innerHTML = '<span style="color:rgba(255,255,255,0.4);">Checking...</span>';
+  editUsernameOk = false;
+  clearTimeout(editUsernameTimer);
+  editUsernameTimer = setTimeout(async function() {
+    try {
+      var result = await sb.rpc('check_username_available', { uname: clean });
+      if (result.data === true) {
+        status.innerHTML = '<span style="color:#34d399;">\u2713 Available</span>';
+        editUsernameOk = true;
+      } else {
+        status.innerHTML = '<span style="color:#ef4444;">\u2717 Already taken</span>';
+        editUsernameOk = false;
+      }
+    } catch (e) {
+      status.innerHTML = '';
+      editUsernameOk = true;
+    }
+  }, 400);
+}
+
+async function saveProfile() {
+  var errEl = document.getElementById('profileEditError');
+  var successEl = document.getElementById('profileEditSuccess');
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  var newName = document.getElementById('editName').value.trim();
+  var newUsername = document.getElementById('editUsername').value.trim().toLowerCase();
+
+  if (!newName) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+  if (newUsername.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; errEl.style.display = 'block'; return; }
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(newUsername)) { errEl.textContent = 'Username: 3-20 characters, letters/numbers/underscores only.'; errEl.style.display = 'block'; return; }
+  if (!editUsernameOk) { errEl.textContent = 'That username is already taken.'; errEl.style.display = 'block'; return; }
+
+  var btn = document.getElementById('saveProfileBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    var session = (await sb.auth.getSession()).data.session;
+    if (!session) { errEl.textContent = 'Session expired. Please log in again.'; errEl.style.display = 'block'; return; }
+
+    // If username changed, double-check availability
+    if (newUsername !== originalUsername) {
+      var check = await sb.rpc('check_username_available', { uname: newUsername });
+      if (check.data !== true) {
+        errEl.textContent = 'That username was just taken. Try another.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Save Changes';
+        return;
+      }
+    }
+
+    var result = await sb.from('profiles').update({ first_name: newName, username: newUsername }).eq('id', session.user.id);
+    if (result.error) {
+      errEl.textContent = result.error.message || 'Failed to update profile.';
+      errEl.style.display = 'block';
+    } else {
+      // Update view mode
+      document.getElementById('profileName').textContent = newName;
+      document.getElementById('profileUsername').textContent = '@' + newUsername;
+      document.getElementById('dashUserInfo').textContent = 'Welcome, ' + newName;
+      successEl.textContent = 'Profile updated!';
+      successEl.style.display = 'block';
+      setTimeout(function() { cancelProfileEdit(); }, 1200);
+    }
+  } catch (e) {
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.auth-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
@@ -211,6 +324,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var signupUsername = document.getElementById('signupUsername');
   if (signupUsername) signupUsername.addEventListener('input', function() { checkUsername(this.value); });
+
+  var editProfileBtn = document.getElementById('editProfileBtn');
+  if (editProfileBtn) editProfileBtn.addEventListener('click', showProfileEdit);
+
+  var cancelProfileBtn = document.getElementById('cancelProfileBtn');
+  if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', cancelProfileEdit);
+
+  var saveProfileBtn = document.getElementById('saveProfileBtn');
+  if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
+
+  var editUsernameInput = document.getElementById('editUsername');
+  if (editUsernameInput) editUsernameInput.addEventListener('input', function() { checkEditUsername(this.value); });
 
   document.querySelectorAll('[data-tab]').forEach(function(link) {
     link.addEventListener('click', function(e) {
