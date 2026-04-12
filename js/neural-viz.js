@@ -157,7 +157,7 @@
       targetX: toNode.x, targetY: toNode.y,
       progress: 0,
       speed: 0.008 + Math.random() * 0.012,
-      color: color || 'rgba(16,185,129,0.8)',
+      color: color || 'rgba(255,106,0,0.8)',
       size: 2 + Math.random() * 2,
       life: 1,
     });
@@ -177,9 +177,9 @@
       var from = nodes[c.from];
       var to = nodes[c.to];
       var color;
-      if (state === 'analyzing') color = 'rgba(59,130,246,0.8)';
-      else if (state === 'acting') color = 'rgba(245,158,11,0.9)';
-      else color = to.status === 'offline' ? 'rgba(239,68,68,0.5)' : 'rgba(16,185,129,0.6)';
+      if (state === 'analyzing') color = 'rgba(255,140,51,0.8)';
+      else if (state === 'acting') color = 'rgba(255,179,102,0.9)';
+      else color = to.status === 'offline' ? 'rgba(239,68,68,0.5)' : 'rgba(255,106,0,0.6)';
       // Randomly pick direction
       if (Math.random() > 0.5) spawnParticle(from, to, color);
       else spawnParticle(to, from, color);
@@ -216,7 +216,7 @@
       if (p.life <= 0) { pulses.splice(pi, 1); continue; }
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      var pColor = state === 'analyzing' ? '59,130,246' : state === 'acting' ? '245,158,11' : '16,185,129';
+      var pColor = '255,106,0';
       ctx.strokeStyle = 'rgba(' + pColor + ',' + (p.life * 0.15) + ')';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -232,7 +232,7 @@
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = c.active ? 'rgba(16,185,129,' + alpha + ')' : 'rgba(239,68,68,' + alpha + ')';
+      ctx.strokeStyle = c.active ? 'rgba(255,106,0,' + alpha + ')' : 'rgba(239,68,68,' + alpha + ')';
       ctx.lineWidth = c.active ? 1.5 : 0.8;
       ctx.stroke();
     });
@@ -266,7 +266,7 @@
 
       // Glow ring
       if (n.type === 'brain' || n.glow > 0.05) {
-        var glowColor = state === 'analyzing' ? '59,130,246' : state === 'acting' ? '245,158,11' : '16,185,129';
+        var glowColor = '255,106,0';
         var gr = ctx.createRadialGradient(n.x, n.y, n.radius, n.x, n.y, n.radius * 3 + n.glow * 20);
         gr.addColorStop(0, 'rgba(' + glowColor + ',' + (0.15 + glowExtra) + ')');
         gr.addColorStop(1, 'rgba(' + glowColor + ',0)');
@@ -284,11 +284,11 @@
         // Brain: pulsing core
         var pulse = 0.7 + Math.sin(time * 2) * 0.3;
         var brainGrad = ctx.createRadialGradient(n.x - 4, n.y - 4, 0, n.x, n.y, n.radius);
-        brainGrad.addColorStop(0, 'rgba(16,185,129,' + pulse + ')');
-        brainGrad.addColorStop(1, 'rgba(6,78,59,0.9)');
+        brainGrad.addColorStop(0, 'rgba(255,106,0,' + pulse + ')');
+        brainGrad.addColorStop(1, 'rgba(102,42,0,0.9)');
         ctx.fillStyle = brainGrad;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(16,185,129,0.6)';
+        ctx.strokeStyle = 'rgba(255,106,0,0.6)';
         ctx.lineWidth = 2;
         ctx.stroke();
         // Inner symbol
@@ -298,17 +298,17 @@
         ctx.textBaseline = 'middle';
         ctx.fillText('N', n.x, n.y);
       } else if (n.type === 'network') {
-        ctx.fillStyle = n.status === 'online' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)';
+        ctx.fillStyle = n.status === 'online' ? 'rgba(255,106,0,0.2)' : 'rgba(239,68,68,0.15)';
         ctx.fill();
-        ctx.strokeStyle = n.status === 'online' ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.3)';
+        ctx.strokeStyle = n.status === 'online' ? 'rgba(255,106,0,0.5)' : 'rgba(239,68,68,0.3)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
       } else {
         // Device
-        ctx.fillStyle = n.status === 'online' ? 'rgba(16,185,129,0.6)' : n.status === 'dormant' ? 'rgba(245,158,11,0.4)' : 'rgba(239,68,68,0.5)';
+        ctx.fillStyle = n.status === 'online' ? 'rgba(255,106,0,0.6)' : n.status === 'dormant' ? 'rgba(255,179,102,0.4)' : 'rgba(239,68,68,0.5)';
         ctx.fill();
         if (n.status !== 'online') {
-          ctx.strokeStyle = n.status === 'dormant' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)';
+          ctx.strokeStyle = n.status === 'dormant' ? 'rgba(255,179,102,0.3)' : 'rgba(239,68,68,0.3)';
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -327,7 +327,7 @@
     // Matrix-style falling data on analyzing
     if (state === 'analyzing' || state === 'acting') {
       ctx.font = '10px monospace';
-      ctx.fillStyle = state === 'analyzing' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.12)';
+      ctx.fillStyle = state === 'analyzing' ? 'rgba(255,140,51,0.12)' : 'rgba(255,179,102,0.12)';
       var chars = '01ABCDEF.:>/{}[]';
       for (var mi = 0; mi < 8; mi++) {
         var mx = Math.random() * W;
