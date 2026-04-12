@@ -1,21 +1,5 @@
-function updateNav(session) {
-  var n = document.getElementById('navMyAgents'), l = document.getElementById('navLoginBtn');
-  var ma = document.getElementById('menuAuth'), ml = document.getElementById('menuMyAgents');
-  if (session) {
-    if (n) n.style.display = 'inline';
-    if (l) l.style.display = 'none';
-    if (ma) ma.style.display = 'none';
-    if (ml) ml.style.display = 'block';
-  } else {
-    if (n) n.style.display = 'none';
-    if (l) l.style.display = 'inline-block';
-    if (ma) ma.style.display = 'block';
-    if (ml) ml.style.display = 'none';
-  }
-}
-
+// Nav is handled by common.js — only handle pricing-specific UI here
 sb.auth.onAuthStateChange(async function(event, session) {
-  updateNav(session);
   if (session) {
     document.getElementById('authPrompt').style.display = 'none';
     document.getElementById('pricingSection').style.display = 'block';
