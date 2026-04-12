@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice & Payment Tracker — CapitaCoreAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root {
+  --bg: #0b0f1a;
+  --surface: #131825;
+  --surface2: #1a2035;
+  --border: #1e2a42;
+  --border-hover: #2a3a5c;
+  --text: #e8ecf4;
+  --text-dim: #8892a8;
+  --text-muted: #5a6478;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.12);
+  --yellow: #eab308;
+  --yellow-bg: rgba(234,179,8,0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.12);
+  --blue: #3b82f6;
+  --blue-bg: rgba(59,130,246,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+/* Sidebar */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #fff;
+}
+.logo-text { font-size: 15px; font-weight: 700; color: var(--text); }
+.logo-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+.nav-section { margin-bottom: 24px; }
+.nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0 12px; margin-bottom: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(99,102,241,0.12); color: var(--accent); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Main Content */
+.main { flex: 1; overflow-x: hidden; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 18px; font-weight: 700; }
+.topbar-sub { font-size: 12px; color: var(--text-dim); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--border-hover); color: var(--text); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: #16a34a; }
+.btn-sm { padding: 5px 12px; font-size: 11px; }
+
+.content { padding: 28px 32px; }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+}
+.kpi-card:nth-child(1)::before { background: linear-gradient(90deg, var(--green), #4ade80); }
+.kpi-card:nth-child(2)::before { background: linear-gradient(90deg, var(--yellow), #fde047); }
+.kpi-card:nth-child(3)::before { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+.kpi-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent), #a78bfa); }
+
+.kpi-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.kpi-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.kpi-card:nth-child(1) .kpi-icon { background: var(--green-bg); }
+.kpi-card:nth-child(2) .kpi-icon { background: var(--yellow-bg); }
+.kpi-card:nth-child(3) .kpi-icon { background: var(--blue-bg); }
+.kpi-card:nth-child(4) .kpi-icon { background: rgba(99,102,241,0.12); }
+
+.kpi-trend {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 20px;
+}
+.trend-up { background: var(--green-bg); color: var(--green); }
+.trend-down { background: var(--red-bg); color: var(--red); }
+.kpi-value { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.kpi-label { font-size: 12px; color: var(--text-dim); }
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.chart-title { font-size: 14px; font-weight: 700; }
+.chart-container { position: relative; height: 260px; }
+
+/* Table */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.table-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.table-toolbar-left { display: flex; align-items: center; gap: 12px; }
+.table-toolbar h3 { font-size: 14px; font-weight: 700; }
+.table-count {
+  font-size: 11px; color: var(--text-muted);
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: 20px;
+}
+
+.search-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  outline: none;
+  width: 220px;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.filter-tabs {
+  display: flex; gap: 4px;
+  padding: 0 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.filter-tab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.15s;
+}
+.filter-tab:hover { background: var(--surface2); }
+.filter-tab.active { background: rgba(99,102,241,0.12); color: var(--accent); border-color: rgba(99,102,241,0.3); }
+
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); }
+thead th {
+  padding: 11px 16px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+thead th:hover { color: var(--text-dim); }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+tbody tr:hover { background: rgba(99,102,241,0.04); }
+tbody td {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.client-name { font-weight: 600; color: var(--text); }
+.invoice-num { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.amount { font-weight: 700; color: var(--text); text-align: right; }
+.status-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.status-paid { background: var(--green-bg); color: var(--green); }
+.status-pending { background: var(--yellow-bg); color: var(--yellow); }
+.status-overdue { background: var(--red-bg); color: var(--red); }
+.status-draft { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+.actions-cell { display: flex; gap: 6px; }
+.action-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.action-btn:hover { background: var(--surface2); border-color: var(--border-hover); color: var(--text); }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h3 { font-size: 16px; font-weight: 700; }
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { padding: 24px; }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-select { cursor: pointer; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .kpi-grid { grid-template-columns: 1fr; }
+  .content { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">$</div>
+      <div>
+        <div class="logo-text">InvoiceTrack</div>
+        <div class="logo-sub">by CapitaCoreAI</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active"><span class="icon">📊</span> Dashboard</div>
+      <div class="nav-item"><span class="icon">📄</span> Invoices <span class="badge">3</span></div>
+      <div class="nav-item"><span class="icon">👥</span> Clients</div>
+      <div class="nav-item"><span class="icon">💰</span> Payments</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Reports</div>
+      <div class="nav-item"><span class="icon">📈</span> Revenue</div>
+      <div class="nav-item"><span class="icon">📉</span> Expenses</div>
+      <div class="nav-item"><span class="icon">🏦</span> Tax Summary</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Settings</div>
+      <div class="nav-item"><span class="icon">⚙️</span> Preferences</div>
+      <div class="nav-item"><span class="icon">🏢</span> Business Info</div>
+    </div>
+    <div class="sidebar-footer">Built by CapitaCoreAI &copy; 2026</div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Invoice Dashboard</div>
+          <div class="topbar-sub">Track invoices, payments, and client balances</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-outline" onclick="exportData()">📥 Export CSV</button>
+        <button class="btn btn-primary" onclick="openModal('invoice')">+ New Invoice</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon">💰</div>
+            <span class="kpi-trend trend-up">↑ 12%</span>
+          </div>
+          <div class="kpi-value" id="kpi-revenue">$0</div>
+          <div class="kpi-label">Total Revenue (Paid)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon">⏳</div>
+            <span class="kpi-trend trend-down">3 pending</span>
+          </div>
+          <div class="kpi-value" id="kpi-pending">$0</div>
+          <div class="kpi-label">Outstanding Balance</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon">📄</div>
+          </div>
+          <div class="kpi-value" id="kpi-count">0</div>
+          <div class="kpi-label">Total Invoices</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon">🚨</div>
+            <span class="kpi-trend trend-down" id="kpi-overdue-badge">0 overdue</span>
+          </div>
+          <div class="kpi-value" id="kpi-overdue">$0</div>
+          <div class="kpi-label">Overdue Amount</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Monthly Revenue</div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="setChartView('6m')">6M</button>
+              <button class="btn btn-outline btn-sm" onclick="setChartView('12m')">12M</button>
+            </div>
+          </div>
+          <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Payment Status</div>
+          </div>
+          <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Invoice Table -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <h3>Invoices</h3>
+            <span class="table-count" id="invoice-count">0 invoices</span>
+          </div>
+          <input type="text" class="search-input" placeholder="Search invoices..." oninput="filterInvoices(this.value)" id="searchInput">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" onclick="setFilter('all')">All</button>
+          <button class="filter-tab" onclick="setFilter('paid')">Paid</button>
+          <button class="filter-tab" onclick="setFilter('pending')">Pending</button>
+          <button class="filter-tab" onclick="setFilter('overdue')">Overdue</button>
+          <button class="filter-tab" onclick="setFilter('draft')">Draft</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTable('invoice')">Invoice #</th>
+                <th onclick="sortTable('client')">Client</th>
+                <th onclick="sortTable('date')">Date</th>
+                <th onclick="sortTable('due')">Due Date</th>
+                <th>Status</th>
+                <th onclick="sortTable('amount')" style="text-align:right">Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">New Invoice</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Client Name</label>
+          <input type="text" class="form-input" id="formClient" placeholder="e.g. Acme Corp">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Client Email</label>
+          <input type="email" class="form-input" id="formEmail" placeholder="client@company.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Invoice Date</label>
+          <input type="date" class="form-input" id="formDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-input" id="formDue">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="formDesc" placeholder="Services rendered, project details..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount ($)</label>
+          <input type="number" class="form-input" id="formAmount" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="formStatus">
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA STORE =====
+let invoices = [
+  { id: 'INV-001', client: 'Meridian Solutions', email: 'billing@meridian.com', date: '2026-04-01', due: '2026-04-15', desc: 'Web development retainer — April', amount: 4500, status: 'paid' },
+  { id: 'INV-002', client: 'Atlas Digital Group', email: 'ap@atlasdigital.io', date: '2026-04-03', due: '2026-04-17', desc: 'Brand identity package', amount: 8200, status: 'paid' },
+  { id: 'INV-003', client: 'Pinnacle Ventures', email: 'finance@pinnacle.vc', date: '2026-03-20', due: '2026-04-03', desc: 'Investor deck design + copywriting', amount: 3750, status: 'overdue' },
+  { id: 'INV-004', client: 'ClearPath Logistics', email: 'ops@clearpath.com', date: '2026-04-05', due: '2026-04-19', desc: 'Dashboard UI/UX consulting', amount: 6100, status: 'pending' },
+  { id: 'INV-005', client: 'Vertex Health Inc.', email: 'admin@vertexhealth.co', date: '2026-04-08', due: '2026-04-22', desc: 'HIPAA compliance portal', amount: 12000, status: 'pending' },
+  { id: 'INV-006', client: 'NovaWorks AI', email: 'billing@novaworks.ai', date: '2026-03-15', due: '2026-03-29', desc: 'AI model integration — Phase 1', amount: 15500, status: 'paid' },
+  { id: 'INV-007', client: 'Redline Studios', email: 'pay@redline.studio', date: '2026-04-10', due: '2026-04-24', desc: 'Motion graphics package', amount: 2800, status: 'draft' },
+  { id: 'INV-008', client: 'UrbanGrid Properties', email: 'ar@urbangrid.com', date: '2026-03-25', due: '2026-04-08', desc: 'Property management platform', amount: 9400, status: 'overdue' },
+  { id: 'INV-009', client: 'Bright Horizon Ed.', email: 'finance@brighthorizon.edu', date: '2026-04-09', due: '2026-04-23', desc: 'Student portal redesign', amount: 5600, status: 'pending' },
+  { id: 'INV-010', client: 'Catalyst Fitness', email: 'owners@catalystfit.com', date: '2026-04-02', due: '2026-04-16', desc: 'Membership management system', amount: 7300, status: 'paid' },
+];
+
+let currentFilter = 'all';
+let searchQuery = '';
+let editingId = null;
+let sortCol = null;
+let sortDir = 1;
+let nextId = 11;
+
+// ===== RENDER =====
+function render() {
+  renderKPIs();
+  renderTable();
+  renderCharts();
+}
+
+function renderKPIs() {
+  const paid = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+  const pending = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + i.amount, 0);
+  const overdue = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + i.amount, 0);
+  const overdueCount = invoices.filter(i => i.status === 'overdue').length;
+
+  document.getElementById('kpi-revenue').textContent = '$' + paid.toLocaleString('en-US', {minimumFractionDigits: 0});
+  document.getElementById('kpi-pending').textContent = '$' + pending.toLocaleString('en-US', {minimumFractionDigits: 0});
+  document.getElementById('kpi-count').textContent = invoices.length;
+  document.getElementById('kpi-overdue').textContent = '$' + overdue.toLocaleString('en-US', {minimumFractionDigits: 0});
+  document.getElementById('kpi-overdue-badge').textContent = overdueCount + ' overdue';
+}
+
+function renderTable() {
+  let filtered = invoices.filter(i => {
+    if (currentFilter !== 'all' && i.status !== currentFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return i.client.toLowerCase().includes(q) || i.id.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    filtered.sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (sortCol === 'amount') return (va - vb) * sortDir;
+      return String(va).localeCompare(String(vb)) * sortDir;
+    });
+  }
+
+  document.getElementById('invoice-count').textContent = filtered.length + ' invoice' + (filtered.length !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('invoiceTableBody');
+  tbody.innerHTML = filtered.map(inv => `
+    <tr>
+      <td><span class="invoice-num">${inv.id}</span></td>
+      <td><span class="client-name">${inv.client}</span></td>
+      <td>${formatDate(inv.date)}</td>
+      <td>${formatDate(inv.due)}</td>
+      <td><span class="status-badge status-${inv.status}">${inv.status}</span></td>
+      <td class="amount">$${inv.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="action-btn" onclick="editInvoice('${inv.id}')" title="Edit">✏️</button>
+          <button class="action-btn" onclick="toggleStatus('${inv.id}')" title="Toggle Status">🔄</button>
+          <button class="action-btn" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+let revenueChart, statusChart;
+function renderCharts() {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlyData = new Array(12).fill(0);
+  invoices.filter(i => i.status === 'paid').forEach(inv => {
+    const m = new Date(inv.date).getMonth();
+    monthlyData[m] += inv.amount;
+  });
+
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Revenue',
+        data: monthlyData,
+        backgroundColor: 'rgba(99,102,241,0.6)',
+        borderColor: '#6366f1',
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5a6478', font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: '#5a6478', callback: v => '$' + (v/1000) + 'k' }, grid: { color: '#1e2a42' } }
+      }
+    }
+  });
+
+  const statusCounts = {
+    paid: invoices.filter(i => i.status === 'paid').length,
+    pending: invoices.filter(i => i.status === 'pending').length,
+    overdue: invoices.filter(i => i.status === 'overdue').length,
+    draft: invoices.filter(i => i.status === 'draft').length
+  };
+
+  if (statusChart) statusChart.destroy();
+  statusChart = new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Paid', 'Pending', 'Overdue', 'Draft'],
+      datasets: [{
+        data: [statusCounts.paid, statusCounts.pending, statusCounts.overdue, statusCounts.draft],
+        backgroundColor: ['#22c55e', '#eab308', '#ef4444', '#374151'],
+        borderWidth: 3,
+        borderColor: '#131825'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8892a8', font: { size: 11 }, padding: 12 } }
+      }
+    }
+  });
+}
+
+// ===== ACTIONS =====
+function openModal(type) {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Invoice';
+  document.getElementById('formClient').value = '';
+  document.getElementById('formEmail').value = '';
+  document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('formDue').value = '';
+  document.getElementById('formDesc').value = '';
+  document.getElementById('formAmount').value = '';
+  document.getElementById('formStatus').value = 'draft';
+  document.getElementById('invoiceModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('invoiceModal').classList.remove('active');
+}
+
+function saveInvoice() {
+  const client = document.getElementById('formClient').value.trim();
+  const email = document.getElementById('formEmail').value.trim();
+  const date = document.getElementById('formDate').value;
+  const due = document.getElementById('formDue').value;
+  const desc = document.getElementById('formDesc').value.trim();
+  const amount = parseFloat(document.getElementById('formAmount').value) || 0;
+  const status = document.getElementById('formStatus').value;
+
+  if (!client || !amount) { alert('Client name and amount are required.'); return; }
+
+  if (editingId) {
+    const inv = invoices.find(i => i.id === editingId);
+    if (inv) { Object.assign(inv, { client, email, date, due, desc, amount, status }); }
+  } else {
+    invoices.push({
+      id: 'INV-' + String(nextId++).padStart(3, '0'),
+      client, email, date, due, desc, amount, status
+    });
+  }
+  closeModal();
+  render();
+}
+
+function editInvoice(id) {
+  const inv = invoices.find(i => i.id === id);
+  if (!inv) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Invoice — ' + id;
+  document.getElementById('formClient').value = inv.client;
+  document.getElementById('formEmail').value = inv.email;
+  document.getElementById('formDate').value = inv.date;
+  document.getElementById('formDue').value = inv.due;
+  document.getElementById('formDesc').value = inv.desc;
+  document.getElementById('formAmount').value = inv.amount;
+  document.getElementById('formStatus').value = inv.status;
+  document.getElementById('invoiceModal').classList.add('active');
+}
+
+function deleteInvoice(id) {
+  if (!confirm('Delete ' + id + '?')) return;
+  invoices = invoices.filter(i => i.id !== id);
+  render();
+}
+
+function toggleStatus(id) {
+  const inv = invoices.find(i => i.id === id);
+  if (!inv) return;
+  const cycle = ['draft', 'pending', 'paid', 'overdue'];
+  inv.status = cycle[(cycle.indexOf(inv.status) + 1) % cycle.length];
+  render();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTable();
+}
+
+function filterInvoices(q) {
+  searchQuery = q;
+  renderTable();
+}
+
+function sortTable(col) {
+  if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+  renderTable();
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function exportData() {
+  const headers = ['Invoice #','Client','Email','Date','Due','Description','Amount','Status'];
+  const rows = invoices.map(i => [i.id, i.client, i.email, i.date, i.due, '"'+i.desc+'"', i.amount, i.status]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'invoices_export.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function setChartView(range) {
+  // Placeholder for chart range toggle
+  renderCharts();
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>

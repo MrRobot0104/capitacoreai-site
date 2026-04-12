@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Command Center | CommandAI by CapitaCoreAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0f1a;
+            color: #e0e6ed;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border-right: 1px solid rgba(168, 85, 247, 0.1);
+            padding: 30px 20px;
+            overflow-y: auto;
+            box-shadow: inset -1px 0 0 rgba(168, 85, 247, 0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            font-weight: 700;
+            font-size: 16px;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo::before {
+            content: "⚡";
+            font-size: 20px;
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7c8aaf;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding: 0 10px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: #a0aec0;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(168, 85, 247, 0.1);
+            color: #e0e6ed;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.2) 0%, transparent 100%);
+            color: #a855f7;
+            border-left-color: #a855f7;
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.6);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px;
+        }
+
+        /* KPI GRID */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .kpi-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 12px 48px rgba(168, 85, 247, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.5), transparent);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #7c8aaf;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .kpi-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .trend-up {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .trend-down {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #86efac;
+        }
+
+        /* SECTION TITLE */
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ai-pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+            }
+            50% {
+                opacity: 0.8;
+                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
+            }
+        }
+
+        /* AI INSIGHTS PANEL */
+        .ai-insights {
+            background: linear-gradient(135deg, #1a1f2e 0%, #15192a 100%);
+            border: 2px solid transparent;
+            background-image: linear-gradient(135deg, #1a1f2e 0%, #15192a 100%),
+                              linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            background-origin: padding-box, border-box;
+            background-clip: padding-box, border-box;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-insights::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+            animation: glow 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .ai-insights-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .insight-item {
+            background: rgba(168, 85, 247, 0.08);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .insight-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #7c8aaf;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            color: #a855f7;
+        }
+
+        .tab.active {
+            color: #a855f7;
+            border-bottom-color: #a855f7;
+        }
+
+        /* DATA TABLE */
+        .table-container {
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(168, 85, 247, 0.1);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: #a855f7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 6px 10px;
+            border: none;
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            background: rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-action.delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .anomaly-highlight {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+        }
+
+        /* SEARCH */
+        .search-bar {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px 15px 10px 35px;
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+        }
+
+        .search-bar input::placeholder {
+            color: #7c8aaf;
+        }
+
+        .search-bar::before {
+            content: '🔍';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #e0e6ed;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+        }
+
+        .form-select option {
+            background: #131825;
+            color: #e0e6ed;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #a855f7;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            justify-content: flex-end;
+        }
+
+        .btn-close {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-close:hover {
+            background: rgba(168, 85, 247, 0.2);
+        }
+
+        /* CHARTS CONTAINER */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 12px 48px rgba(168, 85, 247, 0.15);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #e0e6ed;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(168, 85, 247, 0.5);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1600px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .health-gauge {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-number {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gauge-label {
+            font-size: 11px;
+            color: #7c8aaf;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">CommandAI by CapitaCoreAI</div>
+
+            <div class="nav-section">
+                <div class="nav-label">Main</div>
+                <div class="nav-item active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+                <div class="nav-item" onclick="switchTab('revenue')">💰 Revenue Intel</div>
+                <div class="nav-item" onclick="switchTab('expenses')">💸 Expense Analyzer</div>
+                <div class="nav-item" onclick="switchTab('customers')">👥 Customer Insights</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Analytics</div>
+                <div class="nav-item" onclick="switchTab('forecasting')">📈 Forecasting</div>
+                <div class="nav-item" onclick="switchTab('reports')">📋 AI Reports</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">System</div>
+                <div class="nav-item" onclick="switchTab('settings')">⚙️ Settings</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div class="header">
+                <div class="header-title">AI Business Command Center</div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary btn-small" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="btn btn-primary btn-small" onclick="openAddRevenueModal()">+ Revenue</button>
+                    <button class="btn btn-primary btn-small" onclick="openAddExpenseModal()">+ Expense</button>
+                    <button class="btn btn-primary btn-small" onclick="openAddCustomerModal()">+ Customer</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- DASHBOARD TAB -->
+                <div id="dashboard-tab" class="tab-content">
+                    <!-- KPI CARDS -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-label">Monthly Revenue</div>
+                            <div class="kpi-value">$185.4K</div>
+                            <div class="kpi-meta"><span class="trend-up">↑ 23%</span> vs last month</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">Monthly Expenses</div>
+                            <div class="kpi-value">$62.8K</div>
+                            <div class="kpi-meta"><span class="trend-down">↑ 8%</span> <span class="badge">⚠️ Anomaly</span></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">Net Profit</div>
+                            <div class="kpi-value">$122.6K</div>
+                            <div class="kpi-meta">Margin: <strong>66.1%</strong></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">Customer Count</div>
+                            <div class="kpi-value">1,247</div>
+                            <div class="kpi-meta"><span class="trend-up">↑ 18.5%</span> growth</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">AI Health Score</div>
+                            <div class="kpi-value">92/100</div>
+                            <div class="kpi-meta"><span class="badge success">✓ Optimal</span></div>
+                        </div>
+                    </div>
+
+                    <!-- AI INSIGHTS PANEL -->
+                    <div class="ai-insights">
+                        <div class="ai-insights-header">
+                            <span class="ai-pulse"></span>
+                            AI-Powered Business Insights
+                        </div>
+                        <div class="insights-grid">
+                            <div class="insight-item">
+                                <span class="insight-icon">📈</span>
+                                <div><strong>Revenue Surge (23% MoM)</strong><br>Consulting services drove $58K of new revenue this month, up from $31K previously. Your SaaS channel also contributed $42K.</div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">⚠️</span>
+                                <div><strong>Marketing ROI Declining</strong><br>Paid ads spend increased 34% but revenue impact only 12%. Consider reallocating $8K to content marketing where historical ROI is 4.2x.</div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">😟</span>
+                                <div><strong>3 Customers at Risk</strong><br>Acme Corp, TechFlow Inc, and DataViz Ltd show 60+ days of inactivity. Recommended: personalized outreach or renewal incentives within 14 days.</div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">💡</span>
+                                <div><strong>Expense Anomaly Detected</strong><br>Software tools category spiked to $18.6K (2.1x average). Verify: license renewals or new subscriptions. Budget impact: -$5.2K vs forecast.</div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">🎯</span>
+                                <div><strong>High-Value Customer Segment</strong><br>12 enterprise customers (>$10K LTV) represent 48% of revenue. Focus retention efforts here. Average churn risk: 8%.</div>
+                            </div>
+                            <div class="insight-item">
+                                <span class="insight-icon">📊</span>
+                                <div><strong>Seasonal Pattern Identified</strong><br>April typically sees 28% revenue lift vs March. Ramping sales team early recommended. Forecast: $225K by month-end.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CHARTS -->
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-title">Revenue vs Expenses Trend</div>
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Expense Breakdown</div>
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Revenue by Channel</div>
+                            <canvas id="channelChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Customer Acquisition Funnel</div>
+                            <canvas id="funnelChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REVENUE TAB -->
+                <div id="revenue-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 20px;">
+                        <div class="section-title">
+                            <span class="ai-pulse"></span>
+                            Revenue Tracker
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search revenue entries..." id="revenueSearch" onkeyup="filterRevenueTable()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="revenueTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Source/Channel</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenueBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- EXPENSES TAB -->
+                <div id="expenses-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 20px;">
+                        <div class="section-title">
+                            <span class="ai-pulse"></span>
+                            Expense Analyzer
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search expenses..." id="expenseSearch" onkeyup="filterExpenseTable()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="expenseTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Vendor</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Recurring</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CUSTOMERS TAB -->
+                <div id="customers-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 20px;">
+                        <div class="section-title">
+                            <span class="ai-pulse"></span>
+                            Customer Insights
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search customers..." id="customerSearch" onkeyup="filterCustomerTable()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="customerTable">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Acquisition Channel</th>
+                                    <th>Lifetime Value</th>
+                                    <th>Last Purchase</th>
+                                    <th>Health Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FORECASTING TAB -->
+                <div id="forecasting-tab" class="tab-content" style="display: none;">
+                    <div class="section-title">
+                        <span class="ai-pulse"></span>
+                        Financial Forecasting
+                    </div>
+                    <div class="chart-card" style="margin-bottom: 25px;">
+                        <div class="chart-title">90-Day Revenue Forecast</div>
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- REPORTS TAB -->
+                <div id="reports-tab" class="tab-content" style="display: none;">
+                    <div class="section-title">
+                        <span class="ai-pulse"></span>
+                        AI-Generated Reports
+                    </div>
+                    <div style="background: linear-gradient(135deg, #1a1f2e 0%, #15192a 100%); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 25px; margin-bottom: 20px;">
+                        <h3 style="color: #a855f7; margin-bottom: 15px;">April Performance Summary</h3>
+                        <p style="line-height: 1.8; color: #cbd5e1; margin-bottom: 12px;">
+                            <strong>Revenue Performance:</strong> April delivered $185.4K in total revenue, representing a 23% month-over-month increase. The consulting services channel was the primary growth driver, contributing $58K. This is an exceptional result that exceeds the forecasted $165K by 12.4%.
+                        </p>
+                        <p style="line-height: 1.8; color: #cbd5e1; margin-bottom: 12px;">
+                            <strong>Cost Efficiency:</strong> Despite the revenue growth, expenses increased modestly to $62.8K (up only 8% from March). The primary cost driver is software tools ($18.6K), which experienced an anomaly this month. Total profit margin stands at 66.1%, which is healthy but slightly below the 68% benchmark. Recommend investigating the tools category to prevent future overages.
+                        </p>
+                        <p style="line-height: 1.8; color: #cbd5e1; margin-bottom: 12px;">
+                            <strong>Customer Growth:</strong> The customer base expanded to 1,247 active customers, up 18.5% from March. Enterprise segment (>$10K LTV) grew 22%, significantly outpacing SMB growth at 14%. Three customers are flagged for at-risk status due to 60+ day inactivity.
+                        </p>
+                        <p style="line-height: 1.8; color: #cbd5e1;">
+                            <strong>Forecast:</strong> Based on current trends, May is projected to reach $195K-$210K in revenue, assuming stable channel performance and seasonal lift patterns.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div id="settings-tab" class="tab-content" style="display: none;">
+                    <div class="section-title">
+                        <span class="ai-pulse"></span>
+                        System Settings
+                    </div>
+                    <div style="background: linear-gradient(135deg, #131825 0%, #1a1f2e 100%); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 25px; max-width: 500px;">
+                        <div class="form-group">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" class="form-input" value="CapitaCoreAI">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Currency</label>
+                            <select class="form-select">
+                                <option>USD ($)</option>
+                                <option>EUR (€)</option>
+                                <option>GBP (£)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Refresh Interval</label>
+                            <select class="form-select">
+                                <option>Real-time</option>
+                                <option>Every 5 minutes</option>
+                                <option>Every 15 minutes</option>
+                                <option>Hourly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">AI Insights Frequency</label>
+                            <select class="form-select">
+                                <option>Real-time</option>
+                                <option>Daily</option>
+                                <option>Weekly</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- ADD REVENUE MODAL -->
+    <div id="addRevenueModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Revenue Entry</div>
+            <form onsubmit="addRevenue(event)">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="revenueDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Source/Channel</label>
+                    <input type="text" class="form-input" id="revenueSource" placeholder="e.g., SaaS, Consulting" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" class="form-input" id="revenueAmount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="revenueCategory" required>
+                        <option value="">Select category</option>
+                        <option value="SaaS">SaaS</option>
+                        <option value="Consulting">Consulting</option>
+                        <option value="Support">Support</option>
+                        <option value="Training">Training</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-close" onclick="closeModal('addRevenueModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Revenue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD EXPENSE MODAL -->
+    <div id="addExpenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Expense Entry</div>
+            <form onsubmit="addExpense(event)">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="expenseDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendor</label>
+                    <input type="text" class="form-input" id="expenseVendor" placeholder="e.g., AWS, Slack" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" class="form-input" id="expenseAmount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="expenseCategory" required>
+                        <option value="">Select category</option>
+                        <option value="Operations">Operations</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Payroll">Payroll</option>
+                        <option value="Tools">Tools</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="expenseRecurring">
+                        <label class="form-label" style="margin: 0;">Recurring expense?</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-close" onclick="closeModal('addExpenseModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD CUSTOMER MODAL -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Customer</div>
+            <form onsubmit="addCustomer(event)">
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="customerName" placeholder="e.g., Acme Corp" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Acquisition Channel</label>
+                    <select class="form-select" id="customerChannel" required>
+                        <option value="">Select channel</option>
+                        <option value="Direct">Direct</option>
+                        <option value="Referral">Referral</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Sales">Sales</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lifetime Value ($)</label>
+                    <input type="number" class="form-input" id="customerLTV" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Purchase (Days Ago)</label>
+                    <input type="number" class="form-input" id="customerLastPurchase" placeholder="0" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-close" onclick="closeModal('addCustomerModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DATA STORE
+        const data = {
+            revenue: [
+                { id: 1, date: '2026-02-05', source: 'SaaS', amount: 15000, category: 'SaaS' },
+                { id: 2, date: '2026-02-08', source: 'Consulting', amount: 8500, category: 'Consulting' },
+                { id: 3, date: '2026-02-12', source: 'SaaS', amount: 22000, category: 'SaaS' },
+                { id: 4, date: '2026-02-15', source: 'Support', amount: 4200, category: 'Support' },
+                { id: 5, date: '2026-02-18', source: 'Consulting', amount: 11000, category: 'Consulting' },
+                { id: 6, date: '2026-03-02', source: 'SaaS', amount: 18500, category: 'SaaS' },
+                { id: 7, date: '2026-03-05', source: 'Consulting', amount: 9800, category: 'Consulting' },
+                { id: 8, date: '2026-03-10', source: 'Training', amount: 6500, category: 'Training' },
+                { id: 9, date: '2026-03-15', source: 'SaaS', amount: 25000, category: 'SaaS' },
+                { id: 10, date: '2026-03-22', source: 'Support', amount: 3800, category: 'Support' },
+                { id: 11, date: '2026-04-02', source: 'SaaS', amount: 28000, category: 'SaaS' },
+                { id: 12, date: '2026-04-08', source: 'Consulting', amount: 30000, category: 'Consulting' },
+                { id: 13, date: '2026-04-15', source: 'SaaS', amount: 42000, category: 'SaaS' },
+                { id: 14, date: '2026-04-18', source: 'Consulting', amount: 28000, category: 'Consulting' },
+                { id: 15, date: '2026-04-25', source: 'Training', amount: 8500, category: 'Training' },
+            ],
+            expenses: [
+                { id: 1, date: '2026-02-02', vendor: 'AWS', amount: 5200, category: 'Operations', recurring: true },
+                { id: 2, date: '2026-02-03', vendor: 'Slack', amount: 800, category: 'Tools', recurring: true },
+                { id: 3, date: '2026-02-05', vendor: 'Google Ads', amount: 4500, category: 'Marketing', recurring: false },
+                { id: 4, date: '2026-02-10', vendor: 'Payroll', amount: 28000, category: 'Payroll', recurring: true },
+                { id: 5, date: '2026-02-15', vendor: 'Office Rent', amount: 8000, category: 'Operations', recurring: true },
+                { id: 6, date: '2026-03-02', vendor: 'AWS', amount: 5400, category: 'Operations', recurring: true },
+                { id: 7, date: '2026-03-03', vendor: 'HubSpot', amount: 1200, category: 'Tools', recurring: true },
+                { id: 8, date: '2026-03-05', vendor: 'Facebook Ads', amount: 3800, category: 'Marketing', recurring: false },
+                { id: 9, date: '2026-03-10', vendor: 'Payroll', amount: 28000, category: 'Payroll', recurring: true },
+                { id: 10, date: '2026-03-15', vendor: 'Office Rent', amount: 8000, category: 'Operations', recurring: true },
+                { id: 11, date: '2026-04-02', vendor: 'AWS', amount: 5600, category: 'Operations', recurring: true },
+                { id: 12, date: '2026-04-03', vendor: 'Datadog', amount: 2100, category: 'Tools', recurring: true },
+                { id: 13, date: '2026-04-05', vendor: 'LinkedIn Ads', amount: 5200, category: 'Marketing', recurring: false },
+                { id: 14, date: '2026-04-10', vendor: 'Payroll', amount: 28000, category: 'Payroll', recurring: true },
+                { id: 15, date: '2026-04-15', vendor: 'Office Rent', amount: 8000, category: 'Operations', recurring: true },
+                { id: 16, date: '2026-04-18', vendor: 'Figma', amount: 1500, category: 'Tools', recurring: true },
+                { id: 17, date: '2026-04-22', vendor: 'SendGrid', amount: 900, category: 'Tools', recurring: true },
+            ],
+            customers: [
+                { id: 1, name: 'Acme Corp', channel: 'Direct', ltv: 45000, lastPurchase: 65, health: 'at-risk' },
+                { id: 2, name: 'TechFlow Inc', channel: 'Referral', ltv: 32000, lastPurchase: 72, health: 'at-risk' },
+                { id: 3, name: 'DataViz Ltd', channel: 'Marketing', ltv: 28500, lastPurchase: 68, health: 'at-risk' },
+                { id: 4, name: 'CloudSync Systems', channel: 'Sales', ltv: 52000, lastPurchase: 8, health: 'active' },
+                { id: 5, name: 'AI Innovations', channel: 'Direct', ltv: 38000, lastPurchase: 12, health: 'active' },
+                { id: 6, name: 'Digital Architects', channel: 'Referral', ltv: 41000, lastPurchase: 5, health: 'active' },
+                { id: 7, name: 'SecureNet Corp', channel: 'Marketing', ltv: 35000, lastPurchase: 18, health: 'active' },
+                { id: 8, name: 'Enterprise Solutions', channel: 'Sales', ltv: 58000, lastPurchase: 3, health: 'active' },
+                { id: 9, name: 'QuantumData Analytics', channel: 'Direct', ltv: 48000, lastPurchase: 15, health: 'active' },
+                { id: 10, name: 'RapidScale Industries', channel: 'Referral', ltv: 32000, lastPurchase: 22, health: 'active' },
+            ],
+            nextId: { revenue: 16, expenses: 18, customers: 11 }
+        };
+
+        let currentTab = 'dashboard';
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', function() {
+            setDateInputToToday('revenueDate');
+            setDateInputToToday('expenseDate');
+            renderRevenue();
+            renderExpenses();
+            renderCustomers();
+            initCharts();
+        });
+
+        function setDateInputToToday(inputId) {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById(inputId).value = today;
+        }
+
+        // TAB SWITCHING
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tabName === 'dashboard') {
+                setTimeout(() => {
+                    updateCharts();
+                }, 100);
+            }
+        }
+
+        // REVENUE FUNCTIONS
+        function renderRevenue() {
+            const tbody = document.getElementById('revenueBody');
+            tbody.innerHTML = data.revenue.map(item => `
+                <tr>
+                    <td>${item.date}</td>
+                    <td>${item.source}</td>
+                    <td>$${item.amount.toLocaleString()}</td>
+                    <td>${item.category}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-action" onclick="editRevenue(${item.id})">Edit</button>
+                            <button class="btn-action delete" onclick="deleteRevenue(${item.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addRevenue(e) {
+            e.preventDefault();
+            const revenue = {
+                id: data.nextId.revenue++,
+                date: document.getElementById('revenueDate').value,
+                source: document.getElementById('revenueSource').value,
+                amount: parseFloat(document.getElementById('revenueAmount').value),
+                category: document.getElementById('revenueCategory').value
+            };
+            data.revenue.push(revenue);
+            renderRevenue();
+            closeModal('addRevenueModal');
+            alert('Revenue entry added successfully!');
+        }
+
+        function deleteRevenue(id) {
+            if (confirm('Delete this revenue entry?')) {
+                data.revenue = data.revenue.filter(r => r.id !== id);
+                renderRevenue();
+            }
+        }
+
+        function editRevenue(id) {
+            alert('Edit functionality - update entry ID ' + id);
+        }
+
+        function filterRevenueTable() {
+            const filter = document.getElementById('revenueSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#revenueBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        // EXPENSE FUNCTIONS
+        function renderExpenses() {
+            const tbody = document.getElementById('expenseBody');
+            const avgByCategory = calculateExpenseAverages();
+
+            tbody.innerHTML = data.expenses.map(item => {
+                const avg = avgByCategory[item.category] || 0;
+                const isAnomaly = item.amount > (avg * 2);
+                return `
+                    <tr ${isAnomaly ? 'class="anomaly-highlight"' : ''}>
+                        <td>${item.date}</td>
+                        <td>${item.vendor}</td>
+                        <td>$${item.amount.toLocaleString()} ${isAnomaly ? '<span class="badge">Anomaly</span>' : ''}</td>
+                        <td>${item.category}</td>
+                        <td>${item.recurring ? '✓ Yes' : 'No'}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn-action" onclick="editExpense(${item.id})">Edit</button>
+                                <button class="btn-action delete" onclick="deleteExpense(${item.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateExpenseAverages() {
+            const categories = {};
+            const counts = {};
+            data.expenses.forEach(e => {
+                categories[e.category] = (categories[e.category] || 0) + e.amount;
+                counts[e.category] = (counts[e.category] || 0) + 1;
+            });
+            Object.keys(categories).forEach(cat => {
+                categories[cat] = categories[cat] / counts[cat];
+            });
+            return categories;
+        }
+
+        function addExpense(e) {
+            e.preventDefault();
+            const expense = {
+                id: data.nextId.expenses++,
+                date: document.getElementById('expenseDate').value,
+                vendor: document.getElementById('expenseVendor').value,
+                amount: parseFloat(document.getElementById('expenseAmount').value),
+                category: document.getElementById('expenseCategory').value,
+                recurring: document.getElementById('expenseRecurring').checked
+            };
+            data.expenses.push(expense);
+            renderExpenses();
+            closeModal('addExpenseModal');
+            alert('Expense entry added successfully!');
+        }
+
+        function deleteExpense(id) {
+            if (confirm('Delete this expense entry?')) {
+                data.expenses = data.expenses.filter(e => e.id !== id);
+                renderExpenses();
+            }
+        }
+
+        function editExpense(id) {
+            alert('Edit functionality - update entry ID ' + id);
+        }
+
+        function filterExpenseTable() {
+            const filter = document.getElementById('expenseSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#expenseBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        // CUSTOMER FUNCTIONS
+        function renderCustomers() {
+            const tbody = document.getElementById('customerBody');
+            tbody.innerHTML = data.customers.map(item => {
+                const health = calculateCustomerHealth(item);
+                let healthColor = 'success';
+                if (health === 'at-risk') healthColor = '';
+                if (health === 'churned') healthColor = '';
+
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.channel}</td>
+                        <td>$${item.ltv.toLocaleString()}</td>
+                        <td>${item.lastPurchase} days ago</td>
+                        <td><span class="badge ${healthColor}">${health.toUpperCase()}</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn-action" onclick="editCustomer(${item.id})">Edit</button>
+                                <button class="btn-action delete" onclick="deleteCustomer(${item.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateCustomerHealth(customer) {
+            if (customer.lastPurchase > 60) return 'at-risk';
+            if (customer.lastPurchase > 90) return 'churned';
+            return 'active';
+        }
+
+        function addCustomer(e) {
+            e.preventDefault();
+            const customer = {
+                id: data.nextId.customers++,
+                name: document.getElementById('customerName').value,
+                channel: document.getElementById('customerChannel').value,
+                ltv: parseFloat(document.getElementById('customerLTV').value),
+                lastPurchase: parseInt(document.getElementById('customerLastPurchase').value),
+                health: 'active'
+            };
+            data.customers.push(customer);
+            renderCustomers();
+            closeModal('addCustomerModal');
+            alert('Customer added successfully!');
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('Delete this customer?')) {
+                data.customers = data.customers.filter(c => c.id !== id);
+                renderCustomers();
+            }
+        }
+
+        function editCustomer(id) {
+            alert('Edit functionality - update customer ID ' + id);
+        }
+
+        function filterCustomerTable() {
+            const filter = document.getElementById('customerSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#customerBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        // MODAL FUNCTIONS
+        function openAddRevenueModal() {
+            document.getElementById('addRevenueModal').classList.add('active');
+        }
+
+        function openAddExpenseModal() {
+            document.getElementById('addExpenseModal').classList.add('active');
+        }
+
+        function openAddCustomerModal() {
+            document.getElementById('addCustomerModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // EXPORT CSV
+        function exportCSV() {
+            let csv = 'REVENUE\nDate,Source,Amount,Category\n';
+            data.revenue.forEach(r => {
+                csv += `${r.date},${r.source},${r.amount},${r.category}\n`;
+            });
+            csv += '\nEXPENSES\nDate,Vendor,Amount,Category,Recurring\n';
+            data.expenses.forEach(e => {
+                csv += `${e.date},${e.vendor},${e.amount},${e.category},${e.recurring}\n`;
+            });
+            csv += '\nCUSTOMERS\nName,Channel,LTV,LastPurchase\n';
+            data.customers.forEach(c => {
+                csv += `${c.name},${c.channel},${c.ltv},${c.lastPurchase}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'business-data.csv';
+            a.click();
+        }
+
+        // CHARTS
+        let charts = {};
+
+        function initCharts() {
+            initTrendChart();
+            initExpenseChart();
+            initChannelChart();
+            initFunnelChart();
+            initForecastChart();
+        }
+
+        function initTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const months = ['Feb', 'Mar', 'Apr'];
+            const revenue = [81500, 63100, 185400];
+            const expenses = [54500, 54400, 62800];
+
+            charts.trend = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: revenue,
+                            backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenses,
+                            type: 'line',
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderWidth: 3,
+                            fill: false,
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#a0aec0', font: { size: 12 } } } },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { color: '#7c8aaf' },
+                            grid: { color: 'rgba(168, 85, 247, 0.1)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { color: '#7c8aaf' },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function initExpenseChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const categories = {};
+            data.expenses.forEach(e => {
+                categories[e.category] = (categories[e.category] || 0) + e.amount;
+            });
+
+            charts.expense = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: [
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(6, 182, 212, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(34, 211, 238, 0.8)',
+                            'rgba(147, 51, 234, 0.8)'
+                        ],
+                        borderColor: '#131825',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#a0aec0', font: { size: 12 } } } }
+                }
+            });
+        }
+
+        function initChannelChart() {
+            const ctx = document.getElementById('channelChart').getContext('2d');
+            const channels = { 'SaaS': 0, 'Consulting': 0, 'Support': 0, 'Training': 0 };
+            data.revenue.forEach(r => {
+                channels[r.category] = (channels[r.category] || 0) + r.amount;
+            });
+
+            charts.channel = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(channels),
+                    datasets: [{
+                        label: 'Revenue by Channel',
+                        data: Object.values(channels),
+                        backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                        borderColor: '#a855f7',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#a0aec0', font: { size: 12 } } } },
+                    scales: {
+                        x: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                        y: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function initFunnelChart() {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            charts.funnel = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Leads', 'MQL', 'SQL', 'Customer'],
+                    datasets: [{
+                        label: 'Acquisition Funnel',
+                        data: [2800, 1450, 650, 1247],
+                        backgroundColor: 'rgba(6, 182, 212, 0.7)',
+                        borderColor: '#06b6d4',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#a0aec0', font: { size: 12 } } } },
+                    scales: {
+                        x: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                        y: { ticks: { color: '#7c8aaf' } }
+                    }
+                }
+            });
+        }
+
+        function initForecastChart() {
+            const ctx = document.getElementById('forecastChart');
+            if (!ctx) return;
+
+            charts.forecast = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Apr 11', 'Apr 18', 'Apr 25', 'May 2', 'May 9', 'May 16', 'May 23', 'May 30', 'Jun 6'],
+                    datasets: [{
+                        label: 'Actual',
+                        data: [185400, null, null, null, null, null, null, null, null],
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Forecast',
+                        data: [185400, 192000, 198500, 205000, 215000, 225000, 235000, 245000, 255000],
+                        borderColor: '#06b6d4',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#a0aec0', font: { size: 12 } } } },
+                    scales: {
+                        y: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                        x: { ticks: { color: '#7c8aaf' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (charts.trend) charts.trend.update();
+            if (charts.expense) charts.expense.update();
+            if (charts.channel) charts.channel.update();
+            if (charts.funnel) charts.funnel.update();
+        }
+    </script>
+</body>
+</html>

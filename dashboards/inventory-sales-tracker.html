@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse - Inventory & Sales Tracker by CapitaCoreAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0b0f1a;
+            --bg-secondary: #131825;
+            --bg-tertiary: #1a1f2e;
+            --accent-orange: #ff8c42;
+            --accent-amber: #ffa500;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --border-color: #2a3038;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 16px;
+            overflow-y: auto;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            font-weight: 700;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 13px;
+            color: white;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding: 0 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber));
+            color: white;
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            margin-left: 260px;
+            flex: 1;
+            background-color: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* CONTENT */
+        .content {
+            padding: 32px;
+        }
+
+        .content-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        /* KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--accent-orange);
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            color: var(--success);
+        }
+
+        .trend-down {
+            color: var(--danger);
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--accent-orange);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* FILTER TABS */
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .filter-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .filter-tab.active {
+            color: var(--accent-orange);
+            border-bottom-color: var(--accent-orange);
+        }
+
+        /* SEARCH */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.1);
+        }
+
+        /* TABLE */
+        .table-container {
+            overflow-x: auto;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        th:hover {
+            color: var(--accent-orange);
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        th.sortable:hover::after {
+            opacity: 0.5;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        td {
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        /* STATUS BADGE */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-in-stock {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-low-stock {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-out-of-stock {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* ALERT BADGE */
+        .alert-badge {
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .chart-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* ACTIONS */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 999;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 24px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            td, th {
+                padding: 12px;
+            }
+        }
+
+        /* UTILITY */
+        .text-muted {
+            color: var(--text-secondary);
+        }
+
+        .mt-4 {
+            margin-top: 32px;
+        }
+
+        .hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">📦</div>
+                <div class="logo-text">StockPulse</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Menu</div>
+                <div class="nav-item active" data-page="dashboard">
+                    📊 Dashboard
+                </div>
+                <div class="nav-item" data-page="products">
+                    📋 Products
+                </div>
+                <div class="nav-item" data-page="sales">
+                    💰 Sales
+                </div>
+                <div class="nav-item" data-page="orders">
+                    📦 Orders
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Other</div>
+                <div class="nav-item" data-page="suppliers">
+                    🏭 Suppliers
+                </div>
+                <div class="nav-item" data-page="reports">
+                    📈 Reports
+                </div>
+                <div class="nav-item" data-page="settings">
+                    ⚙️ Settings
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- HEADER -->
+            <div class="header">
+                <h1 class="header-title">Dashboard</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+                    <button class="btn btn-primary" id="recordSaleBtn">+ Record Sale</button>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="content">
+                <!-- KPI CARDS -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Inventory Value</div>
+                        <div class="kpi-value" id="totalInventoryValue">$0</div>
+                        <div class="kpi-trend trend-up">
+                            <span>↑ 12.5% from last month</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Monthly Sales Revenue</div>
+                        <div class="kpi-value" id="monthlySalesRevenue">$0</div>
+                        <div class="kpi-trend trend-up">
+                            <span>↑ 8.2% from last month</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Low Stock Alerts</div>
+                        <div class="kpi-value" id="lowStockCount">0</div>
+                        <div class="alert-badge" id="alertBadge" style="display: inline-flex;">0</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Profit Margin</div>
+                        <div class="kpi-value" id="profitMargin">0%</div>
+                        <div class="kpi-trend trend-up">
+                            <span>↑ 2.3% from last month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="content-section">
+                    <h2 class="section-title">Analytics</h2>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Sales Trend (Last 12 Months)</h3>
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Top Products by Revenue</h3>
+                            <canvas id="topProductsChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Inventory by Category</h3>
+                            <canvas id="inventoryCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Profit Margin Trend</h3>
+                            <canvas id="profitMarginChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTS SECTION -->
+                <div class="content-section">
+                    <h2 class="section-title">Products</h2>
+                    <div class="search-container">
+                        <input type="text" class="search-input" id="productSearch" placeholder="Search products by name, SKU, or category...">
+                    </div>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All Products</button>
+                        <button class="filter-tab" data-filter="in-stock">In Stock</button>
+                        <button class="filter-tab" data-filter="low-stock">Low Stock</button>
+                        <button class="filter-tab" data-filter="out-of-stock">Out of Stock</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-key="sku">SKU</th>
+                                    <th class="sortable" data-key="name">Product Name</th>
+                                    <th class="sortable" data-key="category">Category</th>
+                                    <th class="sortable" data-key="costPrice">Cost Price</th>
+                                    <th class="sortable" data-key="sellPrice">Sell Price</th>
+                                    <th class="sortable" data-key="quantity">Stock Qty</th>
+                                    <th class="sortable" data-key="reorderLevel">Reorder Level</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SALES LOG SECTION -->
+                <div class="content-section">
+                    <h2 class="section-title">Sales Log</h2>
+                    <div class="search-container">
+                        <input type="text" class="search-input" id="salesSearch" placeholder="Search sales by product, customer, or date...">
+                    </div>
+                    <div class="table-container">
+                        <table id="salesTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-key="date">Date</th>
+                                    <th class="sortable" data-key="product">Product</th>
+                                    <th class="sortable" data-key="quantity">Quantity</th>
+                                    <th class="sortable" data-key="revenue">Revenue</th>
+                                    <th class="sortable" data-key="profit">Profit</th>
+                                    <th class="sortable" data-key="customer">Customer</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD PRODUCT MODAL -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Add New Product</span>
+                <button class="modal-close" onclick="closeModal('addProductModal')">✕</button>
+            </div>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-input" id="productSku" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-input" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="productCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="apparel">Apparel</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="home-goods">Home Goods</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cost Price ($)</label>
+                    <input type="number" class="form-input" id="productCostPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sell Price ($)</label>
+                    <input type="number" class="form-input" id="productSellPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock Quantity</label>
+                    <input type="number" class="form-input" id="productQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reorder Level</label>
+                    <input type="number" class="form-input" id="productReorderLevel" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div class="modal" id="editProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Edit Product</span>
+                <button class="modal-close" onclick="closeModal('editProductModal')">✕</button>
+            </div>
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-input" id="editProductSku" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-input" id="editProductName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="editProductCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="apparel">Apparel</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="home-goods">Home Goods</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cost Price ($)</label>
+                    <input type="number" class="form-input" id="editProductCostPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sell Price ($)</label>
+                    <input type="number" class="form-input" id="editProductSellPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock Quantity</label>
+                    <input type="number" class="form-input" id="editProductQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reorder Level</label>
+                    <input type="number" class="form-input" id="editProductReorderLevel" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editProductModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RECORD SALE MODAL -->
+    <div class="modal" id="recordSaleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Record New Sale</span>
+                <button class="modal-close" onclick="closeModal('recordSaleModal')">✕</button>
+            </div>
+            <form id="recordSaleForm">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="saleDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product</label>
+                    <select class="form-select" id="saleProduct" required>
+                        <option value="">Select Product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity Sold</label>
+                    <input type="number" class="form-input" id="saleQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="saleCustomer" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('recordSaleModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Record Sale</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT SALE MODAL -->
+    <div class="modal" id="editSaleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Edit Sale</span>
+                <button class="modal-close" onclick="closeModal('editSaleModal')">✕</button>
+            </div>
+            <form id="editSaleForm">
+                <input type="hidden" id="editSaleId">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="editSaleDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product</label>
+                    <select class="form-select" id="editSaleProduct" required>
+                        <option value="">Select Product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity Sold</label>
+                    <input type="number" class="form-input" id="editSaleQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="editSaleCustomer" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editSaleModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DATA MANAGEMENT
+        let products = [
+            { id: 1, sku: 'ELEC-001', name: 'Wireless Headphones', category: 'electronics', costPrice: 25.00, sellPrice: 79.99, quantity: 42, reorderLevel: 15 },
+            { id: 2, sku: 'ELEC-002', name: 'USB-C Hub', category: 'electronics', costPrice: 12.50, sellPrice: 34.99, quantity: 8, reorderLevel: 20 },
+            { id: 3, sku: 'ELEC-003', name: 'Portable Charger', category: 'electronics', costPrice: 18.00, sellPrice: 49.99, quantity: 0, reorderLevel: 10 },
+            { id: 4, sku: 'APP-001', name: 'Classic Cotton T-Shirt', category: 'apparel', costPrice: 5.00, sellPrice: 19.99, quantity: 125, reorderLevel: 50 },
+            { id: 5, sku: 'APP-002', name: 'Denim Jeans', category: 'apparel', costPrice: 18.00, sellPrice: 59.99, quantity: 45, reorderLevel: 20 },
+            { id: 6, sku: 'APP-003', name: 'Wool Sweater', category: 'apparel', costPrice: 22.00, sellPrice: 69.99, quantity: 12, reorderLevel: 15 },
+            { id: 7, sku: 'ACC-001', name: 'Leather Wallet', category: 'accessories', costPrice: 10.00, sellPrice: 39.99, quantity: 67, reorderLevel: 25 },
+            { id: 8, sku: 'ACC-002', name: 'Stainless Steel Watch', category: 'accessories', costPrice: 35.00, sellPrice: 129.99, quantity: 28, reorderLevel: 10 },
+            { id: 9, sku: 'ACC-003', name: 'Canvas Backpack', category: 'accessories', costPrice: 15.00, sellPrice: 49.99, quantity: 5, reorderLevel: 15 },
+            { id: 10, sku: 'HG-001', name: 'Ceramic Coffee Mug Set', category: 'home-goods', costPrice: 8.00, sellPrice: 24.99, quantity: 93, reorderLevel: 30 },
+            { id: 11, sku: 'HG-002', name: 'Bamboo Cutting Board', category: 'home-goods', costPrice: 9.00, sellPrice: 29.99, quantity: 37, reorderLevel: 15 },
+            { id: 12, sku: 'HG-003', name: 'Stainless Steel Cookware Set', category: 'home-goods', costPrice: 42.00, sellPrice: 149.99, quantity: 18, reorderLevel: 8 },
+            { id: 13, sku: 'HG-004', name: 'Cotton Throw Blanket', category: 'home-goods', costPrice: 12.00, sellPrice: 39.99, quantity: 55, reorderLevel: 20 },
+            { id: 14, sku: 'OTHER-001', name: 'Fitness Water Bottle', category: 'accessories', costPrice: 6.00, sellPrice: 19.99, quantity: 89, reorderLevel: 35 },
+            { id: 15, sku: 'OTHER-002', name: 'Desk Organizer', category: 'home-goods', costPrice: 8.50, sellPrice: 24.99, quantity: 41, reorderLevel: 18 },
+        ];
+
+        let sales = [
+            { id: 1, date: '2025-04-01', product: 'Wireless Headphones', quantity: 2, revenue: 159.98, profit: 109.98, customer: 'John Smith' },
+            { id: 2, date: '2025-04-02', product: 'Classic Cotton T-Shirt', quantity: 5, revenue: 99.95, profit: 74.95, customer: 'Sarah Johnson' },
+            { id: 3, date: '2025-04-03', product: 'Leather Wallet', quantity: 3, revenue: 119.97, profit: 89.97, customer: 'Mike Davis' },
+            { id: 4, date: '2025-04-04', product: 'Stainless Steel Watch', quantity: 1, revenue: 129.99, profit: 94.99, customer: 'Emily Brown' },
+            { id: 5, date: '2025-04-05', product: 'Ceramic Coffee Mug Set', quantity: 8, revenue: 199.92, profit: 135.92, customer: 'Robert Wilson' },
+            { id: 6, date: '2025-04-06', product: 'Denim Jeans', quantity: 4, revenue: 239.96, profit: 163.96, customer: 'Jessica Lee' },
+            { id: 7, date: '2025-04-07', product: 'Portable Charger', quantity: 6, revenue: 299.94, profit: 191.94, customer: 'David Martinez' },
+            { id: 8, date: '2025-04-08', product: 'Canvas Backpack', quantity: 2, revenue: 99.98, profit: 69.98, customer: 'Lisa Anderson' },
+            { id: 9, date: '2025-04-09', product: 'USB-C Hub', quantity: 3, revenue: 104.97, profit: 72.47, customer: 'James Taylor' },
+            { id: 10, date: '2025-04-10', product: 'Wool Sweater', quantity: 2, revenue: 139.98, profit: 95.98, customer: 'Amanda White' },
+            { id: 11, date: '2025-04-11', product: 'Bamboo Cutting Board', quantity: 5, revenue: 149.95, profit: 104.95, customer: 'Christopher Hall' },
+            { id: 12, date: '2025-04-11', product: 'Fitness Water Bottle', quantity: 10, revenue: 199.90, profit: 159.90, customer: 'Nicole Green' },
+        ];
+
+        let nextProductId = 16;
+        let nextSaleId = 13;
+        let currentFilter = 'all';
+        let productSortKey = null;
+        let productSortAsc = true;
+        let salesSortKey = null;
+        let salesSortAsc = true;
+        let charts = {};
+
+        // INITIALIZATION
+        function init() {
+            setupEventListeners();
+            renderProductsTable();
+            renderSalesTable();
+            updateKPIs();
+            populateSaleProductDropdown();
+            initCharts();
+            document.getElementById('saleDate').valueAsDate = new Date();
+            document.getElementById('editSaleDate').valueAsDate = new Date();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('addProductBtn').addEventListener('click', () => openModal('addProductModal'));
+            document.getElementById('recordSaleBtn').addEventListener('click', () => openModal('recordSaleModal'));
+            document.getElementById('addProductForm').addEventListener('submit', addProduct);
+            document.getElementById('recordSaleForm').addEventListener('submit', recordSale);
+            document.getElementById('editProductForm').addEventListener('submit', saveEditProduct);
+            document.getElementById('editSaleForm').addEventListener('submit', saveEditSale);
+            document.getElementById('productSearch').addEventListener('input', renderProductsTable);
+            document.getElementById('salesSearch').addEventListener('input', renderSalesTable);
+
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderProductsTable();
+                });
+            });
+
+            document.querySelectorAll('th.sortable').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    const key = e.target.dataset.key;
+                    const table = e.target.closest('table');
+                    if (table.id === 'productsTable') {
+                        productSortKey = productSortKey === key ? null : key;
+                        if (productSortKey) productSortAsc = true;
+                        renderProductsTable();
+                    } else {
+                        salesSortKey = salesSortKey === key ? null : key;
+                        if (salesSortKey) salesSortAsc = true;
+                        renderSalesTable();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+        }
+
+        // MODAL FUNCTIONS
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            if (modalId === 'addProductModal') document.getElementById('addProductForm').reset();
+            if (modalId === 'recordSaleModal') document.getElementById('recordSaleForm').reset();
+        }
+
+        // PRODUCT OPERATIONS
+        function addProduct(e) {
+            e.preventDefault();
+            const product = {
+                id: nextProductId++,
+                sku: document.getElementById('productSku').value,
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                costPrice: parseFloat(document.getElementById('productCostPrice').value),
+                sellPrice: parseFloat(document.getElementById('productSellPrice').value),
+                quantity: parseInt(document.getElementById('productQuantity').value),
+                reorderLevel: parseInt(document.getElementById('productReorderLevel').value),
+            };
+            products.push(product);
+            closeModal('addProductModal');
+            renderProductsTable();
+            updateKPIs();
+            populateSaleProductDropdown();
+            updateCharts();
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                products = products.filter(p => p.id !== id);
+                renderProductsTable();
+                updateKPIs();
+                populateSaleProductDropdown();
+                updateCharts();
+            }
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                document.getElementById('editProductId').value = product.id;
+                document.getElementById('editProductSku').value = product.sku;
+                document.getElementById('editProductName').value = product.name;
+                document.getElementById('editProductCategory').value = product.category;
+                document.getElementById('editProductCostPrice').value = product.costPrice;
+                document.getElementById('editProductSellPrice').value = product.sellPrice;
+                document.getElementById('editProductQuantity').value = product.quantity;
+                document.getElementById('editProductReorderLevel').value = product.reorderLevel;
+                openModal('editProductModal');
+            }
+        }
+
+        function saveEditProduct(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editProductId').value);
+            const product = products.find(p => p.id === id);
+            if (product) {
+                product.sku = document.getElementById('editProductSku').value;
+                product.name = document.getElementById('editProductName').value;
+                product.category = document.getElementById('editProductCategory').value;
+                product.costPrice = parseFloat(document.getElementById('editProductCostPrice').value);
+                product.sellPrice = parseFloat(document.getElementById('editProductSellPrice').value);
+                product.quantity = parseInt(document.getElementById('editProductQuantity').value);
+                product.reorderLevel = parseInt(document.getElementById('editProductReorderLevel').value);
+                closeModal('editProductModal');
+                renderProductsTable();
+                updateKPIs();
+                populateSaleProductDropdown();
+                updateCharts();
+            }
+        }
+
+        // SALE OPERATIONS
+        function recordSale(e) {
+            e.preventDefault();
+            const productName = document.getElementById('saleProduct').value;
+            const quantity = parseInt(document.getElementById('saleQuantity').value);
+            const product = products.find(p => p.name === productName);
+
+            if (product && product.quantity >= quantity) {
+                const revenue = quantity * product.sellPrice;
+                const profit = quantity * (product.sellPrice - product.costPrice);
+                const sale = {
+                    id: nextSaleId++,
+                    date: document.getElementById('saleDate').value,
+                    product: productName,
+                    quantity: quantity,
+                    revenue: parseFloat(revenue.toFixed(2)),
+                    profit: parseFloat(profit.toFixed(2)),
+                    customer: document.getElementById('saleCustomer').value,
+                };
+                sales.push(sale);
+                product.quantity -= quantity;
+                closeModal('recordSaleModal');
+                renderSalesTable();
+                renderProductsTable();
+                updateKPIs();
+                updateCharts();
+            } else {
+                alert('Insufficient stock for this product!');
+            }
+        }
+
+        function deleteSale(id) {
+            if (confirm('Are you sure you want to delete this sale?')) {
+                const sale = sales.find(s => s.id === id);
+                const product = products.find(p => p.name === sale.product);
+                if (product) product.quantity += sale.quantity;
+                sales = sales.filter(s => s.id !== id);
+                renderSalesTable();
+                renderProductsTable();
+                updateKPIs();
+                updateCharts();
+            }
+        }
+
+        function editSale(id) {
+            const sale = sales.find(s => s.id === id);
+            if (sale) {
+                document.getElementById('editSaleId').value = sale.id;
+                document.getElementById('editSaleDate').value = sale.date;
+                document.getElementById('editSaleProduct').value = sale.product;
+                document.getElementById('editSaleQuantity').value = sale.quantity;
+                document.getElementById('editSaleCustomer').value = sale.customer;
+                openModal('editSaleModal');
+            }
+        }
+
+        function saveEditSale(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editSaleId').value);
+            const sale = sales.find(s => s.id === id);
+            if (sale) {
+                const oldProduct = products.find(p => p.name === sale.product);
+                const newProductName = document.getElementById('editSaleProduct').value;
+                const newProduct = products.find(p => p.name === newProductName);
+                const newQuantity = parseInt(document.getElementById('editSaleQuantity').value);
+
+                oldProduct.quantity += sale.quantity;
+                newProduct.quantity -= newQuantity;
+
+                sale.date = document.getElementById('editSaleDate').value;
+                sale.product = newProductName;
+                sale.quantity = newQuantity;
+                sale.revenue = parseFloat((newQuantity * newProduct.sellPrice).toFixed(2));
+                sale.profit = parseFloat((newQuantity * (newProduct.sellPrice - newProduct.costPrice)).toFixed(2));
+                sale.customer = document.getElementById('editSaleCustomer').value;
+
+                closeModal('editSaleModal');
+                renderSalesTable();
+                renderProductsTable();
+                updateKPIs();
+                updateCharts();
+            }
+        }
+
+        // RENDERING
+        function renderProductsTable() {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '';
+            let filtered = products;
+
+            // Apply status filter
+            if (currentFilter === 'in-stock') {
+                filtered = filtered.filter(p => p.quantity > p.reorderLevel);
+            } else if (currentFilter === 'low-stock') {
+                filtered = filtered.filter(p => p.quantity <= p.reorderLevel && p.quantity > 0);
+            } else if (currentFilter === 'out-of-stock') {
+                filtered = filtered.filter(p => p.quantity === 0);
+            }
+
+            // Apply search
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(p =>
+                    p.sku.toLowerCase().includes(searchTerm) ||
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    p.category.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Apply sort
+            if (productSortKey) {
+                filtered.sort((a, b) => {
+                    let aVal = a[productSortKey];
+                    let bVal = b[productSortKey];
+                    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+                    return productSortAsc ? aVal > bVal ? 1 : -1 : aVal < bVal ? 1 : -1;
+                });
+            }
+
+            filtered.forEach(product => {
+                let status = 'in-stock';
+                if (product.quantity === 0) status = 'out-of-stock';
+                else if (product.quantity <= product.reorderLevel) status = 'low-stock';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.sku}</td>
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>$${product.costPrice.toFixed(2)}</td>
+                    <td>$${product.sellPrice.toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>${product.reorderLevel}</td>
+                    <td><span class="status-badge status-${status}">${status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-small" onclick="editProduct(${product.id})">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteProduct(${product.id})">Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderSalesTable() {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = '';
+            let filtered = [...sales];
+
+            // Apply search
+            const searchTerm = document.getElementById('salesSearch').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(s =>
+                    s.product.toLowerCase().includes(searchTerm) ||
+                    s.customer.toLowerCase().includes(searchTerm) ||
+                    s.date.includes(searchTerm)
+                );
+            }
+
+            // Apply sort
+            if (salesSortKey) {
+                filtered.sort((a, b) => {
+                    let aVal = a[salesSortKey];
+                    let bVal = b[salesSortKey];
+                    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+                    return salesSortAsc ? aVal > bVal ? 1 : -1 : aVal < bVal ? 1 : -1;
+                });
+            }
+
+            filtered.forEach(sale => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sale.date}</td>
+                    <td>${sale.product}</td>
+                    <td>${sale.quantity}</td>
+                    <td>$${sale.revenue.toFixed(2)}</td>
+                    <td>$${sale.profit.toFixed(2)}</td>
+                    <td>${sale.customer}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-small" onclick="editSale(${sale.id})">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteSale(${sale.id})">Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateSaleProductDropdown() {
+            const selects = [document.getElementById('saleProduct'), document.getElementById('editSaleProduct')];
+            selects.forEach(select => {
+                const current = select.value;
+                select.innerHTML = '<option value="">Select Product</option>';
+                products.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.name;
+                    option.textContent = p.name;
+                    select.appendChild(option);
+                });
+                select.value = current;
+            });
+        }
+
+        // KPI UPDATES
+        function updateKPIs() {
+            const totalInventoryValue = products.reduce((sum, p) => sum + (p.quantity * p.costPrice), 0);
+            document.getElementById('totalInventoryValue').textContent = '$' + totalInventoryValue.toFixed(2);
+
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            const monthlySales = sales.filter(s => s.date.startsWith(currentMonth));
+            const monthlySalesRevenue = monthlySales.reduce((sum, s) => sum + s.revenue, 0);
+            document.getElementById('monthlySalesRevenue').textContent = '$' + monthlySalesRevenue.toFixed(2);
+
+            const lowStockCount = products.filter(p => p.quantity <= p.reorderLevel && p.quantity > 0).length;
+            const outOfStockCount = products.filter(p => p.quantity === 0).length;
+            const totalAlerts = lowStockCount + outOfStockCount;
+            document.getElementById('lowStockCount').textContent = totalAlerts;
+            document.getElementById('alertBadge').textContent = totalAlerts;
+
+            const totalProfit = sales.reduce((sum, s) => sum + s.profit, 0);
+            const totalRevenue = sales.reduce((sum, s) => sum + s.revenue, 0);
+            const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
+            document.getElementById('profitMargin').textContent = profitMargin + '%';
+        }
+
+        // CHARTS
+        function initCharts() {
+            const monthlyData = generateMonthlyData();
+            const topProducts = getTopProductsByRevenue();
+            const categoryData = getInventoryByCategory();
+            const profitData = generateProfitMarginTrend();
+
+            // Sales Trend Chart
+            const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
+            charts.salesTrend = new Chart(salesCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthlyData.labels,
+                    datasets: [{
+                        label: 'Sales Revenue',
+                        data: monthlyData.revenue,
+                        backgroundColor: 'rgba(255, 140, 66, 0.8)',
+                        borderColor: '#ff8c42',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b8c1' },
+                            grid: { color: '#2a3038' }
+                        },
+                        x: { ticks: { color: '#b0b8c1' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Top Products Chart
+            const topCtx = document.getElementById('topProductsChart').getContext('2d');
+            charts.topProducts = new Chart(topCtx, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.names,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: topProducts.revenues,
+                        backgroundColor: 'rgba(255, 165, 0, 0.8)',
+                        borderColor: '#ffa500',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b8c1' },
+                            grid: { color: '#2a3038' }
+                        },
+                        y: { ticks: { color: '#b0b8c1' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Category Chart
+            const categoryCtx = document.getElementById('inventoryCategoryChart').getContext('2d');
+            charts.category = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.labels,
+                    datasets: [{
+                        data: categoryData.values,
+                        backgroundColor: ['#ff8c42', '#ffa500', '#ff9d33', '#ffb366', '#ffc999'],
+                        borderColor: '#131825',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#b0b8c1', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // Profit Margin Chart
+            const profitCtx = document.getElementById('profitMarginChart').getContext('2d');
+            charts.profit = new Chart(profitCtx, {
+                type: 'line',
+                data: {
+                    labels: profitData.labels,
+                    datasets: [{
+                        label: 'Profit Margin %',
+                        data: profitData.margins,
+                        borderColor: '#ff8c42',
+                        backgroundColor: 'rgba(255, 140, 66, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff8c42',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#b0b8c1' },
+                            grid: { color: '#2a3038' }
+                        },
+                        x: { ticks: { color: '#b0b8c1' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            const monthlyData = generateMonthlyData();
+            const topProducts = getTopProductsByRevenue();
+            const categoryData = getInventoryByCategory();
+            const profitData = generateProfitMarginTrend();
+
+            charts.salesTrend.data.datasets[0].data = monthlyData.revenue;
+            charts.salesTrend.update();
+
+            charts.topProducts.data.labels = topProducts.names;
+            charts.topProducts.data.datasets[0].data = topProducts.revenues;
+            charts.topProducts.update();
+
+            charts.category.data.labels = categoryData.labels;
+            charts.category.data.datasets[0].data = categoryData.values;
+            charts.category.update();
+
+            charts.profit.data.labels = profitData.labels;
+            charts.profit.data.datasets[0].data = profitData.margins;
+            charts.profit.update();
+        }
+
+        function generateMonthlyData() {
+            const labels = [];
+            const revenue = [];
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const month = date.toISOString().slice(0, 7);
+                labels.push(month);
+                const monthSales = sales.filter(s => s.date.startsWith(month));
+                revenue.push(monthSales.reduce((sum, s) => sum + s.revenue, 0));
+            }
+            return { labels, revenue };
+        }
+
+        function getTopProductsByRevenue() {
+            const productRevenue = {};
+            sales.forEach(s => {
+                productRevenue[s.product] = (productRevenue[s.product] || 0) + s.revenue;
+            });
+            return Object.entries(productRevenue)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .reduce((acc, [name, rev]) => {
+                    acc.names.push(name);
+                    acc.revenues.push(rev.toFixed(2));
+                    return acc;
+                }, { names: [], revenues: [] });
+        }
+
+        function getInventoryByCategory() {
+            const categories = {};
+            products.forEach(p => {
+                categories[p.category] = (categories[p.category] || 0) + p.quantity;
+            });
+            return {
+                labels: Object.keys(categories).map(c => c.charAt(0).toUpperCase() + c.slice(1)),
+                values: Object.values(categories)
+            };
+        }
+
+        function generateProfitMarginTrend() {
+            const labels = [];
+            const margins = [];
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const month = date.toISOString().slice(0, 7);
+                labels.push(month);
+                const monthSales = sales.filter(s => s.date.startsWith(month));
+                const profit = monthSales.reduce((sum, s) => sum + s.profit, 0);
+                const revenue = monthSales.reduce((sum, s) => sum + s.revenue, 0);
+                margins.push(revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : 0);
+            }
+            return { labels, margins };
+        }
+
+        // INITIALIZATION
+        init();
+    </script>
+</body>
+</html>
