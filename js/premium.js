@@ -45,10 +45,7 @@
       } catch (e) { /* skip */ }
     }
 
-    // Buttons — appear immediately with quick fade
-    if (heroButtons) {
-      gsap.from(heroButtons, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out', delay: 0.15 });
-    }
+    // Buttons — no animation, always visible instantly
   }
 
   // ─── 2. SCROLL ANIMATIONS ──────────────────────────────────
