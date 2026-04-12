@@ -9,7 +9,6 @@ var creditBalance = 0;
 var conversationStarted = false;
 var currentSession = null;
 
-var MERAKI_BASE = 'https://api.meraki.com/api/v1';
 var chatMessages = document.getElementById('chatMessages');
 var chatInput = document.getElementById('chatInput');
 var sendBtn = document.getElementById('sendBtn');
@@ -93,11 +92,23 @@ function hideTyping() {
   if (el) el.remove();
 }
 
-// ─── Meraki API ───────────────────────────────────────────────────
-async function merakiGet(path) {
+// ─── Meraki API (proxied through Vercel to bypass CORS) ──────────
+async function merakiCall(path, method, body) {
+  if (!currentSession) return null;
   try {
-    var resp = await fetch(MERAKI_BASE + path, { headers: { 'X-Cisco-Meraki-API-Key': merakiKey } });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var resp = await fetch('/api/meraki-proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + currentSession.access_token,
+      },
+      body: JSON.stringify({ merakiKey: merakiKey, method: method || 'GET', path: path, body: body }),
+    });
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function() { return {}; });
+      console.error('Meraki proxy error:', resp.status, errData);
+      return null;
+    }
     return await resp.json();
   } catch (e) {
     console.error('Meraki API error:', e);
@@ -105,23 +116,9 @@ async function merakiGet(path) {
   }
 }
 
-async function merakiPost(path, data) {
-  var resp = await fetch(MERAKI_BASE + path, {
-    method: 'POST',
-    headers: { 'X-Cisco-Meraki-API-Key': merakiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return await resp.json();
-}
-
-async function merakiPut(path, data) {
-  var resp = await fetch(MERAKI_BASE + path, {
-    method: 'PUT',
-    headers: { 'X-Cisco-Meraki-API-Key': merakiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return await resp.json();
-}
+async function merakiGet(path) { return merakiCall(path, 'GET'); }
+async function merakiPost(path, data) { return merakiCall(path, 'POST', data); }
+async function merakiPut(path, data) { return merakiCall(path, 'PUT', data); }
 
 // ─── Connect Flow ─────────────────────────────────────────────────
 async function connectMeraki(key) {
