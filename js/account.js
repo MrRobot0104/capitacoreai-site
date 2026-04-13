@@ -174,10 +174,10 @@ async function showDashboard(user) {
   if (pName) pName.textContent = (data && data.first_name) || '—';
   if (pUser) pUser.textContent = (data && data.username) ? '@' + data.username : '—';
   if (pEmail) pEmail.textContent = user.email || '—';
+  var balance = (data && data.token_balance) || 0;
   if (pCredits) pCredits.textContent = isAdmin ? '\u221E' : balance;
 
   var list = document.getElementById('agentsList');
-  var balance = (data && data.token_balance) || 0;
   var hasAccess = isAdmin || balance > 0;
 
   var agents = [

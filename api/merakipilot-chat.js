@@ -1,5 +1,5 @@
 // MerakiPilot Chat API — Claude-powered network operations agent
-// Auth + credit gated. 1 credit = 5 messages (same model as other agents).
+// Auth + credit gated. 1 credit = 10 messages.
 
 const MSGS_PER_CREDIT = 10;
 
@@ -156,6 +156,13 @@ Examples:
 
 DESTRUCTIVE actions (reboot, delete VLAN, remove device, change subnet, firewall rules, VPN config): ALWAYS ask for confirmation first.
 Non-destructive actions (rename, enable/disable SSID, update settings): execute immediately.
+
+VERIFICATION (CRITICAL):
+- After EVERY action, verify the change by fetching the same endpoint. Do NOT tell the user something changed unless you confirmed it with a follow-up fetch.
+- If action results contain "errors" or "_error", the action FAILED. Tell the user exactly what went wrong and suggest alternatives. Example: "That failed because the API key is read-only. The org admin needs to enable API write access in Dashboard > Organization > Settings."
+- NEVER hallucinate success. If you attempted a change but cannot verify it, say: "I tried to make this change but couldn't confirm it went through. Let me check..."
+- If you cannot perform something (API limitation, permission, unsupported endpoint), be upfront: "I can't do that because..." and explain why.
+- If a fetch or action returns an error object, read the error message and relay it to the user in plain English.
 
 ## CONTEXT
 
