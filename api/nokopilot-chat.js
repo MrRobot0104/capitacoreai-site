@@ -208,6 +208,8 @@ You are a Meraki Dashboard API agent. You CANNOT:
 
 If a user asks for any of these, explain what you CAN'T do and offer what you CAN do instead. NEVER fake an action or misinterpret "ssh" as a VPN change.
 
+CRITICAL: When you explain that something is not possible, do NOT include any <fetch> or <action> tags in that response. A response that says "I can't do X" must contain ZERO action tags. Only include action tags when you are actually performing an operation the user requested.
+
 ## ACTION RULES
 
 DESTRUCTIVE actions (reboot, delete VLAN, remove device, change subnet, firewall rules, VPN config): ALWAYS ask for confirmation first.
@@ -307,19 +309,34 @@ module.exports = async (req, res) => {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
-      // Build the messages array for Claude — keep it tight to avoid context overflow
-      const claudeMessages = messages.slice(-12).map((m, i, arr) => {
-        const isLast = i === arr.length - 1;
+      // Build the messages array for Claude
+      // Find the last REAL user message (not fetch_results/action_results)
+      let lastRealUserIdx = -1;
+      for (let mi = messages.length - 1; mi >= 0; mi--) {
+        if (messages[mi].role === 'user' && !messages[mi].content.includes('<fetch_results>') && !messages[mi].content.includes('<action_results>')) {
+          lastRealUserIdx = mi;
+          break;
+        }
+      }
+
+      // Trim: always include from lastRealUserIdx onward, plus some prior context
+      let trimmedMessages = messages;
+      if (messages.length > 16) {
+        const keepFrom = Math.max(0, lastRealUserIdx - 4);
+        trimmedMessages = messages.slice(keepFrom);
+      }
+
+      const claudeMessages = trimmedMessages.map((m, i, arr) => {
         let content = typeof m.content === 'string' ? m.content : String(m.content);
 
-        // Attach network context to the latest user message
-        if (isLast && m.role === 'user' && networkContext) {
-          // Compact network context — no pretty-print
+        // Attach network context to the last REAL user message
+        const globalIdx = messages.length - trimmedMessages.length + i;
+        if (globalIdx === lastRealUserIdx && networkContext) {
           content = `<network_data>${JSON.stringify(networkContext)}</network_data>\n\n${content}`;
         }
 
-        // Tight limits: fetch_results can be huge
-        const limit = content.includes('fetch_results') || content.includes('network_data') ? 10000 : 4000;
+        // Tight limits: fetch_results can be huge, truncate aggressively
+        const limit = content.includes('fetch_results') || content.includes('network_data') ? 8000 : 4000;
         return {
           role: m.role === 'assistant' ? 'assistant' : 'user',
           content: content.substring(0, limit),
@@ -369,11 +386,16 @@ module.exports = async (req, res) => {
       }
 
       // Extract action tags (write operations)
+      // Safety: if the response says "I can't" or "not possible", don't execute any actions
+      const lowerText = text.toLowerCase();
+      const isRefusal = lowerText.includes("i can't") || lowerText.includes("i cannot") || lowerText.includes("not possible") || lowerText.includes("isn't possible") || lowerText.includes("not supported") || lowerText.includes("don't have the ability");
       const actions = [];
-      const actionRegex = /<action>([\s\S]*?)<\/action>/g;
-      let match;
-      while ((match = actionRegex.exec(text)) !== null) {
-        try { actions.push(JSON.parse(match[1])); } catch (e) { console.error('Failed to parse action:', match[1]); }
+      if (!isRefusal) {
+        const actionRegex = /<action>([\s\S]*?)<\/action>/g;
+        let match;
+        while ((match = actionRegex.exec(text)) !== null) {
+          try { actions.push(JSON.parse(match[1])); } catch (e) { console.error('Failed to parse action:', match[1]); }
+        }
       }
 
       // Clean tags from display text
