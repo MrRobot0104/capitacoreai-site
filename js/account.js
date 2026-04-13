@@ -11,7 +11,6 @@ async function init() {
       switchTab('login');
     }
   });
-  await sb.auth.getSession();
   if (IS_RECOVERY) { showResetForm(); return; }
   var result = await sb.auth.getSession();
   var session = result.data.session;
@@ -78,8 +77,10 @@ function checkUsername(val) {
   }, 400);
 }
 
+var signupCooldown = false;
 async function handleSignup(e) {
   e.preventDefault(); hideError();
+  if (signupCooldown) { showError('Please wait a minute before trying again.'); return; }
   var firstName = document.getElementById('signupName').value.trim();
   var username = document.getElementById('signupUsername').value.trim().toLowerCase();
   if (!usernameAvailable) { showError('Please choose an available username.'); return; }
@@ -91,21 +92,47 @@ async function handleSignup(e) {
     options: { data: { first_name: firstName, username: username } }
   });
   btn.disabled = false; btn.textContent = 'Create Account';
-  if (result.error) { showError(result.error.message); return; }
+  if (result.error) {
+    var msg = result.error.message || '';
+    if (msg.toLowerCase().indexOf('rate limit') !== -1) {
+      showError('Too many signup attempts. Please wait a few minutes, then check your inbox (and spam folder) for a confirmation email.');
+      signupCooldown = true;
+      btn.disabled = true;
+      btn.textContent = 'Please wait...';
+      setTimeout(function() { signupCooldown = false; btn.disabled = false; btn.textContent = 'Create Account'; }, 60000);
+    } else {
+      showError(msg);
+    }
+    return;
+  }
   document.querySelectorAll('.auth-form').forEach(function(f) { f.classList.remove('active'); });
   document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('signupSuccess').style.display = 'block';
 }
 
+var loginCooldown = false;
 async function handleLogin(e) {
   e.preventDefault(); hideError();
+  if (loginCooldown) { showError('Please wait a minute before trying again.'); return; }
   var btn = document.getElementById('loginBtn'); btn.disabled = true; btn.textContent = 'Logging in...';
   var result = await sb.auth.signInWithPassword({
     email: document.getElementById('loginEmail').value,
     password: document.getElementById('loginPass').value,
   });
   btn.disabled = false; btn.textContent = 'Log In';
-  if (result.error) { showError(result.error.message); return; }
+  if (result.error) {
+    var msg = result.error.message || '';
+    if (msg.toLowerCase().indexOf('rate limit') !== -1) {
+      showError('Too many login attempts. Please wait a few minutes before trying again.');
+      loginCooldown = true;
+      btn.disabled = true;
+      btn.textContent = 'Please wait...';
+      setTimeout(function() { loginCooldown = false; btn.disabled = false; btn.textContent = 'Log In'; }, 60000);
+    } else {
+      showError(msg);
+    }
+    return;
+  }
   showDashboard(result.data.user);
 }
 
@@ -117,7 +144,15 @@ async function handleForgot(e) {
     { redirectTo: window.location.origin + '/account.html' }
   );
   btn.disabled = false; btn.textContent = 'Send Reset Link';
-  if (result.error) { showError(result.error.message); return; }
+  if (result.error) {
+    var msg = result.error.message || '';
+    if (msg.toLowerCase().indexOf('rate limit') !== -1) {
+      showError('Too many attempts. Please wait a few minutes before requesting another reset link.');
+    } else {
+      showError(msg);
+    }
+    return;
+  }
   document.querySelectorAll('.auth-form').forEach(function(f) { f.classList.remove('active'); });
   document.getElementById('resetSuccess').style.display = 'block';
 }

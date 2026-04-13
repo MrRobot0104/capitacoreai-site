@@ -1,4 +1,4 @@
-var MSGS_PER_CREDIT = 10;
+var MSGS_PER_CREDIT = 5;
 var CREDIT_COST = 1;
 var connected = false;
 var merakiKey = null;
@@ -9,8 +9,11 @@ var msgLimit = 0;
 var creditBalance = 0;
 var conversationStarted = false;
 var currentSession = null;
-
-var allOrgs = []; // All orgs available on current API key
+var allDevices = [];
+var allStatuses = {};
+var allNetworks = [];
+var allOrgs = [];
+var selectedNetworkId = 'all';
 
 var chatMessages = document.getElementById('chatMessages');
 var chatInput = document.getElementById('chatInput');
@@ -74,15 +77,21 @@ function enableInput() {
 
 // ─── Chat UI ──────────────────────────────────────────────────────
 function cleanResponse(text) {
-  // Strip raw fetch_results/action_results blocks — works on both raw and HTML-escaped
   return text
+    // Strip tagged blocks (raw and HTML-escaped)
     .replace(/<fetch_results>[\s\S]*?<\/fetch_results>/g, '')
     .replace(/&lt;fetch_results&gt;[\s\S]*?&lt;\/fetch_results&gt;/g, '')
     .replace(/<action_results>[\s\S]*?<\/action_results>/g, '')
     .replace(/&lt;action_results&gt;[\s\S]*?&lt;\/action_results&gt;/g, '')
-    .replace(/```json\s*[\[{][\s\S]*?```/g, '')
-    .replace(/\{"path":"\/[\s\S]*?"data":[\s\S]*?\}\]/g, '')
-    .replace(/\[?\{"path":"\/org[\s\S]{50,}?\}\]?\}?/g, '')
+    .replace(/<network_data>[\s\S]*?<\/network_data>/g, '')
+    .replace(/&lt;network_data&gt;[\s\S]*?&lt;\/network_data&gt;/g, '')
+    // Strip markdown JSON code blocks
+    .replace(/```json[\s\S]*?```/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    // Strip raw JSON arrays/objects longer than 200 chars (data dumps)
+    .replace(/\[?\{[^{}]*"[a-zA-Z]+"[^{}]*\}(?:\s*,\s*\{[^{}]*\})*\]?/g, function(match) {
+      return match.length > 200 ? '' : match;
+    })
     .trim();
 }
 
@@ -172,7 +181,7 @@ function hideTyping() {
 
 // ─── Meraki API (proxied through Vercel to bypass CORS) ──────────
 async function merakiCall(path, method, body) {
-  if (!currentSession) return { errors: ['Not authenticated — session expired'] };
+  if (!currentSession) return null;
   try {
     var resp = await fetch('/api/meraki-proxy', {
       method: 'POST',
@@ -182,18 +191,15 @@ async function merakiCall(path, method, body) {
       },
       body: JSON.stringify({ merakiKey: merakiKey, method: method || 'GET', path: path, body: body }),
     });
-    var data = await resp.json().catch(function() { return null; });
     if (!resp.ok) {
-      console.error('Meraki proxy error:', resp.status, data);
-      // Return the error from Meraki so Claude and the user can see what went wrong
-      if (data && data.errors) return { errors: data.errors, _status: resp.status };
-      if (data && data.error) return { errors: [data.error], _status: resp.status };
-      return { errors: ['Meraki API returned status ' + resp.status], _status: resp.status };
+      var errData = await resp.json().catch(function() { return {}; });
+      console.error('Meraki proxy error:', resp.status, errData);
+      return null;
     }
-    return data;
+    return await resp.json();
   } catch (e) {
     console.error('Meraki API error:', e);
-    return { errors: ['Network error: ' + e.message] };
+    return null;
   }
 }
 
@@ -209,55 +215,38 @@ async function connectMeraki(key) {
   var orgs = await merakiGet('/organizations');
   hideTyping();
 
-  if (!orgs || !Array.isArray(orgs) || orgs.length === 0) {
-    var errDetail = (orgs && orgs.errors) ? '<br><span style="font-size:12px;color:#ef4444;">' + orgs.errors.join('; ') + '</span>' : '';
-    addMessage("That API key didn't work. I couldn't find any organizations. Double-check the key and try again." + errDetail, 'bot');
+  if (!orgs || orgs.length === 0) {
+    addMessage("That API key didn't work. I couldn't find any organizations. Double-check the key and try again.", 'bot');
     merakiKey = null;
     return;
   }
 
   allOrgs = orgs;
 
-  // If multiple orgs, let the user choose
+  // Populate org selector
+  var orgSelector = document.getElementById('orgSelector');
+  orgSelector.innerHTML = '';
   if (orgs.length > 1) {
-    var orgHtml = '<strong>Found ' + orgs.length + ' organizations:</strong><br><br>';
-    orgs.forEach(function(org, i) {
-      orgHtml += '<button class="org-select-btn" data-org-index="' + i + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:rgba(255,106,0,0.06);border:1px solid rgba(255,106,0,0.2);border-radius:10px;color:#f1f5f9;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;">' +
-        '<strong style="color:#FF6A00;">' + (org.name || 'Unnamed Org') + '</strong>' +
-        '<br><span style="font-size:12px;color:#94a3b8;">ID: ' + org.id + '</span>' +
-        '</button>';
+    orgs.forEach(function(o) {
+      var opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.name;
+      orgSelector.appendChild(opt);
     });
-    orgHtml += '<span style="font-size:12px;color:#94a3b8;">Click an organization to connect.</span>';
-    addMessage(orgHtml, 'bot');
-
-    // Store orgs for selection and bind click handlers
-    window._pendingOrgs = orgs;
-    setTimeout(function() {
-      document.querySelectorAll('.org-select-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var idx = parseInt(this.getAttribute('data-org-index'));
-          selectOrg(window._pendingOrgs[idx]);
-        });
-        btn.addEventListener('mouseenter', function() { this.style.borderColor = '#FF6A00'; this.style.background = 'rgba(255,106,0,0.12)'; });
-        btn.addEventListener('mouseleave', function() { this.style.borderColor = 'rgba(255,106,0,0.2)'; this.style.background = 'rgba(255,106,0,0.06)'; });
-      });
-    }, 100);
-    return;
+    orgSelector.style.display = 'block';
+    document.getElementById('orgLabel').classList.add('visible');
+    document.getElementById('netLabel').classList.add('visible');
   }
 
-  await selectOrg(orgs[0]);
-}
-
-async function selectOrg(org) {
-  orgData = org;
+  orgData = orgs[0];
+  orgSelector.value = orgData.id;
   connected = true;
 
   var chip = document.getElementById('statusChip');
   chip.className = 'status-chip';
   chip.querySelector('#statusText').textContent = orgData.name;
-  populateOrgDropdown();
 
-  addMessage('Connected to <strong>' + orgData.name + '</strong>. Loading your network...', 'bot');
+  addMessage('Connected to <strong>' + orgData.name + '</strong>' + (orgs.length > 1 ? ' (' + orgs.length + ' orgs found — switch in the top-right panel)' : '') + '. Loading your network...', 'bot');
   await loadDashboard();
   addMessage(
     'Your dashboard is ready. I found your devices and networks on the right panel.<br><br>' +
@@ -268,14 +257,24 @@ async function selectOrg(org) {
     '<code>Reboot the warehouse switch</code>',
     'bot'
   );
+}
 
-  // Offer to save key (only if not already saved for this org)
-  if (currentSession && merakiKey) {
-    var existing = await sb.from('meraki_keys').select('id').eq('user_id', currentSession.user.id).eq('org_id', orgData.id);
-    if (!existing.data || existing.data.length === 0) {
-      offerSaveKey(merakiKey, orgData.name, orgData.id);
-    }
-  }
+async function switchOrg(orgId) {
+  var org = allOrgs.find(function(o) { return o.id === orgId; });
+  if (!org) return;
+  orgData = org;
+  selectedNetworkId = 'all';
+  var selector = document.getElementById('networkSelector');
+  selector.value = 'all';
+
+  var chip = document.getElementById('statusChip');
+  chip.querySelector('#statusText').textContent = orgData.name;
+
+  addMessage('Switching to <strong>' + orgData.name + '</strong>...', 'bot');
+  showTyping();
+  await loadDashboard();
+  hideTyping();
+  addMessage('Now viewing <strong>' + orgData.name + '</strong> — ' + allNetworks.length + ' network' + (allNetworks.length !== 1 ? 's' : '') + ', ' + allDevices.length + ' device' + (allDevices.length !== 1 ? 's' : '') + '.', 'bot');
 }
 
 // ─── Load Dashboard → Feed Neural Viz ─────────────────────────────
@@ -289,55 +288,81 @@ async function loadDashboard() {
   ]);
   var devices = results[0], statuses = results[1], networks = results[2];
 
-  var statusMap = {};
-  (statuses || []).forEach(function(s) { statusMap[s.serial] = s; });
+  allStatuses = {};
+  (statuses || []).forEach(function(s) { allStatuses[s.serial] = s; });
 
-  var total = (devices || []).length;
-  var online = (statuses || []).filter(function(s) { return s.status === 'online'; }).length;
-  var offline = total - online;
-  var netCount = (networks || []).length;
-
-  document.getElementById('statDevices').textContent = total;
-  document.getElementById('statOnline').textContent = online;
-  document.getElementById('statOffline').textContent = offline;
-  document.getElementById('statNetworks').textContent = netCount;
-  document.getElementById('neuralStats').style.display = 'flex';
-  document.getElementById('orgMeta').textContent = netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' + total + ' device' + (total !== 1 ? 's' : '');
-  var previewNet = document.getElementById('previewNet');
-  if (previewNet) previewNet.style.display = 'none';
-
-  // Build device list with status for neural viz
-  var deviceList = (devices || []).map(function(d) {
-    var s = statusMap[d.serial] || {};
+  allDevices = (devices || []).map(function(d) {
+    var s = allStatuses[d.serial] || {};
     return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'offline', networkId: d.networkId, clients: 0 };
   });
-  var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
+  allNetworks = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
+
+  // Populate network selector
+  var selector = document.getElementById('networkSelector');
+  var prevValue = selector.value;
+  selector.innerHTML = '<option value="all">All Networks (' + allNetworks.length + ')</option>';
+  allNetworks.forEach(function(n) {
+    var opt = document.createElement('option');
+    opt.value = n.id;
+    opt.textContent = n.name;
+    selector.appendChild(opt);
+  });
+  selector.value = prevValue && selector.querySelector('option[value="' + prevValue + '"]') ? prevValue : 'all';
+  selectedNetworkId = selector.value;
+  if (allNetworks.length > 0) selector.style.display = 'block';
+
+  updateDashboardStats();
 
   // Fetch client counts per network (non-blocking — viz updates after)
   (networks || []).forEach(function(net) {
     merakiGet('/networks/' + net.id + '/clients?perPage=5&timespan=86400').then(function(clients) {
       if (!clients || !Array.isArray(clients)) return;
-      // Count clients per device serial
       var counts = {};
       clients.forEach(function(c) {
         if (c.recentDeviceSerial) {
           counts[c.recentDeviceSerial] = (counts[c.recentDeviceSerial] || 0) + 1;
         }
       });
-      // Update device list and refresh viz
       var updated = false;
-      deviceList.forEach(function(d) {
+      allDevices.forEach(function(d) {
         if (counts[d.serial]) { d.clients = counts[d.serial]; updated = true; }
       });
-      if (updated && window.neuralVizUpdate) {
-        window.neuralVizUpdate({ devices: deviceList, networks: networkList });
-      }
+      if (updated) updateDashboardStats();
     }).catch(function() {});
   });
+}
 
-  // Feed the neural visualization immediately (client counts update async)
+function getFilteredData() {
+  var devices = allDevices;
+  var networks = allNetworks;
+  if (selectedNetworkId !== 'all') {
+    devices = allDevices.filter(function(d) { return d.networkId === selectedNetworkId; });
+    networks = allNetworks.filter(function(n) { return n.id === selectedNetworkId; });
+  }
+  return { devices: devices, networks: networks };
+}
+
+function updateDashboardStats() {
+  var filtered = getFilteredData();
+  var devices = filtered.devices;
+  var networks = filtered.networks;
+
+  var total = devices.length;
+  var online = devices.filter(function(d) { return d.status === 'online'; }).length;
+  var offline = total - online;
+  var netCount = networks.length;
+
+  document.getElementById('statDevices').textContent = total;
+  document.getElementById('statOnline').textContent = online;
+  document.getElementById('statOffline').textContent = offline;
+  document.getElementById('statNetworks').textContent = netCount;
+  document.getElementById('neuralStats').style.display = 'flex';
+  document.getElementById('orgMeta').textContent = (selectedNetworkId === 'all' ? netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' : '') + total + ' device' + (total !== 1 ? 's' : '');
+  var previewNet = document.getElementById('previewNet');
+  if (previewNet) previewNet.style.display = 'none';
+
   if (window.neuralVizUpdate) {
-    window.neuralVizUpdate({ devices: deviceList, networks: networkList });
+    window.neuralVizUpdate({ devices: devices, networks: networks });
   }
 }
 
@@ -345,26 +370,22 @@ async function loadDashboard() {
 async function gatherNetworkContext() {
   if (!connected || !orgData) return null;
   try {
-    var results = await Promise.all([
-      merakiGet('/organizations/' + orgData.id + '/devices'),
-      merakiGet('/organizations/' + orgData.id + '/devices/statuses'),
-      merakiGet('/organizations/' + orgData.id + '/networks'),
-    ]);
-    var devices = results[0], statuses = results[1], networks = results[2];
-    var statusMap = {};
-    (statuses || []).forEach(function(s) { statusMap[s.serial] = s; });
-    var deviceList = (devices || []).map(function(d) {
-      var s = statusMap[d.serial] || {};
-      return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'unknown', networkId: d.networkId };
-    });
-    var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
-    return {
+    var filtered = getFilteredData();
+    var deviceList = filtered.devices;
+    var networkList = filtered.networks;
+    var context = {
       orgName: orgData.name, orgId: orgData.id,
       totalDevices: deviceList.length,
       onlineDevices: deviceList.filter(function(d) { return d.status === 'online'; }).length,
       offlineDevices: deviceList.filter(function(d) { return d.status !== 'online'; }),
       devices: deviceList, networks: networkList,
     };
+    if (selectedNetworkId !== 'all') {
+      context.selectedNetwork = selectedNetworkId;
+      var net = allNetworks.find(function(n) { return n.id === selectedNetworkId; });
+      if (net) context.selectedNetworkName = net.name;
+    }
+    return context;
   } catch (e) {
     console.error('Failed to gather context:', e);
     return { orgName: orgData.name, orgId: orgData.id, error: 'Failed to fetch network data' };
@@ -388,7 +409,6 @@ async function executeFetches(fetches) {
 // ─── Execute Actions (Claude makes changes) ──────────────────────
 async function executeActions(actions) {
   var results = {};
-  var failures = [];
   for (var i = 0; i < actions.length; i++) {
     var a = actions[i];
     try {
@@ -397,26 +417,8 @@ async function executeActions(actions) {
       if (method === 'POST') data = await merakiPost(a.path, a.body || {});
       else if (method === 'PUT') data = await merakiPut(a.path, a.body || {});
       else data = await merakiGet(a.path);
-
-      // Check if the Meraki API returned an error
-      if (data && data.errors) {
-        var errMsg = data.errors.join('; ');
-        results[a.path] = { _error: errMsg, _status: data._status };
-        failures.push(a.path + ': ' + errMsg);
-      } else if (data === null) {
-        results[a.path] = { _error: 'No response from Meraki API' };
-        failures.push(a.path + ': No response');
-      } else {
-        results[a.path] = data;
-      }
-    } catch (e) {
-      results[a.path] = { _error: e.message };
-      failures.push(a.path + ': ' + e.message);
-    }
-  }
-  // Report failures prominently so Claude doesn't hallucinate success
-  if (failures.length > 0) {
-    addMessage('<strong style="color:#ef4444;">Action failed:</strong><br>' + failures.map(function(f) { return '&bull; ' + f; }).join('<br>') + '<br><br><span style="color:#94a3b8;font-size:12px;">The requested changes were NOT applied. The AI may need to try a different approach.</span>', 'bot');
+      results[a.path] = data;
+    } catch (e) { results[a.path] = { _error: e.message }; }
   }
   await loadDashboard();
   return results;
@@ -431,12 +433,12 @@ function mdToHtml(text) {
   // Escape HTML first, then apply safe markdown formatting
   var html = escapeHtml(text);
 
-  // Parse markdown tables
+  // Parse markdown tables — wrap in scrollable container
   html = html.replace(/((?:^|\n)\|.+\|(?:\n\|[-:| ]+\|)(?:\n\|.+\|)+)/g, function(table) {
     var rows = table.trim().split('\n').filter(function(r) { return r.trim(); });
     if (rows.length < 2) return table;
     var headerCells = rows[0].split('|').filter(function(c) { return c.trim(); });
-    var out = '<table><thead><tr>';
+    var out = '<div class="table-wrap"><table><thead><tr>';
     headerCells.forEach(function(c) { out += '<th>' + c.trim() + '</th>'; });
     out += '</tr></thead><tbody>';
     for (var i = 2; i < rows.length; i++) {
@@ -446,7 +448,7 @@ function mdToHtml(text) {
       cells.forEach(function(c) { out += '<td>' + c.trim() + '</td>'; });
       out += '</tr>';
     }
-    out += '</tbody></table>';
+    out += '</tbody></table></div>';
     return out;
   });
 
@@ -491,7 +493,20 @@ async function continueConversation() {
   }
 }
 
+// ─── Command History (up arrow recall) ───────────────────────────
+var commandHistory = [];
+var historyIndex = -1;
+
 // ─── Handle User Input (Claude-powered) ───────────────────────────
+async function callChatAPI(messages, networkContext) {
+  var resp = await fetch('/api/merakipilot-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ action: 'chat', messages: messages, networkContext: networkContext }),
+  });
+  return resp;
+}
+
 async function handleSend() {
   var text = chatInput.value.trim();
   if (!text) return;
@@ -500,6 +515,11 @@ async function handleSend() {
     addMessage('Please <a href="account.html" style="color:#111;text-decoration:underline;">log in</a> to use MerakiPilot.', 'bot');
     return;
   }
+
+  // Save to command history
+  if (commandHistory[commandHistory.length - 1] !== text) commandHistory.push(text);
+  if (commandHistory.length > 50) commandHistory.shift();
+  historyIndex = commandHistory.length;
 
   chatInput.value = '';
   chatInput.style.height = 'auto';
@@ -513,40 +533,6 @@ async function handleSend() {
 
   if (!connected) {
     addMessage("I need your Meraki API key first. Paste it here and I'll connect to your network.", 'bot');
-    return;
-  }
-
-  // Handle org switch command
-  var lower = text.toLowerCase().trim();
-  if (lower === 'switch org' || lower === 'switch organization' || lower === 'change org' || lower === 'change organization') {
-    showTyping();
-    var orgs = await merakiGet('/organizations');
-    hideTyping();
-    if (!orgs || orgs.length <= 1) {
-      addMessage('Only one organization is available on this API key.', 'bot');
-      return;
-    }
-    var orgHtml = '<strong>Switch organization:</strong><br><br>';
-    orgs.forEach(function(org, i) {
-      var isCurrent = orgData && org.id === orgData.id;
-      orgHtml += '<button class="org-select-btn" data-org-index="' + i + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:' + (isCurrent ? 'rgba(34,197,94,0.08)' : 'rgba(255,106,0,0.06)') + ';border:1px solid ' + (isCurrent ? 'rgba(34,197,94,0.3)' : 'rgba(255,106,0,0.2)') + ';border-radius:10px;color:#f1f5f9;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;">' +
-        '<strong style="color:' + (isCurrent ? '#22c55e' : '#FF6A00') + ';">' + (org.name || 'Unnamed Org') + '</strong>' +
-        (isCurrent ? ' <span style="font-size:11px;color:#22c55e;">(current)</span>' : '') +
-        '<br><span style="font-size:12px;color:#94a3b8;">ID: ' + org.id + '</span>' +
-        '</button>';
-    });
-    addMessage(orgHtml, 'bot');
-    window._pendingOrgs = orgs;
-    setTimeout(function() {
-      document.querySelectorAll('.org-select-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var idx = parseInt(this.getAttribute('data-org-index'));
-          selectOrg(window._pendingOrgs[idx]);
-        });
-        btn.addEventListener('mouseenter', function() { this.style.borderColor = '#FF6A00'; this.style.background = 'rgba(255,106,0,0.12)'; });
-        btn.addEventListener('mouseleave', function() { this.style.borderColor = 'rgba(255,106,0,0.2)'; this.style.background = 'rgba(255,106,0,0.06)'; });
-      });
-    }, 100);
     return;
   }
 
@@ -568,31 +554,46 @@ async function handleSend() {
 
   try {
     var networkContext = await gatherNetworkContext();
-    var maxLoops = 8; // Safety: max fetch-loop iterations (higher for complex MSP workflows)
+    var maxLoops = 5;
 
     // ─── Conversation Loop: Claude can fetch data and keep going ───
     for (var loop = 0; loop < maxLoops; loop++) {
-      var resp = await fetch('/api/merakipilot-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-        body: JSON.stringify({ action: 'chat', messages: chatHistory, networkContext: loop === 0 ? networkContext : null }),
-      });
+      // Trim history before each API call to prevent context overflow
+      if (chatHistory.length > 16) chatHistory = chatHistory.slice(-12);
+
+      var resp = await callChatAPI(chatHistory, loop === 0 ? networkContext : null);
 
       if (resp.status === 402) {
         hideTyping(); creditBalance = 0; refreshCredits(); showLimitBar(); return;
       }
       if (!resp.ok) {
-        hideTyping();
-        var err = {}; try { err = await resp.json(); } catch(e) {}
-        addMessage('Something went wrong: ' + (err.error || 'Unknown error') + '. Try again.', 'bot');
-        return;
+        // Auto-retry once on server errors
+        if (resp.status >= 500) {
+          console.error('MerakiPilot: retrying after status', resp.status);
+          // Trim more aggressively before retry
+          if (chatHistory.length > 6) chatHistory = chatHistory.slice(-4);
+          await new Promise(function(r) { setTimeout(r, 2000); });
+          var retryResp = await callChatAPI(chatHistory, networkContext);
+          if (retryResp.ok) {
+            resp = retryResp;
+          } else {
+            hideTyping();
+            var err2 = {}; try { err2 = await retryResp.json(); } catch(e) {}
+            addMessage((err2.error || 'AI is temporarily unavailable.') + ' Try again in a moment.', 'bot');
+            return;
+          }
+        } else {
+          hideTyping();
+          var err = {}; try { err = await resp.json(); } catch(e) {}
+          addMessage((err.error || 'Something went wrong.') + ' Try again.', 'bot');
+          return;
+        }
       }
 
       var data = await resp.json();
 
       // If Claude wants to fetch data, execute and loop back
       if (data.fetches && data.fetches.length > 0) {
-        // Show Claude's status message to the user
         if (data.response) {
           hideTyping();
           var cleanedIntermediate = cleanResponse(data.response);
@@ -600,21 +601,24 @@ async function handleSend() {
           showTyping();
         }
 
-        // Execute all fetches in parallel
         if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Fetching ' + data.fetches.length + ' endpoint' + (data.fetches.length > 1 ? 's' : '') + '...');
         var fetchResults = await executeFetches(data.fetches);
 
-        // Add Claude's response + fetch results to history for next loop
-        chatHistory.push({ role: 'assistant', content: data.response || 'Fetching data...' });
-        chatHistory.push({ role: 'user', content: '<fetch_results>\n' + JSON.stringify(fetchResults, null, 2) + '\n</fetch_results>' });
+        // Keep assistant response short in history
+        chatHistory.push({ role: 'assistant', content: (data.response || 'Fetching data...').substring(0, 500) });
+        // Heavily truncate fetch results — Claude only needs a summary
+        var fetchStr = JSON.stringify(fetchResults);
+        if (fetchStr.length > 8000) fetchStr = fetchStr.substring(0, 8000) + '...(truncated)';
+        chatHistory.push({ role: 'user', content: '<fetch_results>' + fetchStr + '</fetch_results>' });
 
-        // Execute any actions that came with the fetches
         if (data.actions && data.actions.length > 0) {
           var actionResults = await executeActions(data.actions);
-          chatHistory.push({ role: 'user', content: '<action_results>\n' + JSON.stringify(actionResults, null, 2) + '\n</action_results>' });
+          var actStr = JSON.stringify(actionResults);
+          if (actStr.length > 2000) actStr = actStr.substring(0, 2000) + '...(truncated)';
+          chatHistory.push({ role: 'user', content: '<action_results>' + actStr + '</action_results>' });
         }
 
-        continue; // Loop back to Claude with the results
+        continue;
       }
 
       // No more fetches — show final response
@@ -622,29 +626,25 @@ async function handleSend() {
       if (data.response) {
         var cleanedFinal = cleanResponse(data.response);
         if (cleanedFinal) addMessage(mdToHtml(cleanedFinal), 'bot');
-        chatHistory.push({ role: 'assistant', content: data.response });
+        chatHistory.push({ role: 'assistant', content: data.response.substring(0, 2000) });
       }
       msgCount++;
 
       if (msgCount >= msgLimit) { showLimitBar(); }
-
       if (window.neuralVizDone) window.neuralVizDone();
 
-      // Execute any final actions
       if (data.actions && data.actions.length > 0) {
         if (window.neuralVizAction) window.neuralVizAction('Executing ' + data.actions.length + ' change' + (data.actions.length > 1 ? 's' : '') + '...');
         var actionResults = await executeActions(data.actions);
         var resultSummary = Object.keys(actionResults).map(function(path) {
           var r = actionResults[path];
-          return r && r._error ? '&bull; ' + path + ': Failed — ' + r._error : '&bull; ' + path + ': Done';
+          return r && r._error ? '&bull; ' + path + ': <strong>Failed</strong> — ' + r._error : '&bull; ' + path + ': <strong>Done</strong>';
         }).join('<br>');
-        addMessage('<strong>Changes applied:</strong><br>' + resultSummary, 'bot');
+        addMessage(resultSummary, 'bot');
       }
 
-      break; // Done
+      break;
     }
-
-    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-30);
 
   } catch (e) {
     hideTyping();
@@ -657,6 +657,23 @@ async function handleSend() {
 sendBtn.addEventListener('click', handleSend);
 chatInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  // Up arrow: recall previous commands
+  if (e.key === 'ArrowUp' && chatInput.value === '' && commandHistory.length > 0) {
+    e.preventDefault();
+    if (historyIndex > 0) historyIndex--;
+    chatInput.value = commandHistory[historyIndex] || '';
+  }
+  // Down arrow: go forward in history
+  if (e.key === 'ArrowDown' && commandHistory.length > 0) {
+    e.preventDefault();
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      chatInput.value = commandHistory[historyIndex] || '';
+    } else {
+      historyIndex = commandHistory.length;
+      chatInput.value = '';
+    }
+  }
 });
 chatInput.addEventListener('input', function() {
   chatInput.style.height = 'auto';
@@ -665,303 +682,20 @@ chatInput.addEventListener('input', function() {
 
 document.getElementById('continueBtn').addEventListener('click', continueConversation);
 
+document.getElementById('networkSelector').addEventListener('change', function() {
+  selectedNetworkId = this.value;
+  updateDashboardStats();
+  var net = allNetworks.find(function(n) { return n.id === selectedNetworkId; });
+  var name = net ? net.name : 'All Networks';
+  if (connected) {
+    addMessage('Switched to <strong>' + name + '</strong>. My responses will now focus on ' + (selectedNetworkId === 'all' ? 'all networks.' : 'this network.'), 'bot');
+  }
+});
+
+document.getElementById('orgSelector').addEventListener('change', function() {
+  switchOrg(this.value);
+});
+
 window.addEventListener('pageshow', function() {
   if (currentSession) refreshCredits();
 });
-
-// ─── Org Dropdown ────────────────────────────────────────────────
-function populateOrgDropdown() {
-  var dropdown = document.getElementById('orgDropdown');
-  var arrow = document.getElementById('orgDropdownArrow');
-  if (allOrgs.length <= 1) { arrow.style.display = 'none'; return; }
-  arrow.style.display = 'inline';
-
-  var html = '';
-  allOrgs.forEach(function(org, i) {
-    var isCurrent = orgData && org.id === orgData.id;
-    html += '<div class="org-dropdown-item' + (isCurrent ? ' current' : '') + '" data-org-idx="' + i + '">' +
-      '<span class="odd"></span>' +
-      '<div><div class="org-name">' + escapeHtml(org.name || 'Unnamed') + '</div>' +
-      '<div class="org-id">' + org.id + '</div></div></div>';
-  });
-  dropdown.innerHTML = html;
-
-  dropdown.querySelectorAll('.org-dropdown-item').forEach(function(item) {
-    item.addEventListener('click', function() {
-      var idx = parseInt(this.getAttribute('data-org-idx'));
-      dropdown.classList.remove('active');
-      if (allOrgs[idx].id !== (orgData && orgData.id)) {
-        addMessage('Switching to <strong>' + escapeHtml(allOrgs[idx].name) + '</strong>...', 'bot');
-        selectOrg(allOrgs[idx]);
-      }
-    });
-  });
-}
-
-document.getElementById('statusChip').addEventListener('click', function(e) {
-  if (allOrgs.length <= 1 || !connected) return;
-  var dropdown = document.getElementById('orgDropdown');
-  dropdown.classList.toggle('active');
-  // Position dropdown near the chip
-  var chip = document.getElementById('statusChip');
-  var rect = chip.getBoundingClientRect();
-  dropdown.style.position = 'fixed';
-  dropdown.style.top = (rect.bottom + 6) + 'px';
-  dropdown.style.left = Math.max(8, rect.left) + 'px';
-  e.stopPropagation();
-});
-
-document.addEventListener('click', function(e) {
-  var dropdown = document.getElementById('orgDropdown');
-  if (dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('active');
-});
-
-// ─── Encrypted API Key Storage (Web Crypto API) ─────────────────
-// Keys are encrypted in the browser with AES-256-GCM.
-// The encryption key is derived from the user's password via PBKDF2.
-// The server only ever sees the encrypted blob — never the raw API key.
-
-function b64Encode(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
-function b64Decode(str) { var bin = atob(str); var buf = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); return buf; }
-
-async function deriveKey(password, salt) {
-  var enc = new TextEncoder();
-  var keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-async function encryptKey(apiKey, password) {
-  var salt = crypto.getRandomValues(new Uint8Array(16));
-  var iv = crypto.getRandomValues(new Uint8Array(12));
-  var key = await deriveKey(password, salt);
-  var enc = new TextEncoder();
-  var encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, enc.encode(apiKey));
-  return { encrypted: b64Encode(encrypted), salt: b64Encode(salt), iv: b64Encode(iv) };
-}
-
-async function decryptKey(encryptedB64, saltB64, ivB64, password) {
-  var salt = b64Decode(saltB64);
-  var iv = b64Decode(ivB64);
-  var encrypted = b64Decode(encryptedB64);
-  var key = await deriveKey(password, salt);
-  var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, encrypted);
-  return new TextDecoder().decode(decrypted);
-}
-
-// ─── Save Key Flow ──────────────────────────────────────────────
-var pendingSaveKey = null;
-
-function offerSaveKey(rawKey, orgName, orgId) {
-  pendingSaveKey = { key: rawKey, orgName: orgName, orgId: orgId };
-  var hint = '••••' + rawKey.slice(-4);
-  var html = '<div class="save-key-banner" id="saveKeyBanner">' +
-    '<p>Save this API key (<code>' + hint + '</code>) for <strong>' + escapeHtml(orgName) + '</strong> so you don\'t have to paste it next time?</p>' +
-    '<div class="save-actions">' +
-    '<button class="key-action-btn use" onclick="promptSavePassword()">Save Key</button>' +
-    '<button class="key-action-btn del" onclick="dismissSaveBanner()">No Thanks</button>' +
-    '</div></div>';
-  addMessage(html, 'bot');
-}
-
-function dismissSaveBanner() {
-  pendingSaveKey = null;
-  var banner = document.getElementById('saveKeyBanner');
-  if (banner) banner.closest('.msg').remove();
-}
-
-function promptSavePassword() {
-  var banner = document.getElementById('saveKeyBanner');
-  if (banner) banner.closest('.msg').remove();
-
-  var html = '<div style="padding:16px;background:rgba(255,106,0,0.04);border:1px solid rgba(255,106,0,0.15);border-radius:10px;">' +
-    '<p style="font-size:13px;color:#94a3b8;margin-bottom:10px;"><strong style="color:#f1f5f9;">Encrypt & Save</strong><br>Enter your CapitaCoreAI login password to encrypt this key. We never see your password or raw key.</p>' +
-    '<input type="password" id="saveKeyPassword" placeholder="Your CapitaCoreAI password" style="width:100%;padding:10px 14px;background:#0a0a0a;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f1f5f9;font-size:14px;font-family:inherit;outline:none;margin-bottom:8px;">' +
-    '<div id="saveKeyError" style="font-size:12px;color:#ef4444;display:none;margin-bottom:6px;"></div>' +
-    '<div style="display:flex;gap:8px;">' +
-    '<button class="key-action-btn use" onclick="executeSaveKey()">Encrypt & Save</button>' +
-    '<button class="key-action-btn del" onclick="dismissSaveBanner()">Cancel</button>' +
-    '</div></div>';
-  addMessage(html, 'bot');
-
-  setTimeout(function() {
-    var input = document.getElementById('saveKeyPassword');
-    if (input) {
-      input.focus();
-      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') executeSaveKey(); });
-    }
-  }, 100);
-}
-
-async function executeSaveKey() {
-  if (!pendingSaveKey || !currentSession) return;
-  var passwordInput = document.getElementById('saveKeyPassword');
-  var errorEl = document.getElementById('saveKeyError');
-  var password = passwordInput ? passwordInput.value : '';
-  if (!password) { if (errorEl) { errorEl.textContent = 'Password required.'; errorEl.style.display = 'block'; } return; }
-
-  // Verify password by attempting to sign in
-  var email = currentSession.user.email;
-  var authCheck = await sb.auth.signInWithPassword({ email: email, password: password });
-  if (authCheck.error) {
-    if (errorEl) { errorEl.textContent = 'Wrong password. Please enter your CapitaCoreAI login password.'; errorEl.style.display = 'block'; }
-    return;
-  }
-
-  try {
-    var encrypted = await encryptKey(pendingSaveKey.key, password);
-    var hint = pendingSaveKey.key.slice(-4);
-
-    var res = await sb.from('meraki_keys').insert({
-      user_id: currentSession.user.id,
-      label: pendingSaveKey.orgName || 'Meraki Key',
-      org_id: pendingSaveKey.orgId || null,
-      encrypted_key: encrypted.encrypted,
-      salt: encrypted.salt,
-      iv: encrypted.iv,
-      key_hint: hint,
-    });
-
-    if (res.error) {
-      if (errorEl) { errorEl.textContent = 'Failed to save: ' + res.error.message; errorEl.style.display = 'block'; }
-      return;
-    }
-
-    pendingSaveKey = null;
-    // Remove the save prompt and show success
-    var msgs = document.querySelectorAll('.msg.bot');
-    var lastMsg = msgs[msgs.length - 1];
-    if (lastMsg) lastMsg.remove();
-    addMessage('<span style="color:#22c55e;">Key saved and encrypted.</span> You can access it anytime from <strong>My Keys</strong> in the top bar.', 'bot');
-    document.getElementById('myKeysBtn').style.display = 'inline-flex';
-  } catch (e) {
-    if (errorEl) { errorEl.textContent = 'Encryption failed: ' + e.message; errorEl.style.display = 'block'; }
-  }
-}
-
-// ─── Load & Display Saved Keys ──────────────────────────────────
-async function loadSavedKeys() {
-  if (!currentSession) return;
-  var res = await sb.from('meraki_keys').select('*').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
-  var keys = (res.data || []);
-  var list = document.getElementById('keysList');
-
-  if (keys.length === 0) {
-    list.innerHTML = '<div class="keys-empty">No saved API keys yet.<br>Connect a Meraki API key and you\'ll be offered to save it.</div>';
-    return;
-  }
-
-  var html = '';
-  keys.forEach(function(k) {
-    var date = new Date(k.created_at).toLocaleDateString();
-    html += '<div class="key-item" data-key-id="' + k.id + '">' +
-      '<div class="key-item-info">' +
-      '<div class="key-item-label">' + escapeHtml(k.label) + '</div>' +
-      '<div class="key-item-hint">••••••••' + escapeHtml(k.key_hint || '????') + '</div>' +
-      '<div class="key-item-date">Saved ' + date + '</div>' +
-      '</div>' +
-      '<div class="key-item-actions">' +
-      '<button class="key-action-btn use" onclick="useKey(\'' + k.id + '\')">Use</button>' +
-      '<button class="key-action-btn del" onclick="deleteKey(\'' + k.id + '\')">Delete</button>' +
-      '</div></div>';
-  });
-  list.innerHTML = html;
-}
-
-var pendingUseKeyId = null;
-
-function useKey(keyId) {
-  pendingUseKeyId = keyId;
-  var prompt = document.getElementById('keysPasswordPrompt');
-  var input = document.getElementById('keysPasswordInput');
-  var error = document.getElementById('keysPasswordError');
-  prompt.style.display = 'block';
-  error.style.display = 'none';
-  input.value = '';
-  input.focus();
-}
-
-async function submitUseKey() {
-  if (!pendingUseKeyId || !currentSession) return;
-  var input = document.getElementById('keysPasswordInput');
-  var error = document.getElementById('keysPasswordError');
-  var password = input.value;
-  if (!password) { error.textContent = 'Password required.'; error.style.display = 'block'; return; }
-
-  // Verify password
-  var authCheck = await sb.auth.signInWithPassword({ email: currentSession.user.email, password: password });
-  if (authCheck.error) {
-    error.textContent = 'Wrong password. Enter your CapitaCoreAI login password.';
-    error.style.display = 'block';
-    return;
-  }
-
-  // Find the key
-  var res = await sb.from('meraki_keys').select('*').eq('id', pendingUseKeyId).single();
-  if (!res.data) { error.textContent = 'Key not found.'; error.style.display = 'block'; return; }
-
-  try {
-    var rawKey = await decryptKey(res.data.encrypted_key, res.data.salt, res.data.iv, password);
-    // Close modal and connect
-    closeKeysModal();
-    addMessage('Connecting with saved key for <strong>' + escapeHtml(res.data.label) + '</strong>...', 'bot');
-    await connectMeraki(rawKey);
-  } catch (e) {
-    error.textContent = 'Decryption failed — wrong password or corrupted key.';
-    error.style.display = 'block';
-  }
-}
-
-async function deleteKey(keyId) {
-  if (!confirm('Delete this saved API key? This cannot be undone.')) return;
-  await sb.from('meraki_keys').delete().eq('id', keyId).eq('user_id', currentSession.user.id);
-  loadSavedKeys();
-}
-
-function openKeysModal() {
-  loadSavedKeys();
-  document.getElementById('keysOverlay').classList.add('active');
-  document.getElementById('keysPasswordPrompt').style.display = 'none';
-}
-
-function closeKeysModal() {
-  document.getElementById('keysOverlay').classList.remove('active');
-  document.getElementById('keysPasswordPrompt').style.display = 'none';
-  pendingUseKeyId = null;
-}
-
-// ─── Key management event listeners ─────────────────────────────
-document.getElementById('myKeysBtn').addEventListener('click', openKeysModal);
-document.getElementById('keysClose').addEventListener('click', closeKeysModal);
-document.getElementById('keysOverlay').addEventListener('click', function(e) {
-  if (e.target === document.getElementById('keysOverlay')) closeKeysModal();
-});
-document.getElementById('keysPasswordSubmit').addEventListener('click', submitUseKey);
-document.getElementById('keysPasswordCancel').addEventListener('click', function() {
-  document.getElementById('keysPasswordPrompt').style.display = 'none';
-  pendingUseKeyId = null;
-});
-document.getElementById('keysPasswordInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') submitUseKey();
-});
-
-// Show "My Keys" button if user has saved keys
-(async function checkSavedKeys() {
-  // Wait for auth
-  var waitCount = 0;
-  var interval = setInterval(async function() {
-    waitCount++;
-    if (waitCount > 20) { clearInterval(interval); return; }
-    if (!currentSession) return;
-    clearInterval(interval);
-    var res = await sb.from('meraki_keys').select('id', { count: 'exact', head: true }).eq('user_id', currentSession.user.id);
-    if (res.count > 0) {
-      document.getElementById('myKeysBtn').style.display = 'inline-flex';
-    }
-  }, 500);
-})();

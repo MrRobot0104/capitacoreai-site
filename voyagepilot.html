@@ -41,6 +41,8 @@
     .btn-hero:hover { background: #FF8000; box-shadow: 0 6px 32px rgba(255,106,0,0.35); transform: translateY(-1px); }
     .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; }
     .btn-outline:hover { color: #FF6A00; border-color: #FF6A00; }
+    .btn-credits { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 500; text-decoration: none; transition: color 0.2s; }
+    .btn-credits:hover { color: #FF6A00; }
     .hero-stats { display: flex; gap: 40px; justify-content: center; }
     .hero-stat { text-align: center; }
     .hero-stat .hs-val { font-size: 24px; font-weight: 800; color: #ffffff; }
@@ -211,8 +213,11 @@
       <h1>Plan your dream trip <span>with AI</span></h1>
       <p>Tell VoyagePilot where you want to go. Get real-time flights, hotels, day-by-day itineraries, and an interactive route map — all in seconds.</p>
       <div class="hero-buttons">
-        <a href="pricing.html" class="btn-hero">Buy Credits</a>
-        <a href="voyagepilot-app.html" class="btn-outline launch-btn" style="display:none;">Launch VoyagePilot &rarr;</a>
+        <a href="voyagepilot-app.html" class="btn-hero launch-btn" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Launch VoyagePilot
+        </a>
+        <a href="#how" class="btn-outline">How It Works</a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hs-val">1,200+</div><div class="hs-label">Trips Planned</div></div>
@@ -320,7 +325,7 @@
   </div>
 
   <!-- HOW IT WORKS -->
-  <div class="how-section">
+  <div class="how-section" id="how">
     <div class="section">
       <div class="section-header">
         <h2>How It Works</h2>
@@ -402,10 +407,12 @@
   <div class="cta-section">
     <h2>Ready to explore?</h2>
     <p>1 credit = 1 complete travel itinerary with real flights, hotels, daily plans, and an interactive route map.</p>
-    <div class="hero-buttons">
-      <a href="pricing.html" class="btn-hero">Buy Credits</a>
-      <a href="voyagepilot-app.html" class="btn-outline launch-btn" style="display:none;">Launch VoyagePilot &rarr;</a>
-    </div>
+    <a href="voyagepilot-app.html" class="btn-hero launch-btn" style="display:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      Launch VoyagePilot
+    </a>
+    <br>
+    <a href="pricing.html" class="btn-credits">Buy Credits &rarr;</a>
   </div>
 
   <!-- FOOTER -->
