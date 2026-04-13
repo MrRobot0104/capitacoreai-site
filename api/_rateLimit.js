@@ -47,6 +47,7 @@ function applyRateLimit(req, res, endpoint, maxRequests, windowMs) {
   var key = ip + ':' + endpoint;
 
   if (!rateLimit(key, maxRequests, windowMs || 60000)) {
+    console.error('[SECURITY] Rate limit hit:', endpoint, 'from IP:', ip);
     res.status(429).json({ error: 'Too many requests. Please try again later.' });
     return true; // blocked
   }

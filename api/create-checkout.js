@@ -17,6 +17,7 @@ module.exports = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown');
       return res.status(401).json({ error: 'Not authenticated' });
     }
     const token = authHeader.split(' ')[1];
@@ -28,7 +29,7 @@ module.exports = async (req, res) => {
         'apikey': process.env.SUPABASE_ANON_KEY,
       },
     });
-    if (!userRes.ok) return res.status(401).json({ error: 'Invalid session. Please log out and log back in.' });
+    if (!userRes.ok) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Invalid session. Please log out and log back in.' }); }
     const user = await userRes.json();
 
     const { package: pkg } = req.body;

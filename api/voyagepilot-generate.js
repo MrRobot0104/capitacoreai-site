@@ -235,12 +235,22 @@ module.exports = async (req, res) => {
   if (applyRateLimit(req, res, 'voyagepilot', 10, 60000)) return;
 
   try {
-    // Public endpoint — no auth needed
+    // Public endpoint for shared trips — no auth but validate UUID format
     if (req.body && req.body.action === 'get_trip') {
       const { tripId } = req.body;
       if (!tripId) return res.status(400).json({ error: 'No trip ID' });
+      // Validate UUID format to prevent injection
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tripId)) {
+        console.error('[SECURITY] get_trip: invalid trip ID format:', tripId);
+        return res.status(400).json({ error: 'Invalid trip ID format' });
+      }
+      const { applyRateLimit, getClientIP } = require('./_rateLimit');
+      if (applyRateLimit(req, res, 'get_trip', 20, 60000)) {
+        console.error('[SECURITY] get_trip: rate limit hit from', getClientIP(req));
+        return;
+      }
       const tripRes = await fetch(
-        process.env.SUPABASE_URL + '/rest/v1/trips?id=eq.' + tripId + '&select=*',
+        process.env.SUPABASE_URL + '/rest/v1/trips?id=eq.' + tripId + '&select=trip_data',
         { headers: { 'apikey': process.env.SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY } }
       );
       if (!tripRes.ok) return res.status(500).json({ error: 'Failed to load trip' });
@@ -250,7 +260,7 @@ module.exports = async (req, res) => {
     }
 
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Not authenticated' });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Not authenticated' }); }
     const token = authHeader.split(' ')[1];
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseAnon = process.env.SUPABASE_ANON_KEY;
@@ -259,7 +269,7 @@ module.exports = async (req, res) => {
     const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
       headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
     });
-    if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
+    if (!userRes.ok) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Invalid session' }); }
     const user = await userRes.json();
 
     const adminCheck = await fetch(

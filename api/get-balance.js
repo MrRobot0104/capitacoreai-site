@@ -8,6 +8,7 @@ module.exports = async (req, res) => {
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown');
     return res.status(401).json({ error: 'Not authenticated' });
   }
   const token = authHeader.split(' ')[1];
@@ -20,7 +21,7 @@ module.exports = async (req, res) => {
   const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
     headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
   });
-  if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
+  if (!userRes.ok) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Invalid session' }); }
   const user = await userRes.json();
 
   // Get balance

@@ -257,8 +257,13 @@ async function executeActions(actions) {
 }
 
 // ─── Markdown to HTML ─────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function mdToHtml(text) {
-  return text
+  // Escape HTML first, then apply safe markdown formatting
+  return escapeHtml(text)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(/^- (.+)$/gm, '&bull; $1<br>')
