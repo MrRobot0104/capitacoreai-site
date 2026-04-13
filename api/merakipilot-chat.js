@@ -89,6 +89,7 @@ module.exports = async (req, res) => {
     // ─── Auth ──────────────────────────────────────────────────
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown');
       return res.status(401).json({ error: 'Not authenticated. Please log in.' });
     }
     const token = authHeader.split(' ')[1];
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
     const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
       headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
     });
-    if (!userRes.ok) return res.status(401).json({ error: 'Invalid session. Please log out and log back in.' });
+    if (!userRes.ok) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Invalid session. Please log out and log back in.' }); }
     const user = await userRes.json();
 
     const adminCheck = await fetch(
