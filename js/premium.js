@@ -67,7 +67,7 @@
     });
 
     // Stagger cards — only if the group is below fold
-    var cardGroups = document.querySelectorAll('.services-grid, .agents-grid, .pricing-grid, .features, .usecase-grid, .prebuilt-grid');
+    var cardGroups = document.querySelectorAll('.services-grid, .agents-grid, .features, .usecase-grid, .prebuilt-grid');
     cardGroups.forEach(function(group) {
       var rect = group.getBoundingClientRect();
       if (rect.top < viewportBottom) return; // Already visible
