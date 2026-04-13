@@ -32,13 +32,19 @@
   resize();
 
   // ─── Node class ──────────────────────────────────────────
+  var networkScale = 'small'; // small (<30), medium (30-60), large (60+)
+
   function createNode(x, y, type, label, status, meta) {
+    var r;
+    if (type === 'brain') r = networkScale === 'large' ? 22 : 28;
+    else if (type === 'network') r = networkScale === 'large' ? 10 : networkScale === 'medium' ? 12 : 14;
+    else r = networkScale === 'large' ? 3 : networkScale === 'medium' ? 5 : 8;
     return {
       x: x, y: y,
       targetX: x, targetY: y,
       vx: 0, vy: 0,
-      radius: type === 'brain' ? 28 : type === 'network' ? 14 : 8,
-      type: type, // brain, network, device
+      radius: r,
+      type: type,
       label: label || '',
       sublabel: (meta && meta.model) || '',
       clients: (meta && meta.clients) || 0,
@@ -57,8 +63,11 @@
     nodes = [];
     connections = [];
 
+    var totalDevices = data.devices.length;
+    networkScale = totalDevices > 60 ? 'large' : totalDevices > 30 ? 'medium' : 'small';
+
     // Center brain node
-    centerNode = createNode(W / 2, H / 2, 'brain', 'Noko', 'online');
+    centerNode = createNode(W / 2, H / 2, 'brain', 'N', 'online');
     nodes.push(centerNode);
 
     // Group devices by network
@@ -70,40 +79,47 @@
     });
 
     var netKeys = Object.keys(networks);
-    var netAngle = (Math.PI * 2) / Math.max(netKeys.length, 1);
+    var netCount = netKeys.length;
+    var netAngle = (Math.PI * 2) / Math.max(netCount, 1);
+
+    // Adaptive distances based on network size
+    var baseDist = networkScale === 'large' ? Math.min(W, H) * 0.38 :
+                   networkScale === 'medium' ? Math.min(W, H) * 0.33 :
+                   Math.min(W, H) * 0.28;
 
     netKeys.forEach(function(nid, ni) {
-      // Find network name from data.networks
       var netInfo = (data.networks || []).find(function(n) { return n.id === nid; });
       var netName = netInfo ? netInfo.name : 'Network';
+      var devs = networks[nid];
 
+      // Stagger rings for large networks — alternate inner/outer
+      var ringOffset = (netCount > 10 && ni % 2 === 1) ? baseDist * 0.7 : baseDist;
       var angle = netAngle * ni - Math.PI / 2;
-      var dist = Math.min(W, H) * 0.28;
-      var nx = W / 2 + Math.cos(angle) * dist;
-      var ny = H / 2 + Math.sin(angle) * dist;
+      var nx = W / 2 + Math.cos(angle) * ringOffset;
+      var ny = H / 2 + Math.sin(angle) * ringOffset;
 
-      var netNode = createNode(nx, ny, 'network', netName, 'online');
-      var netIdx = nodes.length;
+      var netLabel = networkScale === 'large' ? netName.substring(0, 15) : netName;
+      var netNode = createNode(nx, ny, 'network', netLabel, 'online');
       nodes.push(netNode);
+      var netIdx = nodes.length - 1;
       connections.push({ from: 0, to: netIdx, active: true });
 
-      // Devices around this network
-      var devs = networks[nid];
+      // Adaptive device distance
       var devAngle = (Math.PI * 2) / Math.max(devs.length, 1);
-      var devDist = 50 + devs.length * 8;
+      var devDist = networkScale === 'large' ? 20 + Math.min(devs.length * 3, 40) :
+                    networkScale === 'medium' ? 30 + devs.length * 5 :
+                    50 + devs.length * 8;
 
       devs.forEach(function(d, di) {
         var da = devAngle * di - Math.PI / 2 + angle * 0.3;
         var dx = nx + Math.cos(da) * devDist;
         var dy = ny + Math.sin(da) * devDist;
-        // Keep in bounds
-        dx = Math.max(60, Math.min(W - 60, dx));
-        dy = Math.max(60, Math.min(H - 60, dy));
+        dx = Math.max(20, Math.min(W - 20, dx));
+        dy = Math.max(20, Math.min(H - 20, dy));
 
         var devNode = createNode(dx, dy, 'device', d.name || d.model, d.status, { model: d.model, clients: d.clients || 0 });
-        var devIdx = nodes.length;
         nodes.push(devNode);
-        connections.push({ from: netIdx, to: devIdx, active: d.status === 'online' });
+        connections.push({ from: netIdx, to: nodes.length - 1, active: d.status === 'online' });
       });
     });
 
@@ -235,7 +251,7 @@
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
       ctx.strokeStyle = c.active ? 'rgba(255,106,0,' + alpha + ')' : 'rgba(239,68,68,' + alpha + ')';
-      ctx.lineWidth = c.active ? 1.5 : 0.8;
+      ctx.lineWidth = networkScale === 'large' ? (c.active ? 0.5 : 0.3) : networkScale === 'medium' ? (c.active ? 0.8 : 0.5) : (c.active ? 1.5 : 0.8);
       ctx.stroke();
     });
 
@@ -316,30 +332,35 @@
         }
       }
 
-      // Labels
-      if (n.type !== 'device' || n.radius > 6) {
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        if (n.type === 'network') {
-          ctx.fillStyle = 'rgba(255,255,255,0.7)';
-          ctx.font = '500 11px Inter';
-          ctx.fillText(n.label, n.x, n.y + n.radius + 6);
-        } else if (n.type === 'device') {
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
-          ctx.font = '400 9px Inter';
-          ctx.fillText(n.label, n.x, n.y + n.radius + 5);
-          if (n.sublabel) {
-            ctx.fillStyle = 'rgba(255,106,0,0.4)';
-            ctx.font = '400 8px Inter';
-            ctx.fillText(n.sublabel, n.x, n.y + n.radius + 16);
-          }
-          if (n.clients > 0) {
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.font = '400 8px Inter';
-            ctx.fillText(n.clients + ' client' + (n.clients !== 1 ? 's' : ''), n.x, n.y + n.radius + (n.sublabel ? 26 : 16));
-          }
+      // Labels — adaptive based on network scale
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      if (n.type === 'network') {
+        ctx.fillStyle = 'rgba(255,255,255,' + (networkScale === 'large' ? '0.6' : '0.7') + ')';
+        ctx.font = (networkScale === 'large' ? '500 9px' : '500 11px') + ' Inter';
+        ctx.fillText(n.label, n.x, n.y + n.radius + 4);
+      } else if (n.type === 'device' && networkScale === 'small') {
+        // Only show device labels on small networks
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '400 9px Inter';
+        ctx.fillText(n.label, n.x, n.y + n.radius + 5);
+        if (n.sublabel) {
+          ctx.fillStyle = 'rgba(255,106,0,0.4)';
+          ctx.font = '400 8px Inter';
+          ctx.fillText(n.sublabel, n.x, n.y + n.radius + 16);
         }
+        if (n.clients > 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.font = '400 8px Inter';
+          ctx.fillText(n.clients + ' client' + (n.clients !== 1 ? 's' : ''), n.x, n.y + n.radius + (n.sublabel ? 26 : 16));
+        }
+      } else if (n.type === 'device' && networkScale === 'medium') {
+        // Medium: show name only, no model/clients
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.font = '400 8px Inter';
+        ctx.fillText(n.label, n.x, n.y + n.radius + 4);
       }
+      // Large networks: no device labels at all — just dots
     });
 
     // Matrix-style falling data on analyzing
