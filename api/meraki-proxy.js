@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
       },
     };
 
-    if (body && (method === 'POST' || method === 'PUT')) {
+    if (body && (safeMethod === 'POST' || safeMethod === 'PUT')) {
       fetchOptions.body = JSON.stringify(body);
     }
 

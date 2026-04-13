@@ -1,4 +1,4 @@
-var MSGS_PER_CREDIT = 5;
+var MSGS_PER_CREDIT = 10;
 var CREDIT_COST = 1;
 var connected = false;
 var merakiKey = null;
@@ -210,7 +210,38 @@ async function connectMeraki(key) {
     return;
   }
 
-  orgData = orgs[0];
+  // If multiple orgs, let the user choose
+  if (orgs.length > 1) {
+    var orgHtml = '<strong>Found ' + orgs.length + ' organizations:</strong><br><br>';
+    orgs.forEach(function(org, i) {
+      orgHtml += '<button class="org-select-btn" data-org-index="' + i + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:rgba(255,106,0,0.06);border:1px solid rgba(255,106,0,0.2);border-radius:10px;color:#f1f5f9;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;">' +
+        '<strong style="color:#FF6A00;">' + (org.name || 'Unnamed Org') + '</strong>' +
+        '<br><span style="font-size:12px;color:#94a3b8;">ID: ' + org.id + '</span>' +
+        '</button>';
+    });
+    orgHtml += '<span style="font-size:12px;color:#94a3b8;">Click an organization to connect.</span>';
+    addMessage(orgHtml, 'bot');
+
+    // Store orgs for selection and bind click handlers
+    window._pendingOrgs = orgs;
+    setTimeout(function() {
+      document.querySelectorAll('.org-select-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.getAttribute('data-org-index'));
+          selectOrg(window._pendingOrgs[idx]);
+        });
+        btn.addEventListener('mouseenter', function() { this.style.borderColor = '#FF6A00'; this.style.background = 'rgba(255,106,0,0.12)'; });
+        btn.addEventListener('mouseleave', function() { this.style.borderColor = 'rgba(255,106,0,0.2)'; this.style.background = 'rgba(255,106,0,0.06)'; });
+      });
+    }, 100);
+    return;
+  }
+
+  await selectOrg(orgs[0]);
+}
+
+async function selectOrg(org) {
+  orgData = org;
   connected = true;
 
   var chip = document.getElementById('statusChip');
@@ -340,6 +371,7 @@ async function executeFetches(fetches) {
 // ─── Execute Actions (Claude makes changes) ──────────────────────
 async function executeActions(actions) {
   var results = {};
+  var failures = [];
   for (var i = 0; i < actions.length; i++) {
     var a = actions[i];
     try {
@@ -348,8 +380,25 @@ async function executeActions(actions) {
       if (method === 'POST') data = await merakiPost(a.path, a.body || {});
       else if (method === 'PUT') data = await merakiPut(a.path, a.body || {});
       else data = await merakiGet(a.path);
-      results[a.path] = data;
-    } catch (e) { results[a.path] = { _error: e.message }; }
+
+      // Check if the Meraki API returned an error
+      if (data && data.errors) {
+        results[a.path] = { _error: data.errors.join('; ') };
+        failures.push(a.path + ': ' + data.errors.join('; '));
+      } else if (data === null) {
+        results[a.path] = { _error: 'No response from Meraki API' };
+        failures.push(a.path + ': No response');
+      } else {
+        results[a.path] = data;
+      }
+    } catch (e) {
+      results[a.path] = { _error: e.message };
+      failures.push(a.path + ': ' + e.message);
+    }
+  }
+  // Report failures prominently so Claude doesn't hallucinate success
+  if (failures.length > 0) {
+    addMessage('<strong style="color:#ef4444;">Action failed:</strong><br>' + failures.map(function(f) { return '&bull; ' + f; }).join('<br>') + '<br><br><span style="color:#94a3b8;font-size:12px;">The requested changes were NOT applied. The AI may need to try a different approach.</span>', 'bot');
   }
   await loadDashboard();
   return results;
@@ -446,6 +495,40 @@ async function handleSend() {
 
   if (!connected) {
     addMessage("I need your Meraki API key first. Paste it here and I'll connect to your network.", 'bot');
+    return;
+  }
+
+  // Handle org switch command
+  var lower = text.toLowerCase().trim();
+  if (lower === 'switch org' || lower === 'switch organization' || lower === 'change org' || lower === 'change organization') {
+    showTyping();
+    var orgs = await merakiGet('/organizations');
+    hideTyping();
+    if (!orgs || orgs.length <= 1) {
+      addMessage('Only one organization is available on this API key.', 'bot');
+      return;
+    }
+    var orgHtml = '<strong>Switch organization:</strong><br><br>';
+    orgs.forEach(function(org, i) {
+      var isCurrent = orgData && org.id === orgData.id;
+      orgHtml += '<button class="org-select-btn" data-org-index="' + i + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:' + (isCurrent ? 'rgba(34,197,94,0.08)' : 'rgba(255,106,0,0.06)') + ';border:1px solid ' + (isCurrent ? 'rgba(34,197,94,0.3)' : 'rgba(255,106,0,0.2)') + ';border-radius:10px;color:#f1f5f9;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;">' +
+        '<strong style="color:' + (isCurrent ? '#22c55e' : '#FF6A00') + ';">' + (org.name || 'Unnamed Org') + '</strong>' +
+        (isCurrent ? ' <span style="font-size:11px;color:#22c55e;">(current)</span>' : '') +
+        '<br><span style="font-size:12px;color:#94a3b8;">ID: ' + org.id + '</span>' +
+        '</button>';
+    });
+    addMessage(orgHtml, 'bot');
+    window._pendingOrgs = orgs;
+    setTimeout(function() {
+      document.querySelectorAll('.org-select-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.getAttribute('data-org-index'));
+          selectOrg(window._pendingOrgs[idx]);
+        });
+        btn.addEventListener('mouseenter', function() { this.style.borderColor = '#FF6A00'; this.style.background = 'rgba(255,106,0,0.12)'; });
+        btn.addEventListener('mouseleave', function() { this.style.borderColor = 'rgba(255,106,0,0.2)'; this.style.background = 'rgba(255,106,0,0.06)'; });
+      });
+    }, 100);
     return;
   }
 

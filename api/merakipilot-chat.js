@@ -1,7 +1,7 @@
 // MerakiPilot Chat API — Claude-powered network operations agent
 // Auth + credit gated. 1 credit = 5 messages (same model as other agents).
 
-const MSGS_PER_CREDIT = 5;
+const MSGS_PER_CREDIT = 10;
 
 const SYSTEM_PROMPT = `You are Noko, the AI brain behind MerakiPilot — a Cisco Meraki network operations agent built by CapitaCoreAI.
 
@@ -60,6 +60,9 @@ RULES for actions:
 - For simple read operations and status checks: just do it, no confirmation needed
 - You can include multiple actions in one response for multi-step configs
 - After actions execute, you'll get results back — report success/failure to the user
+- CRITICAL: After any action, ALWAYS verify the change by fetching the endpoint again. Do NOT tell the user something was changed unless you have verified it with a follow-up fetch. If action results contain "errors" or "_error", the action FAILED — tell the user honestly and suggest alternatives.
+- NEVER hallucinate success. If you don't get confirmation that a change went through, say "I attempted to make this change but could not verify it succeeded. Let me check..."
+- If you cannot perform a requested action (e.g., API limitation, permission issue, unsupported endpoint), be upfront: "I can't do that because..."
 
 ## MULTI-STEP WORKFLOWS
 
