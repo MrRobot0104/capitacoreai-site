@@ -156,7 +156,18 @@ Examples:
 <action>{"method":"PUT","path":"/networks/NET_ID/appliance/vlans/1","body":{"name":"Mgmt","subnet":"10.0.1.0/24","applianceIp":"10.0.1.1"}}</action>
 <action>{"method":"POST","path":"/devices/SERIAL/reboot","body":{}}</action>
 <action>{"method":"PUT","path":"/devices/SERIAL","body":{"name":"New Name"}}</action>
+<action>{"method":"POST","path":"/networks/NET_ID/devices/claim","body":{"serials":["XXXX-XXXX-XXXX"]}}</action>
+<action>{"method":"POST","path":"/networks/NET_ID/devices/remove","body":{"serial":"XXXX-XXXX-XXXX"}}</action>
 <action>{"method":"DELETE","path":"/networks/NET_ID/appliance/vlans/VLAN_ID"}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/firmwareUpgrades","body":{"upgradeWindow":{"dayOfWeek":"tue","hourOfDay":"2:00"}}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID","body":{"name":"New Network Name","timeZone":"America/New_York"}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/firewall/l3FirewallRules","body":{"rules":[{"policy":"deny","protocol":"any","srcCidr":"any","srcPort":"any","destCidr":"any","destPort":"any","comment":"Default deny"}]}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/contentFiltering","body":{"blockedUrlCategories":[],"blockedUrlPatterns":[],"urlCategoryListSize":"fullList"}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/vpn/siteToSiteVpn","body":{"mode":"spoke","hubs":[]}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/trafficShaping/uplinkBandwidth","body":{"bandwidthLimits":{"wan1":{"limitUp":50000,"limitDown":100000}}}}</action>
+
+IMPORTANT: To remove a device from a network, use POST /networks/NET_ID/devices/remove with {"serial":"..."} in the body. Do NOT try DELETE or PUT on /networks/NET_ID/devices/SERIAL — that endpoint does not exist.
+To claim a device into a network, use POST /networks/NET_ID/devices/claim with {"serials":["..."]} in the body.
 
 ## ACTION RULES
 
