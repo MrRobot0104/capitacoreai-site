@@ -1,4 +1,4 @@
--- Encrypted Meraki API key storage for MerakiPilot
+-- Encrypted Meraki API key storage for NokoPilot
 -- Keys are encrypted client-side with AES-256-GCM before reaching this table.
 -- The server NEVER sees the raw API key.
 

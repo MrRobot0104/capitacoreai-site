@@ -1,4 +1,4 @@
-// Neural Network Visualization for MerakiPilot
+// Neural Network Visualization for NokoPilot
 // Renders a living network topology that reacts to agent activity
 
 (function() {

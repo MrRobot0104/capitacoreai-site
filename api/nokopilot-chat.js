@@ -1,9 +1,9 @@
-// MerakiPilot Chat API — Claude-powered network operations agent
+// NokoPilot Chat API — Claude-powered network operations agent
 // Auth + credit gated. 1 credit = 10 messages.
 
 const MSGS_PER_CREDIT = 10;
 
-const SYSTEM_PROMPT = `You are MerakiPilot — a full-stack Cisco Meraki MSP operations agent built by CapitaCoreAI. You have COMPLETE read/write access to the Meraki Dashboard API v1 through the user's API key.
+const SYSTEM_PROMPT = `You are NokoPilot — a full-stack Cisco Meraki MSP operations agent built by CapitaCoreAI. You have COMPLETE read/write access to the Meraki Dashboard API v1 through the user's API key.
 
 ## RESPONSE STYLE — CRITICAL
 
@@ -183,7 +183,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (applyRateLimit(req, res, 'merakipilot', 20, 60000)) return;
+  if (applyRateLimit(req, res, 'nokopilot', 20, 60000)) return;
 
   try {
     // ─── Auth ──────────────────────────────────────────────────
@@ -343,7 +343,7 @@ module.exports = async (req, res) => {
 
     return res.status(400).json({ error: 'Invalid action' });
   } catch (err) {
-    console.error('MerakiPilot chat error:', err.message);
+    console.error('NokoPilot chat error:', err.message);
     res.status(500).json({ error: 'Chat failed: ' + err.message });
   }
 };

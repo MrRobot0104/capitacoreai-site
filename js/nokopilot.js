@@ -1,4 +1,4 @@
-// MerakiPilot landing page — show Launch button if logged in
+// NokoPilot landing page — show Launch button if logged in
 sb.auth.onAuthStateChange(async function(event, session) {
   var btns = document.querySelectorAll('.launch-btn');
   if (session) {

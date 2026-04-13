@@ -17,7 +17,7 @@
 ## AI Agents
 1. **DashPilot** — AI dashboard builder (api/dashpilot-generate.js, 1 credit/gen)
 2. **VoyagePilot** — AI travel planner with real flight/hotel data via SerpAPI (api/voyagepilot-generate.js, 1 credit/trip)
-3. **MerakiPilot** — Cisco Meraki network ops assistant (api/merakipilot-chat.js, 1 credit/5 msgs)
+3. **NokoPilot** — Cisco Meraki network ops assistant (api/nokopilot-chat.js, 1 credit/5 msgs)
 
 ## Architecture
 ```

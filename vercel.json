@@ -23,7 +23,7 @@
       "memory": 1024,
       "maxDuration": 300
     },
-    "api/merakipilot-chat.js": {
+    "api/nokopilot-chat.js": {
       "memory": 512,
       "maxDuration": 120
     },
