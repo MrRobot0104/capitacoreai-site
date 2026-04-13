@@ -427,12 +427,12 @@ function mdToHtml(text) {
   // Escape HTML first, then apply safe markdown formatting
   var html = escapeHtml(text);
 
-  // Parse markdown tables
+  // Parse markdown tables — wrap in scrollable container
   html = html.replace(/((?:^|\n)\|.+\|(?:\n\|[-:| ]+\|)(?:\n\|.+\|)+)/g, function(table) {
     var rows = table.trim().split('\n').filter(function(r) { return r.trim(); });
     if (rows.length < 2) return table;
     var headerCells = rows[0].split('|').filter(function(c) { return c.trim(); });
-    var out = '<table><thead><tr>';
+    var out = '<div class="table-wrap"><table><thead><tr>';
     headerCells.forEach(function(c) { out += '<th>' + c.trim() + '</th>'; });
     out += '</tr></thead><tbody>';
     for (var i = 2; i < rows.length; i++) {
@@ -442,7 +442,7 @@ function mdToHtml(text) {
       cells.forEach(function(c) { out += '<td>' + c.trim() + '</td>'; });
       out += '</tr>';
     }
-    out += '</tbody></table>';
+    out += '</tbody></table></div>';
     return out;
   });
 
@@ -544,9 +544,15 @@ async function handleSend() {
         hideTyping(); creditBalance = 0; refreshCredits(); showLimitBar(); return;
       }
       if (!resp.ok) {
+        // Auto-retry once on server errors (500, 503, 529)
+        if (resp.status >= 500 && loop === 0) {
+          console.error('MerakiPilot: retrying after status', resp.status);
+          await new Promise(function(r) { setTimeout(r, 1500); });
+          continue;
+        }
         hideTyping();
         var err = {}; try { err = await resp.json(); } catch(e) {}
-        addMessage('Something went wrong: ' + (err.error || 'Unknown error') + '. Try again.', 'bot');
+        addMessage((err.error || 'Something went wrong') + ' Try again.', 'bot');
         return;
       }
 
@@ -568,7 +574,10 @@ async function handleSend() {
 
         // Add Claude's response + fetch results to history for next loop
         chatHistory.push({ role: 'assistant', content: data.response || 'Fetching data...' });
-        chatHistory.push({ role: 'user', content: '<fetch_results>\n' + JSON.stringify(fetchResults, null, 2) + '\n</fetch_results>' });
+        // Truncate large fetch results to avoid blowing context
+        var fetchStr = JSON.stringify(fetchResults, null, 2);
+        if (fetchStr.length > 15000) fetchStr = fetchStr.substring(0, 15000) + '\n... (truncated)';
+        chatHistory.push({ role: 'user', content: '<fetch_results>\n' + fetchStr + '\n</fetch_results>' });
 
         // Execute any actions that came with the fetches
         if (data.actions && data.actions.length > 0) {
