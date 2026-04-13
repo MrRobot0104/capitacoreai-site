@@ -10,6 +10,8 @@ var creditBalance = 0;
 var conversationStarted = false;
 var currentSession = null;
 
+var allOrgs = []; // All orgs available on current API key
+
 var chatMessages = document.getElementById('chatMessages');
 var chatInput = document.getElementById('chatInput');
 var sendBtn = document.getElementById('sendBtn');
@@ -214,6 +216,8 @@ async function connectMeraki(key) {
     return;
   }
 
+  allOrgs = orgs;
+
   // If multiple orgs, let the user choose
   if (orgs.length > 1) {
     var orgHtml = '<strong>Found ' + orgs.length + ' organizations:</strong><br><br>';
@@ -251,6 +255,7 @@ async function selectOrg(org) {
   var chip = document.getElementById('statusChip');
   chip.className = 'status-chip';
   chip.querySelector('#statusText').textContent = orgData.name;
+  populateOrgDropdown();
 
   addMessage('Connected to <strong>' + orgData.name + '</strong>. Loading your network...', 'bot');
   await loadDashboard();
@@ -662,6 +667,53 @@ document.getElementById('continueBtn').addEventListener('click', continueConvers
 
 window.addEventListener('pageshow', function() {
   if (currentSession) refreshCredits();
+});
+
+// ─── Org Dropdown ────────────────────────────────────────────────
+function populateOrgDropdown() {
+  var dropdown = document.getElementById('orgDropdown');
+  var arrow = document.getElementById('orgDropdownArrow');
+  if (allOrgs.length <= 1) { arrow.style.display = 'none'; return; }
+  arrow.style.display = 'inline';
+
+  var html = '';
+  allOrgs.forEach(function(org, i) {
+    var isCurrent = orgData && org.id === orgData.id;
+    html += '<div class="org-dropdown-item' + (isCurrent ? ' current' : '') + '" data-org-idx="' + i + '">' +
+      '<span class="odd"></span>' +
+      '<div><div class="org-name">' + escapeHtml(org.name || 'Unnamed') + '</div>' +
+      '<div class="org-id">' + org.id + '</div></div></div>';
+  });
+  dropdown.innerHTML = html;
+
+  dropdown.querySelectorAll('.org-dropdown-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var idx = parseInt(this.getAttribute('data-org-idx'));
+      dropdown.classList.remove('active');
+      if (allOrgs[idx].id !== (orgData && orgData.id)) {
+        addMessage('Switching to <strong>' + escapeHtml(allOrgs[idx].name) + '</strong>...', 'bot');
+        selectOrg(allOrgs[idx]);
+      }
+    });
+  });
+}
+
+document.getElementById('statusChip').addEventListener('click', function(e) {
+  if (allOrgs.length <= 1 || !connected) return;
+  var dropdown = document.getElementById('orgDropdown');
+  dropdown.classList.toggle('active');
+  // Position dropdown near the chip
+  var chip = document.getElementById('statusChip');
+  var rect = chip.getBoundingClientRect();
+  dropdown.style.position = 'fixed';
+  dropdown.style.top = (rect.bottom + 6) + 'px';
+  dropdown.style.left = Math.max(8, rect.left) + 'px';
+  e.stopPropagation();
+});
+
+document.addEventListener('click', function(e) {
+  var dropdown = document.getElementById('orgDropdown');
+  if (dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('active');
 });
 
 // ─── Encrypted API Key Storage (Web Crypto API) ─────────────────
