@@ -602,14 +602,19 @@ async function handleSend() {
 
   try {
     var networkContext = await gatherNetworkContext();
-    var maxLoops = 5;
+    var maxLoops = 8;
+    var pendingActions = null;
 
     // ─── Conversation Loop: Claude can fetch data and keep going ───
     for (var loop = 0; loop < maxLoops; loop++) {
-      // Trim history before each API call to prevent context overflow
-      if (chatHistory.length > 16) chatHistory = chatHistory.slice(-12);
+      // Trim history — but always keep the latest user message intact
+      if (chatHistory.length > 20) {
+        // Keep first 2 messages (initial context) + last 10 messages
+        chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-10));
+      }
 
-      var resp = await callChatAPI(chatHistory, loop === 0 ? networkContext : null);
+      // Always send network context so Claude knows the selected network scope
+      var resp = await callChatAPI(chatHistory, networkContext);
 
       if (resp.status === 402) {
         hideTyping(); creditBalance = 0; refreshCredits(); showLimitBar(); return;
@@ -618,8 +623,8 @@ async function handleSend() {
         // Auto-retry once on server errors
         if (resp.status >= 500) {
           console.error('NokoPilot: retrying after status', resp.status);
-          // Trim more aggressively before retry
-          if (chatHistory.length > 6) chatHistory = chatHistory.slice(-4);
+          // Trim before retry but keep recent context
+          if (chatHistory.length > 8) chatHistory = chatHistory.slice(-6);
           await new Promise(function(r) { setTimeout(r, 2000); });
           var retryResp = await callChatAPI(chatHistory, networkContext);
           if (retryResp.ok) {
@@ -663,11 +668,11 @@ async function handleSend() {
         if (fetchStr.length > 8000) fetchStr = fetchStr.substring(0, 8000) + '...(truncated)';
         chatHistory.push({ role: 'user', content: '<fetch_results>' + fetchStr + '</fetch_results>' });
 
+        // Do NOT execute actions here — they'll be executed in the final response.
+        // If Claude sent actions alongside fetches, queue them for after the fetch loop.
         if (data.actions && data.actions.length > 0) {
-          var actionResults = await executeActions(data.actions);
-          var actStr = JSON.stringify(actionResults);
-          if (actStr.length > 2000) actStr = actStr.substring(0, 2000) + '...(truncated)';
-          chatHistory.push({ role: 'user', content: '<action_results>' + actStr + '</action_results>' });
+          // Store for execution after final response
+          pendingActions = data.actions;
         }
 
         continue;
@@ -685,12 +690,21 @@ async function handleSend() {
       if (msgCount >= msgLimit) { showLimitBar(); }
       if (window.neuralVizDone) window.neuralVizDone();
 
-      if (data.actions && data.actions.length > 0) {
-        if (window.neuralVizAction) window.neuralVizAction('Executing ' + data.actions.length + ' change' + (data.actions.length > 1 ? 's' : '') + '...');
-        var actionResults = await executeActions(data.actions);
+      // Merge any pending actions from fetch loop with final response actions
+      var allActions = (pendingActions || []).concat(data.actions || []);
+      if (allActions.length > 0) {
+        // Deduplicate by path+method
+        var seen = {};
+        var uniqueActions = [];
+        allActions.forEach(function(a) {
+          var key = (a.method || '') + ':' + (a.path || '');
+          if (!seen[key]) { seen[key] = true; uniqueActions.push(a); }
+        });
+        if (window.neuralVizAction) window.neuralVizAction('Executing ' + uniqueActions.length + ' change' + (uniqueActions.length > 1 ? 's' : '') + '...');
+        var actionResults = await executeActions(uniqueActions);
         var resultSummary = Object.keys(actionResults).map(function(path) {
           var r = actionResults[path];
-          return r && r._error ? '&bull; ' + path + ': <strong>Failed</strong> — ' + r._error : '&bull; ' + path + ': <strong>Done</strong>';
+          return r && r._error ? '&bull; ' + path + ': <strong>Failed</strong> — ' + escapeHtml(r._error) : '&bull; ' + path + ': <strong>Done</strong>';
         }).join('<br>');
         addMessage(resultSummary, 'bot');
       }
