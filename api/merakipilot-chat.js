@@ -149,19 +149,22 @@ module.exports = async (req, res) => {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
-      // Build the messages array for Claude
-      const claudeMessages = messages.slice(-20).map((m, i, arr) => {
+      // Build the messages array for Claude — keep it tight to avoid context overflow
+      const claudeMessages = messages.slice(-12).map((m, i, arr) => {
         const isLast = i === arr.length - 1;
         let content = typeof m.content === 'string' ? m.content : String(m.content);
 
         // Attach network context to the latest user message
         if (isLast && m.role === 'user' && networkContext) {
-          content = `<network_data>\n${JSON.stringify(networkContext, null, 2)}\n</network_data>\n\n${content}`;
+          // Compact network context — no pretty-print
+          content = `<network_data>${JSON.stringify(networkContext)}</network_data>\n\n${content}`;
         }
 
+        // Tight limits: fetch_results can be huge
+        const limit = content.includes('fetch_results') || content.includes('network_data') ? 10000 : 4000;
         return {
           role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: content.substring(0, 30000),
+          content: content.substring(0, limit),
         };
       });
 

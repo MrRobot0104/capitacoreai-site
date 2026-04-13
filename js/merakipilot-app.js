@@ -77,15 +77,21 @@ function enableInput() {
 
 // ─── Chat UI ──────────────────────────────────────────────────────
 function cleanResponse(text) {
-  // Strip raw fetch_results/action_results blocks — works on both raw and HTML-escaped
   return text
+    // Strip tagged blocks (raw and HTML-escaped)
     .replace(/<fetch_results>[\s\S]*?<\/fetch_results>/g, '')
     .replace(/&lt;fetch_results&gt;[\s\S]*?&lt;\/fetch_results&gt;/g, '')
     .replace(/<action_results>[\s\S]*?<\/action_results>/g, '')
     .replace(/&lt;action_results&gt;[\s\S]*?&lt;\/action_results&gt;/g, '')
-    .replace(/```json\s*[\[{][\s\S]*?```/g, '')
-    .replace(/\{"path":"\/[\s\S]*?"data":[\s\S]*?\}\]/g, '')
-    .replace(/\[?\{"path":"\/org[\s\S]{50,}?\}\]?\}?/g, '')
+    .replace(/<network_data>[\s\S]*?<\/network_data>/g, '')
+    .replace(/&lt;network_data&gt;[\s\S]*?&lt;\/network_data&gt;/g, '')
+    // Strip markdown JSON code blocks
+    .replace(/```json[\s\S]*?```/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    // Strip raw JSON arrays/objects longer than 200 chars (data dumps)
+    .replace(/\[?\{[^{}]*"[a-zA-Z]+"[^{}]*\}(?:\s*,\s*\{[^{}]*\})*\]?/g, function(match) {
+      return match.length > 200 ? '' : match;
+    })
     .trim();
 }
 
@@ -487,7 +493,20 @@ async function continueConversation() {
   }
 }
 
+// ─── Command History (up arrow recall) ───────────────────────────
+var commandHistory = [];
+var historyIndex = -1;
+
 // ─── Handle User Input (Claude-powered) ───────────────────────────
+async function callChatAPI(messages, networkContext) {
+  var resp = await fetch('/api/merakipilot-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ action: 'chat', messages: messages, networkContext: networkContext }),
+  });
+  return resp;
+}
+
 async function handleSend() {
   var text = chatInput.value.trim();
   if (!text) return;
@@ -496,6 +515,11 @@ async function handleSend() {
     addMessage('Please <a href="account.html" style="color:#111;text-decoration:underline;">log in</a> to use MerakiPilot.', 'bot');
     return;
   }
+
+  // Save to command history
+  if (commandHistory[commandHistory.length - 1] !== text) commandHistory.push(text);
+  if (commandHistory.length > 50) commandHistory.shift();
+  historyIndex = commandHistory.length;
 
   chatInput.value = '';
   chatInput.style.height = 'auto';
@@ -530,37 +554,46 @@ async function handleSend() {
 
   try {
     var networkContext = await gatherNetworkContext();
-    var maxLoops = 5; // Safety: max fetch-loop iterations
+    var maxLoops = 5;
 
     // ─── Conversation Loop: Claude can fetch data and keep going ───
     for (var loop = 0; loop < maxLoops; loop++) {
-      var resp = await fetch('/api/merakipilot-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-        body: JSON.stringify({ action: 'chat', messages: chatHistory, networkContext: loop === 0 ? networkContext : null }),
-      });
+      // Trim history before each API call to prevent context overflow
+      if (chatHistory.length > 16) chatHistory = chatHistory.slice(-12);
+
+      var resp = await callChatAPI(chatHistory, loop === 0 ? networkContext : null);
 
       if (resp.status === 402) {
         hideTyping(); creditBalance = 0; refreshCredits(); showLimitBar(); return;
       }
       if (!resp.ok) {
-        // Auto-retry once on server errors (500, 503, 529)
-        if (resp.status >= 500 && loop === 0) {
+        // Auto-retry once on server errors
+        if (resp.status >= 500) {
           console.error('MerakiPilot: retrying after status', resp.status);
-          await new Promise(function(r) { setTimeout(r, 1500); });
-          continue;
+          // Trim more aggressively before retry
+          if (chatHistory.length > 6) chatHistory = chatHistory.slice(-4);
+          await new Promise(function(r) { setTimeout(r, 2000); });
+          var retryResp = await callChatAPI(chatHistory, networkContext);
+          if (retryResp.ok) {
+            resp = retryResp;
+          } else {
+            hideTyping();
+            var err2 = {}; try { err2 = await retryResp.json(); } catch(e) {}
+            addMessage((err2.error || 'AI is temporarily unavailable.') + ' Try again in a moment.', 'bot');
+            return;
+          }
+        } else {
+          hideTyping();
+          var err = {}; try { err = await resp.json(); } catch(e) {}
+          addMessage((err.error || 'Something went wrong.') + ' Try again.', 'bot');
+          return;
         }
-        hideTyping();
-        var err = {}; try { err = await resp.json(); } catch(e) {}
-        addMessage((err.error || 'Something went wrong') + ' Try again.', 'bot');
-        return;
       }
 
       var data = await resp.json();
 
       // If Claude wants to fetch data, execute and loop back
       if (data.fetches && data.fetches.length > 0) {
-        // Show Claude's status message to the user
         if (data.response) {
           hideTyping();
           var cleanedIntermediate = cleanResponse(data.response);
@@ -568,24 +601,24 @@ async function handleSend() {
           showTyping();
         }
 
-        // Execute all fetches in parallel
         if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Fetching ' + data.fetches.length + ' endpoint' + (data.fetches.length > 1 ? 's' : '') + '...');
         var fetchResults = await executeFetches(data.fetches);
 
-        // Add Claude's response + fetch results to history for next loop
-        chatHistory.push({ role: 'assistant', content: data.response || 'Fetching data...' });
-        // Truncate large fetch results to avoid blowing context
-        var fetchStr = JSON.stringify(fetchResults, null, 2);
-        if (fetchStr.length > 15000) fetchStr = fetchStr.substring(0, 15000) + '\n... (truncated)';
-        chatHistory.push({ role: 'user', content: '<fetch_results>\n' + fetchStr + '\n</fetch_results>' });
+        // Keep assistant response short in history
+        chatHistory.push({ role: 'assistant', content: (data.response || 'Fetching data...').substring(0, 500) });
+        // Heavily truncate fetch results — Claude only needs a summary
+        var fetchStr = JSON.stringify(fetchResults);
+        if (fetchStr.length > 8000) fetchStr = fetchStr.substring(0, 8000) + '...(truncated)';
+        chatHistory.push({ role: 'user', content: '<fetch_results>' + fetchStr + '</fetch_results>' });
 
-        // Execute any actions that came with the fetches
         if (data.actions && data.actions.length > 0) {
           var actionResults = await executeActions(data.actions);
-          chatHistory.push({ role: 'user', content: '<action_results>\n' + JSON.stringify(actionResults, null, 2) + '\n</action_results>' });
+          var actStr = JSON.stringify(actionResults);
+          if (actStr.length > 2000) actStr = actStr.substring(0, 2000) + '...(truncated)';
+          chatHistory.push({ role: 'user', content: '<action_results>' + actStr + '</action_results>' });
         }
 
-        continue; // Loop back to Claude with the results
+        continue;
       }
 
       // No more fetches — show final response
@@ -593,29 +626,25 @@ async function handleSend() {
       if (data.response) {
         var cleanedFinal = cleanResponse(data.response);
         if (cleanedFinal) addMessage(mdToHtml(cleanedFinal), 'bot');
-        chatHistory.push({ role: 'assistant', content: data.response });
+        chatHistory.push({ role: 'assistant', content: data.response.substring(0, 2000) });
       }
       msgCount++;
 
       if (msgCount >= msgLimit) { showLimitBar(); }
-
       if (window.neuralVizDone) window.neuralVizDone();
 
-      // Execute any final actions
       if (data.actions && data.actions.length > 0) {
         if (window.neuralVizAction) window.neuralVizAction('Executing ' + data.actions.length + ' change' + (data.actions.length > 1 ? 's' : '') + '...');
         var actionResults = await executeActions(data.actions);
         var resultSummary = Object.keys(actionResults).map(function(path) {
           var r = actionResults[path];
-          return r && r._error ? '&bull; ' + path + ': Failed — ' + r._error : '&bull; ' + path + ': Done';
+          return r && r._error ? '&bull; ' + path + ': <strong>Failed</strong> — ' + r._error : '&bull; ' + path + ': <strong>Done</strong>';
         }).join('<br>');
-        addMessage('<strong>Changes applied:</strong><br>' + resultSummary, 'bot');
+        addMessage(resultSummary, 'bot');
       }
 
-      break; // Done
+      break;
     }
-
-    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-30);
 
   } catch (e) {
     hideTyping();
@@ -628,6 +657,23 @@ async function handleSend() {
 sendBtn.addEventListener('click', handleSend);
 chatInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  // Up arrow: recall previous commands
+  if (e.key === 'ArrowUp' && chatInput.value === '' && commandHistory.length > 0) {
+    e.preventDefault();
+    if (historyIndex > 0) historyIndex--;
+    chatInput.value = commandHistory[historyIndex] || '';
+  }
+  // Down arrow: go forward in history
+  if (e.key === 'ArrowDown' && commandHistory.length > 0) {
+    e.preventDefault();
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      chatInput.value = commandHistory[historyIndex] || '';
+    } else {
+      historyIndex = commandHistory.length;
+      chatInput.value = '';
+    }
+  }
 });
 chatInput.addEventListener('input', function() {
   chatInput.style.height = 'auto';
