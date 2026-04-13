@@ -403,10 +403,24 @@ async function gatherNetworkContext() {
   }
 }
 
+// ─── Network scope enforcement ──────────────────────────────────
+// When a specific network is selected, block fetches/actions targeting other networks
+function isPathAllowed(path) {
+  if (selectedNetworkId === 'all') return true;
+  // Extract network ID from path if present
+  var netMatch = path.match(/\/networks\/([^/]+)/);
+  if (!netMatch) return true; // org-level or device-level paths are fine
+  return netMatch[1] === selectedNetworkId;
+}
+
 // ─── Execute Fetches (Claude requests data) ──────────────────────
 async function executeFetches(fetches) {
   var results = {};
   var promises = fetches.map(function(f) {
+    if (!isPathAllowed(f.path)) {
+      results[f.path] = { errors: ['Blocked: this network is not selected. Switch to "All Networks" or select the correct network.'] };
+      return Promise.resolve();
+    }
     return merakiGet(f.path).then(function(data) {
       results[f.path] = data;
     }).catch(function(e) {
@@ -423,6 +437,11 @@ async function executeActions(actions) {
   var failures = [];
   for (var i = 0; i < actions.length; i++) {
     var a = actions[i];
+    if (!isPathAllowed(a.path)) {
+      results[a.path] = { _error: 'Blocked: this network is not selected.' };
+      failures.push(a.path + ': Blocked — wrong network selected');
+      continue;
+    }
     try {
       var method = (a.method || 'GET').toUpperCase();
       var data;
