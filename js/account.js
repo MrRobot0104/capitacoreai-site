@@ -149,6 +149,7 @@ async function showDashboard(user) {
     { name: 'DashPilot', desc: 'AI-powered dashboard builder', url: 'dashpilot-app.html', cost: 3 },
     { name: 'VoyagePilot', desc: 'AI-powered travel planner', url: 'voyagepilot-app.html', cost: 2 },
     { name: 'MerakiPilot', desc: 'AI-powered Meraki network agent', url: 'merakipilot-app.html', cost: 1 },
+    { name: 'VibeShieldPilot', desc: 'AI-powered security scanner', url: 'vibeshieldpilot-app.html', cost: 2 },
   ];
   var html = '';
   agents.forEach(function(agent) {

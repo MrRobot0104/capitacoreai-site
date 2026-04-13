@@ -19,6 +19,10 @@
       "memory": 1024,
       "maxDuration": 300
     },
+    "api/vibeshieldpilot-scan.js": {
+      "memory": 1024,
+      "maxDuration": 300
+    },
     "api/merakipilot-chat.js": {
       "memory": 512,
       "maxDuration": 120
