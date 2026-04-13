@@ -72,12 +72,15 @@ function enableInput() {
 
 // ─── Chat UI ──────────────────────────────────────────────────────
 function cleanResponse(text) {
-  // Strip raw fetch_results/action_results blocks that Claude includes
+  // Strip raw fetch_results/action_results blocks — works on both raw and HTML-escaped
   return text
     .replace(/<fetch_results>[\s\S]*?<\/fetch_results>/g, '')
+    .replace(/&lt;fetch_results&gt;[\s\S]*?&lt;\/fetch_results&gt;/g, '')
     .replace(/<action_results>[\s\S]*?<\/action_results>/g, '')
-    .replace(/```json\s*\{[\s\S]*?"path"[\s\S]*?"data"[\s\S]*?```/g, '')
-    .replace(/\{"path":"\/organizations[\s\S]*?\}\]\}/g, '')
+    .replace(/&lt;action_results&gt;[\s\S]*?&lt;\/action_results&gt;/g, '')
+    .replace(/```json\s*[\[{][\s\S]*?```/g, '')
+    .replace(/\{"path":"\/[\s\S]*?"data":[\s\S]*?\}\]/g, '')
+    .replace(/\[?\{"path":"\/org[\s\S]{50,}?\}\]?\}?/g, '')
     .trim();
 }
 
@@ -478,7 +481,8 @@ async function handleSend() {
         // Show Claude's status message to the user
         if (data.response) {
           hideTyping();
-          addMessage(mdToHtml(data.response), 'bot');
+          var cleanedIntermediate = cleanResponse(data.response);
+          if (cleanedIntermediate) addMessage(mdToHtml(cleanedIntermediate), 'bot');
           showTyping();
         }
 
@@ -502,7 +506,8 @@ async function handleSend() {
       // No more fetches — show final response
       hideTyping();
       if (data.response) {
-        addMessage(mdToHtml(data.response), 'bot');
+        var cleanedFinal = cleanResponse(data.response);
+        if (cleanedFinal) addMessage(mdToHtml(cleanedFinal), 'bot');
         chatHistory.push({ role: 'assistant', content: data.response });
       }
       msgCount++;
