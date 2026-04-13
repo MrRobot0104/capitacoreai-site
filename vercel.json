@@ -2,6 +2,14 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "framework": null,
+  "headers": [
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    }
+  ],
   "functions": {
     "api/dashpilot-generate.js": {
       "memory": 1024,
