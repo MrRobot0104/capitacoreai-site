@@ -148,26 +148,54 @@ CELLULAR GATEWAY:
 
 Include <action> tags to write to ANY Meraki API endpoint. Methods: PUT, POST, DELETE.
 
-Examples:
+VERIFIED EXAMPLES (every path below is confirmed against official Meraki API v1 docs):
+
+SECURITY:
 <action>{"method":"PUT","path":"/networks/NET_ID/appliance/security/intrusion","body":{"mode":"prevention","idsRulesets":"balanced"}}</action>
-<action>{"method":"PUT","path":"/devices/SERIAL/switch/ports/PORT","body":{"vlan":49}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/security/malware","body":{"mode":"enabled"}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/contentFiltering","body":{"blockedUrlCategories":[],"blockedUrlPatterns":["example.com"],"urlCategoryListSize":"fullList"}}</action>
+
+FIREWALL:
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/firewall/l3FirewallRules","body":{"rules":[{"policy":"deny","protocol":"any","srcCidr":"any","srcPort":"any","destCidr":"any","destPort":"any","comment":"Default deny"}]}}</action>
+
+VPN:
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/vpn/siteToSiteVpn","body":{"mode":"spoke","hubs":[]}}</action>
+
+VLANS:
+<action>{"method":"POST","path":"/networks/NET_ID/appliance/vlans","body":{"id":100,"name":"Guest","subnet":"10.0.100.0/24","applianceIp":"10.0.100.1"}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/appliance/vlans/VLAN_ID","body":{"name":"Mgmt","subnet":"10.0.1.0/24","applianceIp":"10.0.1.1"}}</action>
+<action>{"method":"DELETE","path":"/networks/NET_ID/appliance/vlans/VLAN_ID"}</action>
+
+WIRELESS:
+<action>{"method":"PUT","path":"/networks/NET_ID/wireless/ssids/NUMBER","body":{"name":"Corp-WiFi","enabled":true,"authMode":"psk","psk":"password123","encryptionMode":"wpa","wpaEncryptionMode":"WPA2 only with AES"}}</action>
+
+SWITCH:
+<action>{"method":"PUT","path":"/devices/SERIAL/switch/ports/PORT_ID","body":{"name":"Uplink","type":"trunk","vlan":1,"allowedVlans":"all"}}</action>
 <action>{"method":"PUT","path":"/networks/NET_ID/switch/stp","body":{"rstpEnabled":true,"stpBridgePriority":[{"stpPriority":4096}]}}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/wireless/ssids/0","body":{"name":"Corp-WiFi","enabled":true}}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/appliance/vlans/1","body":{"name":"Mgmt","subnet":"10.0.1.0/24","applianceIp":"10.0.1.1"}}</action>
+
+DEVICES:
+<action>{"method":"PUT","path":"/devices/SERIAL","body":{"name":"New Name","address":"123 Main St"}}</action>
 <action>{"method":"POST","path":"/devices/SERIAL/reboot","body":{}}</action>
-<action>{"method":"PUT","path":"/devices/SERIAL","body":{"name":"New Name"}}</action>
 <action>{"method":"POST","path":"/networks/NET_ID/devices/claim","body":{"serials":["XXXX-XXXX-XXXX"]}}</action>
 <action>{"method":"POST","path":"/networks/NET_ID/devices/remove","body":{"serial":"XXXX-XXXX-XXXX"}}</action>
-<action>{"method":"DELETE","path":"/networks/NET_ID/appliance/vlans/VLAN_ID"}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/firmwareUpgrades","body":{"upgradeWindow":{"dayOfWeek":"tue","hourOfDay":"2:00"}}}</action>
+
+NETWORK:
 <action>{"method":"PUT","path":"/networks/NET_ID","body":{"name":"New Network Name","timeZone":"America/New_York"}}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/appliance/firewall/l3FirewallRules","body":{"rules":[{"policy":"deny","protocol":"any","srcCidr":"any","srcPort":"any","destCidr":"any","destPort":"any","comment":"Default deny"}]}}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/appliance/contentFiltering","body":{"blockedUrlCategories":[],"blockedUrlPatterns":[],"urlCategoryListSize":"fullList"}}</action>
-<action>{"method":"PUT","path":"/networks/NET_ID/appliance/vpn/siteToSiteVpn","body":{"mode":"spoke","hubs":[]}}</action>
+<action>{"method":"PUT","path":"/networks/NET_ID/firmwareUpgrades","body":{"upgradeWindow":{"dayOfWeek":"tue","hourOfDay":"2:00"}}}</action>
+
+BANDWIDTH:
 <action>{"method":"PUT","path":"/networks/NET_ID/appliance/trafficShaping/uplinkBandwidth","body":{"bandwidthLimits":{"wan1":{"limitUp":50000,"limitDown":100000}}}}</action>
 
-IMPORTANT: To remove a device from a network, use POST /networks/NET_ID/devices/remove with {"serial":"..."} in the body. Do NOT try DELETE or PUT on /networks/NET_ID/devices/SERIAL — that endpoint does not exist.
-To claim a device into a network, use POST /networks/NET_ID/devices/claim with {"serials":["..."]} in the body.
+ENDPOINT RULES — DO NOT GUESS:
+- Remove device: POST /networks/{id}/devices/remove with {"serial":"..."}. NOT DELETE on /devices/SERIAL.
+- Claim device: POST /networks/{id}/devices/claim with {"serials":["..."]}.
+- Create VLAN: POST /networks/{id}/appliance/vlans with {"id":NUMBER,"name":"..."} (id and name required).
+- Delete VLAN: DELETE /networks/{id}/appliance/vlans/{vlanId} (no body).
+- Reboot device: POST /devices/{serial}/reboot (empty body or no body).
+- Malware: PUT with {"mode":"enabled"} — mode is REQUIRED.
+- VPN: PUT with {"mode":"spoke"|"hub"|"none"} — mode is REQUIRED.
+- L3 firewall rules array: each rule needs policy, protocol, srcCidr, destCidr at minimum.
+- If you are unsure of the exact endpoint for an operation, say so. Do NOT guess paths.
 
 ## ACTION RULES
 
