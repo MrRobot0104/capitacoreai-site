@@ -111,7 +111,7 @@ function addUserMessage(text, fileName) {
   var div = document.createElement('div');
   div.className = 'msg user';
   var html = '';
-  if (fileName) html += '<div class="file-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + fileName + '</div>';
+  if (fileName) html += '<div class="file-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHtml(fileName) + '</div>';
   html += '<div class="msg-bubble">' + escapeHtml(text) + '</div>';
   div.innerHTML = html;
   msgs.appendChild(div);
@@ -364,9 +364,9 @@ async function sendMessage() {
 }
 
 function expandPreview() {
-  var win = window.open('', '_blank');
-  win.document.write(lastDashboardHtml);
-  win.document.close();
+  var blob = new Blob([lastDashboardHtml], { type: 'text/html' });
+  var blobUrl = URL.createObjectURL(blob);
+  window.open(blobUrl, '_blank', 'noopener');
 }
 
 function downloadDashboard() {

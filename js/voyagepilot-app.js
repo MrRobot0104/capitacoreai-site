@@ -362,8 +362,9 @@ function renderDestinationNode(dest, cityDays, hotel, startDay, endDay, startDat
     (day.activities || []).forEach(function(a) {
       var desc = a.description || a;
       var ratingHtml = a.rating ? '<span class="act-rating">\u2605 ' + a.rating + (a.reviews ? ' <span class="act-reviews">(' + a.reviews.toLocaleString() + ')</span>' : '') + '</span>' : '';
-      var linkOpen = a.mapsUrl ? '<a href="' + a.mapsUrl + '" target="_blank" rel="noopener" class="act-link">' : '';
-      var linkClose = a.mapsUrl ? ' <span class="act-maps-icon">\ud83d\udccd</span></a>' : '';
+      var safeUrl = (a.mapsUrl && a.mapsUrl.startsWith('https://')) ? a.mapsUrl : '';
+      var linkOpen = safeUrl ? '<a href="' + safeUrl + '" target="_blank" rel="noopener" class="act-link">' : '';
+      var linkClose = safeUrl ? ' <span class="act-maps-icon">\ud83d\udccd</span></a>' : '';
       html += '<div class="itin-activity">' +
         (a.time ? '<div class="itin-time">' + escapeHtml(a.time) + '</div>' : '') +
         '<div>' + linkOpen + escapeHtml(desc) + linkClose + ' ' + ratingHtml + '</div></div>';
@@ -646,6 +647,7 @@ async function startNewTrip() {
   if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
   var result = await sb.auth.getSession();
   var session = result.data.session;
+  if (!session) { window.location.href = 'account.html'; return; }
   var res = await fetch('/api/voyagepilot-generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -677,6 +679,7 @@ async function startNewTrip() {
 async function continueTrip() {
   var result = await sb.auth.getSession();
   var session = result.data.session;
+  if (!session) { window.location.href = 'account.html'; return; }
   var res = await fetch('/api/voyagepilot-generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -698,9 +701,11 @@ async function sendMessage() {
   if (!conversationStarted) {
     if (creditBalance < CREDIT_COST) { showLimitBar(); return; }
     var authResult = await sb.auth.getSession();
+    var authSession = authResult.data.session;
+    if (!authSession) { window.location.href = 'account.html'; return; }
     var res = await fetch('/api/voyagepilot-generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authResult.data.session.access_token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authSession.access_token },
       body: JSON.stringify({ action: 'start_conversation' })
     });
     if (!res.ok) { addBotMessage('Failed to start.'); return; }
@@ -723,6 +728,7 @@ async function sendMessage() {
   try {
     var sessionResult = await sb.auth.getSession();
     var session = sessionResult.data.session;
+    if (!session) { window.location.href = 'account.html'; return; }
     var controller = new AbortController();
     var timeout = setTimeout(function() { controller.abort(); }, 240000);
     var res = await fetch('/api/voyagepilot-generate', {

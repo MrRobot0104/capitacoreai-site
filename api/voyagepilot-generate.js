@@ -625,6 +625,7 @@ module.exports = async (req, res) => {
     }
   } catch (err) {
     console.error('VoyagePilot error:', err.message);
-    res.status(500).json({ error: 'Trip planning failed: ' + err.message });
+    console.error('VoyagePilot error:', err.message);
+    res.status(500).json({ error: 'Trip planning failed. Please try again.' });
   }
 };

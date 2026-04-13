@@ -212,9 +212,13 @@ module.exports = async function handler(req, res) {
             if (evt.type === 'agent.message') {
               var content = '';
               if (evt.agent_message) {
-                content = typeof evt.agent_message.content === 'string'
-                  ? evt.agent_message.content
-                  : JSON.stringify(evt.agent_message.content);
+                if (typeof evt.agent_message.content === 'string') {
+                  content = evt.agent_message.content;
+                } else if (Array.isArray(evt.agent_message.content)) {
+                  content = evt.agent_message.content.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
+                } else {
+                  content = JSON.stringify(evt.agent_message.content);
+                }
               }
               sendEvent({ type: 'message', content: content });
             } else if (evt.type === 'agent.tool_use') {
