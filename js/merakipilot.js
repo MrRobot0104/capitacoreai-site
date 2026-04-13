@@ -1,10 +1,9 @@
-// MerakiPilot landing page — show Launch button if logged in with credits
+// MerakiPilot landing page — show Launch button if logged in
 sb.auth.onAuthStateChange(async function(event, session) {
-  var btn = document.getElementById('launchBtn');
-  if (!btn) return;
+  var btns = document.querySelectorAll('.launch-btn');
   if (session) {
-    btn.style.display = 'inline-flex';
+    btns.forEach(function(b) { b.style.display = 'inline-flex'; });
   } else {
-    btn.style.display = 'none';
+    btns.forEach(function(b) { b.style.display = 'none'; });
   }
 });

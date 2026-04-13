@@ -3,11 +3,11 @@ var currentSession = null;
 
 sb.auth.onAuthStateChange(async function(event, session) {
   currentSession = session;
-  var lb = document.getElementById('launchBtn');
+  var btns = document.querySelectorAll('.launch-btn');
   if (session) {
-    if (lb) lb.style.display = 'inline-flex';
+    btns.forEach(function(b) { b.style.display = 'inline-flex'; });
   } else {
-    if (lb) lb.style.display = 'none';
+    btns.forEach(function(b) { b.style.display = 'none'; });
   }
 });
 
