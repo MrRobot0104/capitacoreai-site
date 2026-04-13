@@ -626,7 +626,11 @@ async function handleSend() {
         if (data.response) {
           hideTyping();
           var cleanedIntermediate = cleanResponse(data.response);
-          if (cleanedIntermediate) addMessage(mdToHtml(cleanedIntermediate), 'bot');
+          // Only show short status messages (< 100 chars), skip verbose intermediate analysis
+          if (cleanedIntermediate && cleanedIntermediate.length < 100) {
+            // Show as a temporary status that will stay (it's just "Checking X...")
+            addMessage('<span style="color:#94a3b8;font-size:13px;">' + mdToHtml(cleanedIntermediate) + '</span>', 'bot');
+          }
           showTyping();
         }
 

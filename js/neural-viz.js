@@ -187,13 +187,13 @@
   // ─── Data streams — vertical falling hex data ────────────
   function spawnDataStream() {
     dataStreams.push({
-      x: 20 + Math.random() * (W - 40),
+      x: 10 + Math.random() * (W - 20),
       y: -20,
-      speed: 1 + Math.random() * 2,
+      speed: 0.8 + Math.random() * 2.5,
       chars: [],
-      maxChars: 8 + Math.floor(Math.random() * 12),
+      maxChars: 12 + Math.floor(Math.random() * 18),
       life: 1,
-      hue: state === 'acting' ? 30 : 20, // orange tint
+      hue: state === 'acting' ? 40 : 25,
     });
   }
 
@@ -213,12 +213,15 @@
       if (Math.random() > 0.5) spawnParticle(from, to, color);
       else spawnParticle(to, from, color);
     }
-    // Spawn data streams during analysis/action
-    if ((state === 'analyzing' || state === 'acting') && Math.random() < 0.15) {
+    // Spawn data streams during analysis/action — heavy
+    if (state === 'analyzing' && Math.random() < 0.35) {
       spawnDataStream();
     }
-    // Ambient data streams when connected (slower)
-    if (state === 'connected' && Math.random() < 0.02) {
+    if (state === 'acting' && Math.random() < 0.5) {
+      spawnDataStream();
+    }
+    // Ambient data streams when connected — noticeable
+    if (state === 'connected' && Math.random() < 0.06) {
       spawnDataStream();
     }
   }
@@ -272,23 +275,30 @@
       ds.y += ds.speed;
       ds.life -= 0.003;
       // Add new character at the head
-      if (ds.chars.length < ds.maxChars && Math.random() < 0.4) {
+      if (ds.chars.length < ds.maxChars && Math.random() < 0.6) {
         ds.chars.push({ ch: hexChars[Math.floor(Math.random() * hexChars.length)], alpha: 1 });
       }
-      if (ds.life <= 0 || ds.y > H + ds.maxChars * 14) { dataStreams.splice(di, 1); continue; }
+      if (ds.life <= 0 || ds.y > H + ds.maxChars * 15) { dataStreams.splice(di, 1); continue; }
       // Draw characters top to bottom
-      ctx.font = '11px monospace';
+      ctx.font = '12px monospace';
       ctx.textAlign = 'center';
       for (var ci = 0; ci < ds.chars.length; ci++) {
         var ch = ds.chars[ci];
-        ch.alpha *= 0.995;
-        var cy = ds.y - ci * 14;
+        ch.alpha *= 0.993;
+        var cy = ds.y - ci * 15;
         if (cy < 0 || cy > H) continue;
-        var brightness = ci === 0 ? 1 : Math.max(0.1, 1 - ci * 0.08);
-        ctx.fillStyle = 'rgba(255,' + (106 + ds.hue) + ',0,' + (ch.alpha * brightness * ds.life * 0.7) + ')';
+        // Head character is brightest, fades down the tail
+        var brightness = ci === 0 ? 1.2 : ci === 1 ? 1 : Math.max(0.08, 1 - ci * 0.06);
+        var alpha = ch.alpha * brightness * ds.life;
+        // Head glow
+        if (ci === 0) {
+          ctx.fillStyle = 'rgba(255,' + (160 + ds.hue) + ',50,' + (alpha * 0.3) + ')';
+          ctx.fillRect(ds.x - 6, cy - 10, 12, 14);
+        }
+        ctx.fillStyle = 'rgba(255,' + (106 + ds.hue) + ',0,' + Math.min(alpha * 0.85, 1) + ')';
         ctx.fillText(ch.ch, ds.x, cy);
-        // Randomize characters occasionally for the "running" effect
-        if (Math.random() < 0.05) ch.ch = hexChars[Math.floor(Math.random() * hexChars.length)];
+        // Randomize characters for the "running code" effect
+        if (Math.random() < 0.08) ch.ch = hexChars[Math.floor(Math.random() * hexChars.length)];
       }
     }
 
@@ -471,10 +481,9 @@
   // ─── Idle animation — ambient hex rain ───────────────────
   setInterval(function() {
     if (state === 'idle') {
-      // Light ambient data streams even when idle
-      if (Math.random() < 0.3) spawnDataStream();
+      if (Math.random() < 0.5) spawnDataStream();
     }
-  }, 800);
+  }, 500);
 
   draw();
 })();
