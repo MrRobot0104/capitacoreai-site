@@ -9,6 +9,10 @@ var msgLimit = 0;
 var creditBalance = 0;
 var conversationStarted = false;
 var currentSession = null;
+var allDevices = [];
+var allStatuses = {};
+var allNetworks = [];
+var selectedNetworkId = 'all';
 
 var chatMessages = document.getElementById('chatMessages');
 var chatInput = document.getElementById('chatInput');
@@ -241,55 +245,81 @@ async function loadDashboard() {
   ]);
   var devices = results[0], statuses = results[1], networks = results[2];
 
-  var statusMap = {};
-  (statuses || []).forEach(function(s) { statusMap[s.serial] = s; });
+  allStatuses = {};
+  (statuses || []).forEach(function(s) { allStatuses[s.serial] = s; });
 
-  var total = (devices || []).length;
-  var online = (statuses || []).filter(function(s) { return s.status === 'online'; }).length;
-  var offline = total - online;
-  var netCount = (networks || []).length;
-
-  document.getElementById('statDevices').textContent = total;
-  document.getElementById('statOnline').textContent = online;
-  document.getElementById('statOffline').textContent = offline;
-  document.getElementById('statNetworks').textContent = netCount;
-  document.getElementById('neuralStats').style.display = 'flex';
-  document.getElementById('orgMeta').textContent = netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' + total + ' device' + (total !== 1 ? 's' : '');
-  var previewNet = document.getElementById('previewNet');
-  if (previewNet) previewNet.style.display = 'none';
-
-  // Build device list with status for neural viz
-  var deviceList = (devices || []).map(function(d) {
-    var s = statusMap[d.serial] || {};
+  allDevices = (devices || []).map(function(d) {
+    var s = allStatuses[d.serial] || {};
     return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'offline', networkId: d.networkId, clients: 0 };
   });
-  var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
+  allNetworks = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
+
+  // Populate network selector
+  var selector = document.getElementById('networkSelector');
+  var prevValue = selector.value;
+  selector.innerHTML = '<option value="all">All Networks (' + allNetworks.length + ')</option>';
+  allNetworks.forEach(function(n) {
+    var opt = document.createElement('option');
+    opt.value = n.id;
+    opt.textContent = n.name;
+    selector.appendChild(opt);
+  });
+  selector.value = prevValue && selector.querySelector('option[value="' + prevValue + '"]') ? prevValue : 'all';
+  selectedNetworkId = selector.value;
+  if (allNetworks.length > 0) selector.style.display = 'block';
+
+  updateDashboardStats();
 
   // Fetch client counts per network (non-blocking — viz updates after)
   (networks || []).forEach(function(net) {
     merakiGet('/networks/' + net.id + '/clients?perPage=5&timespan=86400').then(function(clients) {
       if (!clients || !Array.isArray(clients)) return;
-      // Count clients per device serial
       var counts = {};
       clients.forEach(function(c) {
         if (c.recentDeviceSerial) {
           counts[c.recentDeviceSerial] = (counts[c.recentDeviceSerial] || 0) + 1;
         }
       });
-      // Update device list and refresh viz
       var updated = false;
-      deviceList.forEach(function(d) {
+      allDevices.forEach(function(d) {
         if (counts[d.serial]) { d.clients = counts[d.serial]; updated = true; }
       });
-      if (updated && window.neuralVizUpdate) {
-        window.neuralVizUpdate({ devices: deviceList, networks: networkList });
-      }
+      if (updated) updateDashboardStats();
     }).catch(function() {});
   });
+}
 
-  // Feed the neural visualization immediately (client counts update async)
+function getFilteredData() {
+  var devices = allDevices;
+  var networks = allNetworks;
+  if (selectedNetworkId !== 'all') {
+    devices = allDevices.filter(function(d) { return d.networkId === selectedNetworkId; });
+    networks = allNetworks.filter(function(n) { return n.id === selectedNetworkId; });
+  }
+  return { devices: devices, networks: networks };
+}
+
+function updateDashboardStats() {
+  var filtered = getFilteredData();
+  var devices = filtered.devices;
+  var networks = filtered.networks;
+
+  var total = devices.length;
+  var online = devices.filter(function(d) { return d.status === 'online'; }).length;
+  var offline = total - online;
+  var netCount = networks.length;
+
+  document.getElementById('statDevices').textContent = total;
+  document.getElementById('statOnline').textContent = online;
+  document.getElementById('statOffline').textContent = offline;
+  document.getElementById('statNetworks').textContent = netCount;
+  document.getElementById('neuralStats').style.display = 'flex';
+  document.getElementById('orgMeta').textContent = (selectedNetworkId === 'all' ? netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' : '') + total + ' device' + (total !== 1 ? 's' : '');
+  var previewNet = document.getElementById('previewNet');
+  if (previewNet) previewNet.style.display = 'none';
+
   if (window.neuralVizUpdate) {
-    window.neuralVizUpdate({ devices: deviceList, networks: networkList });
+    window.neuralVizUpdate({ devices: devices, networks: networks });
   }
 }
 
@@ -297,26 +327,22 @@ async function loadDashboard() {
 async function gatherNetworkContext() {
   if (!connected || !orgData) return null;
   try {
-    var results = await Promise.all([
-      merakiGet('/organizations/' + orgData.id + '/devices'),
-      merakiGet('/organizations/' + orgData.id + '/devices/statuses'),
-      merakiGet('/organizations/' + orgData.id + '/networks'),
-    ]);
-    var devices = results[0], statuses = results[1], networks = results[2];
-    var statusMap = {};
-    (statuses || []).forEach(function(s) { statusMap[s.serial] = s; });
-    var deviceList = (devices || []).map(function(d) {
-      var s = statusMap[d.serial] || {};
-      return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'unknown', networkId: d.networkId };
-    });
-    var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
-    return {
+    var filtered = getFilteredData();
+    var deviceList = filtered.devices;
+    var networkList = filtered.networks;
+    var context = {
       orgName: orgData.name, orgId: orgData.id,
       totalDevices: deviceList.length,
       onlineDevices: deviceList.filter(function(d) { return d.status === 'online'; }).length,
       offlineDevices: deviceList.filter(function(d) { return d.status !== 'online'; }),
       devices: deviceList, networks: networkList,
     };
+    if (selectedNetworkId !== 'all') {
+      context.selectedNetwork = selectedNetworkId;
+      var net = allNetworks.find(function(n) { return n.id === selectedNetworkId; });
+      if (net) context.selectedNetworkName = net.name;
+    }
+    return context;
   } catch (e) {
     console.error('Failed to gather context:', e);
     return { orgName: orgData.name, orgId: orgData.id, error: 'Failed to fetch network data' };
@@ -563,6 +589,16 @@ chatInput.addEventListener('input', function() {
 });
 
 document.getElementById('continueBtn').addEventListener('click', continueConversation);
+
+document.getElementById('networkSelector').addEventListener('change', function() {
+  selectedNetworkId = this.value;
+  updateDashboardStats();
+  var net = allNetworks.find(function(n) { return n.id === selectedNetworkId; });
+  var name = net ? net.name : 'All Networks';
+  if (connected) {
+    addMessage('Switched to <strong>' + name + '</strong>. My responses will now focus on ' + (selectedNetworkId === 'all' ? 'all networks.' : 'this network.'), 'bot');
+  }
+});
 
 window.addEventListener('pageshow', function() {
   if (currentSession) refreshCredits();

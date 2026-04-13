@@ -86,6 +86,10 @@
     .neural-org { position: absolute; top: 20px; left: 24px; }
     .neural-org h2 { font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: -0.02em; }
     .neural-org p { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    #networkSelector { display: none; margin-top: 8px; padding: 6px 28px 6px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,106,0,0.25); border-radius: 8px; color: rgba(255,255,255,0.85); font-size: 12px; font-family: 'Inter', system-ui, sans-serif; cursor: pointer; outline: none; pointer-events: auto; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FF6A00' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; max-width: 220px; text-overflow: ellipsis; }
+    #networkSelector:hover { border-color: rgba(255,106,0,0.5); background-color: rgba(255,255,255,0.08); }
+    #networkSelector:focus { border-color: #FF6A00; box-shadow: 0 0 0 2px rgba(255,106,0,0.15); }
+    #networkSelector option { background: #1a1a2e; color: rgba(255,255,255,0.85); }
     .neural-stats { position: absolute; top: 20px; right: 24px; display: flex; gap: 16px; }
     .neural-stat { text-align: right; }
     .neural-stat .ns-val { font-size: 22px; font-weight: 800; color: #FF6A00; font-family: 'Inter', monospace; }
@@ -174,6 +178,7 @@
         <div class="neural-org">
           <h2 id="orgName">MerakiPilot</h2>
           <p id="orgMeta">Connect your API key to begin</p>
+          <select id="networkSelector"><option value="all">All Networks</option></select>
         </div>
         <div class="neural-stats" id="neuralStats" style="display:none;">
           <div class="neural-stat"><div class="ns-val total" id="statDevices">0</div><div class="ns-label">Devices</div></div>
