@@ -12,6 +12,7 @@ var currentSession = null;
 var allDevices = [];
 var allStatuses = {};
 var allNetworks = [];
+var allOrgs = [];
 var selectedNetworkId = 'all';
 
 var chatMessages = document.getElementById('chatMessages');
@@ -214,14 +215,32 @@ async function connectMeraki(key) {
     return;
   }
 
+  allOrgs = orgs;
+
+  // Populate org selector
+  var orgSelector = document.getElementById('orgSelector');
+  orgSelector.innerHTML = '';
+  if (orgs.length > 1) {
+    orgs.forEach(function(o) {
+      var opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.name;
+      orgSelector.appendChild(opt);
+    });
+    orgSelector.style.display = 'block';
+    document.getElementById('orgLabel').classList.add('visible');
+    document.getElementById('netLabel').classList.add('visible');
+  }
+
   orgData = orgs[0];
+  orgSelector.value = orgData.id;
   connected = true;
 
   var chip = document.getElementById('statusChip');
   chip.className = 'status-chip';
   chip.querySelector('#statusText').textContent = orgData.name;
 
-  addMessage('Connected to <strong>' + orgData.name + '</strong>. Loading your network...', 'bot');
+  addMessage('Connected to <strong>' + orgData.name + '</strong>' + (orgs.length > 1 ? ' (' + orgs.length + ' orgs found — switch in the top-right panel)' : '') + '. Loading your network...', 'bot');
   await loadDashboard();
   addMessage(
     'Your dashboard is ready. I found your devices and networks on the right panel.<br><br>' +
@@ -232,6 +251,24 @@ async function connectMeraki(key) {
     '<code>Reboot the warehouse switch</code>',
     'bot'
   );
+}
+
+async function switchOrg(orgId) {
+  var org = allOrgs.find(function(o) { return o.id === orgId; });
+  if (!org) return;
+  orgData = org;
+  selectedNetworkId = 'all';
+  var selector = document.getElementById('networkSelector');
+  selector.value = 'all';
+
+  var chip = document.getElementById('statusChip');
+  chip.querySelector('#statusText').textContent = orgData.name;
+
+  addMessage('Switching to <strong>' + orgData.name + '</strong>...', 'bot');
+  showTyping();
+  await loadDashboard();
+  hideTyping();
+  addMessage('Now viewing <strong>' + orgData.name + '</strong> — ' + allNetworks.length + ' network' + (allNetworks.length !== 1 ? 's' : '') + ', ' + allDevices.length + ' device' + (allDevices.length !== 1 ? 's' : '') + '.', 'bot');
 }
 
 // ─── Load Dashboard → Feed Neural Viz ─────────────────────────────
@@ -598,6 +635,10 @@ document.getElementById('networkSelector').addEventListener('change', function()
   if (connected) {
     addMessage('Switched to <strong>' + name + '</strong>. My responses will now focus on ' + (selectedNetworkId === 'all' ? 'all networks.' : 'this network.'), 'bot');
   }
+});
+
+document.getElementById('orgSelector').addEventListener('change', function() {
+  switchOrg(this.value);
 });
 
 window.addEventListener('pageshow', function() {
