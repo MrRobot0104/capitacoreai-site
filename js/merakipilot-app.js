@@ -186,11 +186,33 @@ async function loadDashboard() {
   // Build device list with status for neural viz
   var deviceList = (devices || []).map(function(d) {
     var s = statusMap[d.serial] || {};
-    return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'offline', networkId: d.networkId };
+    return { name: d.name || d.model || d.serial, model: d.model, serial: d.serial, lanIp: d.lanIp, status: s.status || 'offline', networkId: d.networkId, clients: 0 };
   });
   var networkList = (networks || []).map(function(n) { return { id: n.id, name: n.name, productTypes: n.productTypes }; });
 
-  // Feed the neural visualization
+  // Fetch client counts per network (non-blocking — viz updates after)
+  (networks || []).forEach(function(net) {
+    merakiGet('/networks/' + net.id + '/clients?perPage=5&timespan=86400').then(function(clients) {
+      if (!clients || !Array.isArray(clients)) return;
+      // Count clients per device serial
+      var counts = {};
+      clients.forEach(function(c) {
+        if (c.recentDeviceSerial) {
+          counts[c.recentDeviceSerial] = (counts[c.recentDeviceSerial] || 0) + 1;
+        }
+      });
+      // Update device list and refresh viz
+      var updated = false;
+      deviceList.forEach(function(d) {
+        if (counts[d.serial]) { d.clients = counts[d.serial]; updated = true; }
+      });
+      if (updated && window.neuralVizUpdate) {
+        window.neuralVizUpdate({ devices: deviceList, networks: networkList });
+      }
+    }).catch(function() {});
+  });
+
+  // Feed the neural visualization immediately (client counts update async)
   if (window.neuralVizUpdate) {
     window.neuralVizUpdate({ devices: deviceList, networks: networkList });
   }
