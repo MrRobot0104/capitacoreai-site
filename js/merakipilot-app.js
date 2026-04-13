@@ -170,7 +170,7 @@ function hideTyping() {
 
 // ─── Meraki API (proxied through Vercel to bypass CORS) ──────────
 async function merakiCall(path, method, body) {
-  if (!currentSession) return null;
+  if (!currentSession) return { errors: ['Not authenticated — session expired'] };
   try {
     var resp = await fetch('/api/meraki-proxy', {
       method: 'POST',
@@ -180,15 +180,18 @@ async function merakiCall(path, method, body) {
       },
       body: JSON.stringify({ merakiKey: merakiKey, method: method || 'GET', path: path, body: body }),
     });
+    var data = await resp.json().catch(function() { return null; });
     if (!resp.ok) {
-      var errData = await resp.json().catch(function() { return {}; });
-      console.error('Meraki proxy error:', resp.status, errData);
-      return null;
+      console.error('Meraki proxy error:', resp.status, data);
+      // Return the error from Meraki so Claude and the user can see what went wrong
+      if (data && data.errors) return { errors: data.errors, _status: resp.status };
+      if (data && data.error) return { errors: [data.error], _status: resp.status };
+      return { errors: ['Meraki API returned status ' + resp.status], _status: resp.status };
     }
-    return await resp.json();
+    return data;
   } catch (e) {
     console.error('Meraki API error:', e);
-    return null;
+    return { errors: ['Network error: ' + e.message] };
   }
 }
 
@@ -204,8 +207,9 @@ async function connectMeraki(key) {
   var orgs = await merakiGet('/organizations');
   hideTyping();
 
-  if (!orgs || orgs.length === 0) {
-    addMessage("That API key didn't work. I couldn't find any organizations. Double-check the key and try again.", 'bot');
+  if (!orgs || !Array.isArray(orgs) || orgs.length === 0) {
+    var errDetail = (orgs && orgs.errors) ? '<br><span style="font-size:12px;color:#ef4444;">' + orgs.errors.join('; ') + '</span>' : '';
+    addMessage("That API key didn't work. I couldn't find any organizations. Double-check the key and try again." + errDetail, 'bot');
     merakiKey = null;
     return;
   }
@@ -383,8 +387,9 @@ async function executeActions(actions) {
 
       // Check if the Meraki API returned an error
       if (data && data.errors) {
-        results[a.path] = { _error: data.errors.join('; ') };
-        failures.push(a.path + ': ' + data.errors.join('; '));
+        var errMsg = data.errors.join('; ');
+        results[a.path] = { _error: errMsg, _status: data._status };
+        failures.push(a.path + ': ' + errMsg);
       } else if (data === null) {
         results[a.path] = { _error: 'No response from Meraki API' };
         failures.push(a.path + ': No response');
