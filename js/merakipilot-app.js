@@ -180,6 +180,8 @@ async function loadDashboard() {
   document.getElementById('statNetworks').textContent = netCount;
   document.getElementById('neuralStats').style.display = 'flex';
   document.getElementById('orgMeta').textContent = netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' + total + ' device' + (total !== 1 ? 's' : '');
+  var previewNet = document.getElementById('previewNet');
+  if (previewNet) previewNet.style.display = 'none';
 
   // Build device list with status for neural viz
   var deviceList = (devices || []).map(function(d) {
