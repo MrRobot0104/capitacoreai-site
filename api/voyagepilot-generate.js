@@ -226,11 +226,13 @@ async function searchPhotos(query) {
 
 // ============ MAIN HANDLER ============
 module.exports = async (req, res) => {
+  const { applyRateLimit } = require('./_rateLimit');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (applyRateLimit(req, res, 'voyagepilot', 10, 60000)) return;
 
   try {
     // Public endpoint — no auth needed

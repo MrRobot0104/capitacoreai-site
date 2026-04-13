@@ -2,11 +2,13 @@
 // The user's Meraki API key is sent in the request body, never stored.
 
 module.exports = async (req, res) => {
+  const { applyRateLimit } = require('./_rateLimit');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (applyRateLimit(req, res, 'meraki-proxy', 30, 60000)) return;
 
   try {
     // Auth: require logged-in user
