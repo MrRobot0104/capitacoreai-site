@@ -555,7 +555,7 @@ async function handleSend() {
 
   try {
     var networkContext = await gatherNetworkContext();
-    var maxLoops = 5; // Safety: max fetch-loop iterations
+    var maxLoops = 8; // Safety: max fetch-loop iterations (higher for complex MSP workflows)
 
     // ─── Conversation Loop: Claude can fetch data and keep going ───
     for (var loop = 0; loop < maxLoops; loop++) {

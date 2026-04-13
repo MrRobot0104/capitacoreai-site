@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     }
 
     // Validate path — allowlist of safe Meraki API prefixes
-    const allowedPrefixes = ['/organizations', '/networks', '/devices', '/appliance', '/switch', '/wireless', '/camera', '/insight', '/sm'];
+    const allowedPrefixes = ['/organizations', '/networks', '/devices', '/appliance', '/switch', '/wireless', '/camera', '/insight', '/sm', '/sensor', '/cellularGateway', '/licensing', '/administered'];
     const cleanPath = path.replace(/\.\./g, '').replace(/\/\//g, '/');
     if (!cleanPath.startsWith('/') || !allowedPrefixes.some(function(p) { return cleanPath.startsWith(p); })) {
       console.error('[SECURITY] meraki-proxy: blocked path:', path);
