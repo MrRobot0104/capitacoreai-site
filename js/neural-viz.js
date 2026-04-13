@@ -32,7 +32,7 @@
   resize();
 
   // ─── Node class ──────────────────────────────────────────
-  function createNode(x, y, type, label, status) {
+  function createNode(x, y, type, label, status, meta) {
     return {
       x: x, y: y,
       targetX: x, targetY: y,
@@ -40,6 +40,8 @@
       radius: type === 'brain' ? 28 : type === 'network' ? 14 : 8,
       type: type, // brain, network, device
       label: label || '',
+      sublabel: (meta && meta.model) || '',
+      clients: (meta && meta.clients) || 0,
       status: status || 'online',
       pulse: 0,
       glow: 0,
@@ -98,7 +100,7 @@
         dx = Math.max(60, Math.min(W - 60, dx));
         dy = Math.max(60, Math.min(H - 60, dy));
 
-        var devNode = createNode(dx, dy, 'device', d.name || d.model, d.status);
+        var devNode = createNode(dx, dy, 'device', d.name || d.model, d.status, { model: d.model, clients: d.clients || 0 });
         var devIdx = nodes.length;
         nodes.push(devNode);
         connections.push({ from: netIdx, to: devIdx, active: d.status === 'online' });
@@ -316,11 +318,27 @@
 
       // Labels
       if (n.type !== 'device' || n.radius > 6) {
-        ctx.fillStyle = 'rgba(255,255,255,' + (n.type === 'brain' ? 0 : n.type === 'network' ? 0.7 : 0.45) + ')';
-        ctx.font = (n.type === 'network' ? '500 11px' : '400 9px') + ' Inter';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        if (n.type !== 'brain') ctx.fillText(n.label, n.x, n.y + n.radius + 6);
+        if (n.type === 'network') {
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = '500 11px Inter';
+          ctx.fillText(n.label, n.x, n.y + n.radius + 6);
+        } else if (n.type === 'device') {
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.font = '400 9px Inter';
+          ctx.fillText(n.label, n.x, n.y + n.radius + 5);
+          if (n.sublabel) {
+            ctx.fillStyle = 'rgba(255,106,0,0.4)';
+            ctx.font = '400 8px Inter';
+            ctx.fillText(n.sublabel, n.x, n.y + n.radius + 16);
+          }
+          if (n.clients > 0) {
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.font = '400 8px Inter';
+            ctx.fillText(n.clients + ' client' + (n.clients !== 1 ? 's' : ''), n.x, n.y + n.radius + (n.sublabel ? 26 : 16));
+          }
+        }
       }
     });
 
