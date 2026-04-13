@@ -233,12 +233,20 @@ function formatShortDate(dateStr) {
 }
 
 function renderFlightNode(flight, isReturn) {
-  var from = encodeURIComponent(flight.fromCode || flight.from || '');
-  var to = encodeURIComponent(flight.toCode || flight.to || '');
-  var bookUrl = 'https://www.google.com/travel/flights/search?tfs=CBwQAhooEgoyMDI2' +
-    '&hl=en&curr=USD&departure_id=' + from + '&arrival_id=' + to +
-    (flight.date ? '&outbound_date=' + encodeURIComponent(flight.date) : '') +
-    '&type=2';
+  var fromCity = flight.from || '';
+  var toCity = flight.to || '';
+  var fromCode = flight.fromCode || fromCity;
+  var toCode = flight.toCode || toCity;
+  var dateStr = flight.date || '';
+
+  // Build readable Google Flights search query with city names + date
+  var query = 'flights from ' + fromCity + ' to ' + toCity;
+  if (dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    query += ' on ' + months[d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear();
+  }
+  var bookUrl = 'https://www.google.com/travel/flights?q=' + encodeURIComponent(query);
   var iconClass = isReturn ? 'return' : 'flight';
   var label = isReturn ? 'Return Home' : 'Depart';
 
@@ -256,10 +264,10 @@ function renderFlightNode(flight, isReturn) {
           '<div class="flight-endpoint"><div class="code">' + escapeHtml(flight.toCode || flight.to) + '</div><div class="ftime">' + escapeHtml(flight.arrivalTime || '') + '</div></div>' +
         '</div>' +
         '<div class="flight-meta">' +
-          '<div class="flight-meta-left"><div class="flight-price">' + escapeHtml(flight.price || 'TBD') + '<span class="est">est.</span></div><div class="flight-airline">' + escapeHtml((flight.airlines || []).join(', ') || flight.airline || '') + '</div></div>' +
+          '<div class="flight-meta-left"><div class="flight-price">' + escapeHtml(flight.price || 'TBD') + '<span class="est">est. per person</span></div><div class="flight-airline">' + escapeHtml((flight.airlines || []).join(', ') || flight.airline || '') + '</div></div>' +
           '<div class="flight-duration-label">' + escapeHtml(flight.duration || '') + ' \u00b7 ' + escapeHtml(flight.stops || '') + '</div>' +
         '</div>' +
-        '<a class="flight-book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Book on Google Flights \u2192</a>' +
+        '<a class="flight-book-link" href="' + bookUrl + '" target="_blank" rel="noopener">Search on Google Flights \u2192</a>' +
       '</div>' +
     '</div>' +
   '</div>';
