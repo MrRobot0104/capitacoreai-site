@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeShieldPilot — AI Security Scanner | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+
+    /* NAV */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
+    .nav-brand .wordmark .w-capita { font-weight: 300; }
+    .nav-brand .wordmark .w-core { font-weight: 700; }
+    .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #ffffff; }
+    .nav-links a.active { color: #FF6A00; }
+    .btn-nav { background: #FF6A00; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .btn-nav:hover { background: #FF8000; }
+
+    /* HERO */
+    .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 20%, rgba(255,106,0,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(239,68,68,0.06) 0%, transparent 50%), #0a0a0a; }
+    .hero-bg::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px); }
+    .hero-inner { position: relative; z-index: 2; text-align: center; max-width: 760px; padding: 0 32px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,106,0,0.1); border: 1px solid rgba(255,106,0,0.25); border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 500; color: #FF6A00; margin-bottom: 28px; }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #FF6A00; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px; }
+    .hero h1 .grad { background: linear-gradient(135deg, #FF6A00, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-inner > p { font-size: 17px; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 36px; max-width: 580px; margin-left: auto; margin-right: auto; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
+    .btn-hero { display: inline-flex; align-items: center; gap: 8px; background: #FF6A00; color: #fff; padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 24px rgba(255,106,0,0.25); }
+    .btn-hero:hover { background: #FF8000; box-shadow: 0 6px 32px rgba(255,106,0,0.35); transform: translateY(-1px); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+    .btn-outline:hover { color: #FF6A00; border-color: #FF6A00; }
+    .hero-stats { display: flex; gap: 40px; justify-content: center; }
+    .hero-stat { text-align: center; }
+    .hero-stat .hs-val { font-size: 24px; font-weight: 800; color: #ffffff; }
+    .hero-stat .hs-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+    /* SECTION COMMON */
+    .section { max-width: 1152px; margin: 0 auto; padding: 100px 32px; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-header h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+    .section-header p { font-size: 15px; color: rgba(255,255,255,0.45); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+    /* HOW IT WORKS */
+    .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .how-step { text-align: center; padding: 32px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: border-color 0.2s; }
+    .how-step:hover { border-color: rgba(255,106,0,0.3); }
+    .how-step-num { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,106,0,0.1); color: #FF6A00; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .how-step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .how-step p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+
+    /* CATEGORIES GRID */
+    .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .cat-card { display: flex; align-items: flex-start; gap: 16px; padding: 22px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .cat-card:hover { border-color: rgba(255,106,0,0.25); box-shadow: 0 4px 20px rgba(255,106,0,0.05); }
+    .cat-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,106,0,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .cat-icon svg { width: 18px; height: 18px; color: #FF6A00; }
+    .cat-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .cat-card p { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.55; }
+
+    /* SEVERITY EXAMPLE */
+    .severity-demo { display: flex; justify-content: center; gap: 24px; margin-top: 40px; flex-wrap: wrap; }
+    .sev-chip { font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 10px; }
+    .sev-critical { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .sev-high { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+    .sev-medium { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+    .sev-low { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+
+    /* CTA */
+    .cta-section { text-align: center; max-width: 600px; margin: 0 auto; padding: 100px 32px 120px; }
+    .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 12px; }
+    .cta-section p { font-size: 15px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-bottom: 28px; }
+
+    /* FOOTER */
+    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; }
+    .footer-nav a:hover { color: #FF6A00; }
+
+    /* MOBILE */
+    .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #111111; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.3); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .mobile-menu a:hover { color: #ffffff; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+
+    @media (max-width: 768px) {
+      .nav-links, .nav .btn-nav { display: none; }
+      .nav-inner { padding: 0 20px; height: 64px; }
+      .hero { min-height: 92vh; }
+      .hero-inner { padding: 0 20px; }
+      .hero h1 { font-size: 2rem; margin-bottom: 16px; }
+      .hero-inner > p { font-size: 15px; margin-bottom: 28px; }
+      .hero-buttons { gap: 12px; margin-bottom: 36px; }
+      .hero-stats { gap: 28px; }
+      .hero-stat .hs-val { font-size: 20px; }
+      .section { padding: 64px 20px; }
+      .section-header { margin-bottom: 32px; }
+      .how-grid { grid-template-columns: 1fr; gap: 16px; }
+      .how-step { padding: 24px 20px; }
+      .cat-grid { grid-template-columns: 1fr; gap: 12px; }
+      .severity-demo { gap: 12px; }
+      .cta-section { padding: 64px 20px 80px; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; padding: 20px; }
+      .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.75rem; }
+      .hero-inner > p { font-size: 14px; }
+      .hero-badge { font-size: 11px; padding: 5px 12px; margin-bottom: 20px; }
+      .hero-buttons { flex-direction: column; align-items: stretch; }
+      .btn-hero, .btn-outline { justify-content: center; padding: 14px 24px; }
+      .hero-stats { gap: 20px; }
+      .hero-stat .hs-val { font-size: 18px; }
+      .hero-stat .hs-label { font-size: 10px; }
+      .section { padding: 48px 16px; }
+      .section-header h2 { font-size: 1.35rem; }
+      .section-header p { font-size: 14px; }
+      .cat-card { padding: 16px; gap: 12px; }
+      .cta-section { padding: 48px 16px 64px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="logo.svg" alt="CapitaCoreAI"><span class="wordmark"><span class="w-capita">Capita</span><span class="w-core">Core</span><span class="w-ai">AI</span></span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+        <a href="agents.html" class="active">Agents</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="account.html" id="navMyAgents" style="display:none;">My Account</a>
+      </div>
+      <a href="account.html" id="navLoginBtn" class="btn-nav" style="display:none;">Log In</a>
+      <button class="hamburger" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#FF6A00" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="7" r="2" fill="#FF6A00" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="13" r="2" fill="#FF6A00" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="19" r="2" fill="#FF6A00" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/#services">Services</a><a href="/#about">About</a><a href="/#contact">Contact</a><a href="agents.html">Agents</a><a href="pricing.html">Pricing</a>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;text-decoration:none;">Log In / Sign Up</a></div>
+    <div id="menuMyAgents" style="display:none;padding-top:24px;"></div>
+  </div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-badge"><span class="dot"></span> AI-Powered Security Scanner</div>
+      <h1>Scan Your Code<br><span class="grad">Before a Hacker Does</span></h1>
+      <p>VibeShieldPilot reads every line of your codebase, thinks like a penetration tester, and delivers a professional security scorecard — so you ship with confidence.</p>
+      <div class="hero-buttons">
+        <a href="vibeshieldpilot-app.html" class="btn-hero launch-btn" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Launch Scanner
+        </a>
+        <a href="#how" class="btn-outline">How It Works</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hs-val">14</div><div class="hs-label">Security Categories</div></div>
+        <div class="hero-stat"><div class="hs-val">AI</div><div class="hs-label">Pen Testing</div></div>
+        <div class="hero-stat"><div class="hs-val">A-F</div><div class="hs-label">Instant Scorecard</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-section" id="how">
+    <div class="section">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>Three steps from GitHub URL to full security report.</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <h3>Paste Your GitHub URL</h3>
+          <p>Drop in any public repository link. No tokens, no OAuth, no setup. VibeShieldPilot handles the rest.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <h3>AI Scans Every File</h3>
+          <p>Our agent reads your entire codebase, executes security analysis scripts, and checks all 14 vulnerability categories like a real pentester.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <h3>Get Your Scorecard</h3>
+          <p>Receive a professional security report with an A-F grade, severity-rated findings, exact file locations, and code-level fixes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY CATEGORIES -->
+  <div class="section">
+    <div class="section-header">
+      <h2>14 Vulnerability Categories</h2>
+      <p>Every scan covers the full attack surface — from hardcoded secrets to business logic flaws.</p>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div><h3>Secrets & Exposure</h3><p>Hardcoded API keys, leaked .env files, service keys in client code.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><h3>Authentication</h3><p>Missing auth on endpoints, weak JWT verification, brute-force exposure.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div><h3>Authorization (IDOR)</h3><p>User A accessing User B's data, missing ownership checks, broken RLS.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></div>
+        <div><h3>Injection Attacks</h3><p>SQL injection, command injection, NoSQL injection, template injection.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div><h3>Cross-Site Scripting</h3><p>innerHTML with user input, unescaped AI output, DOM-based XSS vectors.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+        <div><h3>API Security</h3><p>Missing rate limiting, wildcard CORS, SSRF, mass assignment.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+        <div><h3>Data Protection</h3><p>PII in plaintext, missing encryption, insecure cookies and storage.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+        <div><h3>CSRF</h3><p>Missing CSRF tokens, SameSite misconfig, cross-origin state changes.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+        <div><h3>File Upload & Handling</h3><p>No type validation, path traversal in filenames, missing size limits.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+        <div><h3>Dependencies & Supply Chain</h3><p>Known CVEs, outdated packages, missing lockfiles.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div><h3>Infrastructure & Config</h3><p>Debug mode in production, missing security headers, exposed admin routes.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div><h3>Business Logic Flaws</h3><p>Race conditions in payments, price manipulation, account enumeration.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div><h3>Denial of Service</h3><p>ReDoS patterns, unbound loops, missing pagination on list endpoints.</p></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div><h3>Logging & Monitoring</h3><p>Missing audit trails, secrets in logs, no alerting for suspicious activity.</p></div>
+      </div>
+    </div>
+
+    <div class="severity-demo">
+      <span class="sev-chip sev-critical">Critical</span>
+      <span class="sev-chip sev-high">High</span>
+      <span class="sev-chip sev-medium">Medium</span>
+      <span class="sev-chip sev-low">Low</span>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Ship Secure. Ship Confident.</h2>
+    <p>Every vibe-coded app needs a security review before it goes live. VibeShieldPilot gives you one in minutes, not weeks.</p>
+    <a href="vibeshieldpilot-app.html" class="btn-hero launch-btn" style="display:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Launch Scanner
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/vibeshieldpilot.js"></script>
+  <script src="js/premium.js?v=2"></script>
+</body>
+</html>
