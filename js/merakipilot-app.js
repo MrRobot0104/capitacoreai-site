@@ -263,6 +263,14 @@ async function selectOrg(org) {
     '<code>Reboot the warehouse switch</code>',
     'bot'
   );
+
+  // Offer to save key (only if not already saved for this org)
+  if (currentSession && merakiKey) {
+    var existing = await sb.from('meraki_keys').select('id').eq('user_id', currentSession.user.id).eq('org_id', orgData.id);
+    if (!existing.data || existing.data.length === 0) {
+      offerSaveKey(merakiKey, orgData.name, orgData.id);
+    }
+  }
 }
 
 // ─── Load Dashboard → Feed Neural Viz ─────────────────────────────
@@ -655,3 +663,253 @@ document.getElementById('continueBtn').addEventListener('click', continueConvers
 window.addEventListener('pageshow', function() {
   if (currentSession) refreshCredits();
 });
+
+// ─── Encrypted API Key Storage (Web Crypto API) ─────────────────
+// Keys are encrypted in the browser with AES-256-GCM.
+// The encryption key is derived from the user's password via PBKDF2.
+// The server only ever sees the encrypted blob — never the raw API key.
+
+function b64Encode(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function b64Decode(str) { var bin = atob(str); var buf = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); return buf; }
+
+async function deriveKey(password, salt) {
+  var enc = new TextEncoder();
+  var keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptKey(apiKey, password) {
+  var salt = crypto.getRandomValues(new Uint8Array(16));
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var key = await deriveKey(password, salt);
+  var enc = new TextEncoder();
+  var encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, enc.encode(apiKey));
+  return { encrypted: b64Encode(encrypted), salt: b64Encode(salt), iv: b64Encode(iv) };
+}
+
+async function decryptKey(encryptedB64, saltB64, ivB64, password) {
+  var salt = b64Decode(saltB64);
+  var iv = b64Decode(ivB64);
+  var encrypted = b64Decode(encryptedB64);
+  var key = await deriveKey(password, salt);
+  var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, encrypted);
+  return new TextDecoder().decode(decrypted);
+}
+
+// ─── Save Key Flow ──────────────────────────────────────────────
+var pendingSaveKey = null;
+
+function offerSaveKey(rawKey, orgName, orgId) {
+  pendingSaveKey = { key: rawKey, orgName: orgName, orgId: orgId };
+  var hint = '••••' + rawKey.slice(-4);
+  var html = '<div class="save-key-banner" id="saveKeyBanner">' +
+    '<p>Save this API key (<code>' + hint + '</code>) for <strong>' + escapeHtml(orgName) + '</strong> so you don\'t have to paste it next time?</p>' +
+    '<div class="save-actions">' +
+    '<button class="key-action-btn use" onclick="promptSavePassword()">Save Key</button>' +
+    '<button class="key-action-btn del" onclick="dismissSaveBanner()">No Thanks</button>' +
+    '</div></div>';
+  addMessage(html, 'bot');
+}
+
+function dismissSaveBanner() {
+  pendingSaveKey = null;
+  var banner = document.getElementById('saveKeyBanner');
+  if (banner) banner.closest('.msg').remove();
+}
+
+function promptSavePassword() {
+  var banner = document.getElementById('saveKeyBanner');
+  if (banner) banner.closest('.msg').remove();
+
+  var html = '<div style="padding:16px;background:rgba(255,106,0,0.04);border:1px solid rgba(255,106,0,0.15);border-radius:10px;">' +
+    '<p style="font-size:13px;color:#94a3b8;margin-bottom:10px;"><strong style="color:#f1f5f9;">Encrypt & Save</strong><br>Enter your CapitaCoreAI login password to encrypt this key. We never see your password or raw key.</p>' +
+    '<input type="password" id="saveKeyPassword" placeholder="Your CapitaCoreAI password" style="width:100%;padding:10px 14px;background:#0a0a0a;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f1f5f9;font-size:14px;font-family:inherit;outline:none;margin-bottom:8px;">' +
+    '<div id="saveKeyError" style="font-size:12px;color:#ef4444;display:none;margin-bottom:6px;"></div>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button class="key-action-btn use" onclick="executeSaveKey()">Encrypt & Save</button>' +
+    '<button class="key-action-btn del" onclick="dismissSaveBanner()">Cancel</button>' +
+    '</div></div>';
+  addMessage(html, 'bot');
+
+  setTimeout(function() {
+    var input = document.getElementById('saveKeyPassword');
+    if (input) {
+      input.focus();
+      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') executeSaveKey(); });
+    }
+  }, 100);
+}
+
+async function executeSaveKey() {
+  if (!pendingSaveKey || !currentSession) return;
+  var passwordInput = document.getElementById('saveKeyPassword');
+  var errorEl = document.getElementById('saveKeyError');
+  var password = passwordInput ? passwordInput.value : '';
+  if (!password) { if (errorEl) { errorEl.textContent = 'Password required.'; errorEl.style.display = 'block'; } return; }
+
+  // Verify password by attempting to sign in
+  var email = currentSession.user.email;
+  var authCheck = await sb.auth.signInWithPassword({ email: email, password: password });
+  if (authCheck.error) {
+    if (errorEl) { errorEl.textContent = 'Wrong password. Please enter your CapitaCoreAI login password.'; errorEl.style.display = 'block'; }
+    return;
+  }
+
+  try {
+    var encrypted = await encryptKey(pendingSaveKey.key, password);
+    var hint = pendingSaveKey.key.slice(-4);
+
+    var res = await sb.from('meraki_keys').insert({
+      user_id: currentSession.user.id,
+      label: pendingSaveKey.orgName || 'Meraki Key',
+      org_id: pendingSaveKey.orgId || null,
+      encrypted_key: encrypted.encrypted,
+      salt: encrypted.salt,
+      iv: encrypted.iv,
+      key_hint: hint,
+    });
+
+    if (res.error) {
+      if (errorEl) { errorEl.textContent = 'Failed to save: ' + res.error.message; errorEl.style.display = 'block'; }
+      return;
+    }
+
+    pendingSaveKey = null;
+    // Remove the save prompt and show success
+    var msgs = document.querySelectorAll('.msg.bot');
+    var lastMsg = msgs[msgs.length - 1];
+    if (lastMsg) lastMsg.remove();
+    addMessage('<span style="color:#22c55e;">Key saved and encrypted.</span> You can access it anytime from <strong>My Keys</strong> in the top bar.', 'bot');
+    document.getElementById('myKeysBtn').style.display = 'inline-flex';
+  } catch (e) {
+    if (errorEl) { errorEl.textContent = 'Encryption failed: ' + e.message; errorEl.style.display = 'block'; }
+  }
+}
+
+// ─── Load & Display Saved Keys ──────────────────────────────────
+async function loadSavedKeys() {
+  if (!currentSession) return;
+  var res = await sb.from('meraki_keys').select('*').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
+  var keys = (res.data || []);
+  var list = document.getElementById('keysList');
+
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="keys-empty">No saved API keys yet.<br>Connect a Meraki API key and you\'ll be offered to save it.</div>';
+    return;
+  }
+
+  var html = '';
+  keys.forEach(function(k) {
+    var date = new Date(k.created_at).toLocaleDateString();
+    html += '<div class="key-item" data-key-id="' + k.id + '">' +
+      '<div class="key-item-info">' +
+      '<div class="key-item-label">' + escapeHtml(k.label) + '</div>' +
+      '<div class="key-item-hint">••••••••' + escapeHtml(k.key_hint || '????') + '</div>' +
+      '<div class="key-item-date">Saved ' + date + '</div>' +
+      '</div>' +
+      '<div class="key-item-actions">' +
+      '<button class="key-action-btn use" onclick="useKey(\'' + k.id + '\')">Use</button>' +
+      '<button class="key-action-btn del" onclick="deleteKey(\'' + k.id + '\')">Delete</button>' +
+      '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+var pendingUseKeyId = null;
+
+function useKey(keyId) {
+  pendingUseKeyId = keyId;
+  var prompt = document.getElementById('keysPasswordPrompt');
+  var input = document.getElementById('keysPasswordInput');
+  var error = document.getElementById('keysPasswordError');
+  prompt.style.display = 'block';
+  error.style.display = 'none';
+  input.value = '';
+  input.focus();
+}
+
+async function submitUseKey() {
+  if (!pendingUseKeyId || !currentSession) return;
+  var input = document.getElementById('keysPasswordInput');
+  var error = document.getElementById('keysPasswordError');
+  var password = input.value;
+  if (!password) { error.textContent = 'Password required.'; error.style.display = 'block'; return; }
+
+  // Verify password
+  var authCheck = await sb.auth.signInWithPassword({ email: currentSession.user.email, password: password });
+  if (authCheck.error) {
+    error.textContent = 'Wrong password. Enter your CapitaCoreAI login password.';
+    error.style.display = 'block';
+    return;
+  }
+
+  // Find the key
+  var res = await sb.from('meraki_keys').select('*').eq('id', pendingUseKeyId).single();
+  if (!res.data) { error.textContent = 'Key not found.'; error.style.display = 'block'; return; }
+
+  try {
+    var rawKey = await decryptKey(res.data.encrypted_key, res.data.salt, res.data.iv, password);
+    // Close modal and connect
+    closeKeysModal();
+    addMessage('Connecting with saved key for <strong>' + escapeHtml(res.data.label) + '</strong>...', 'bot');
+    await connectMeraki(rawKey);
+  } catch (e) {
+    error.textContent = 'Decryption failed — wrong password or corrupted key.';
+    error.style.display = 'block';
+  }
+}
+
+async function deleteKey(keyId) {
+  if (!confirm('Delete this saved API key? This cannot be undone.')) return;
+  await sb.from('meraki_keys').delete().eq('id', keyId).eq('user_id', currentSession.user.id);
+  loadSavedKeys();
+}
+
+function openKeysModal() {
+  loadSavedKeys();
+  document.getElementById('keysOverlay').classList.add('active');
+  document.getElementById('keysPasswordPrompt').style.display = 'none';
+}
+
+function closeKeysModal() {
+  document.getElementById('keysOverlay').classList.remove('active');
+  document.getElementById('keysPasswordPrompt').style.display = 'none';
+  pendingUseKeyId = null;
+}
+
+// ─── Key management event listeners ─────────────────────────────
+document.getElementById('myKeysBtn').addEventListener('click', openKeysModal);
+document.getElementById('keysClose').addEventListener('click', closeKeysModal);
+document.getElementById('keysOverlay').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('keysOverlay')) closeKeysModal();
+});
+document.getElementById('keysPasswordSubmit').addEventListener('click', submitUseKey);
+document.getElementById('keysPasswordCancel').addEventListener('click', function() {
+  document.getElementById('keysPasswordPrompt').style.display = 'none';
+  pendingUseKeyId = null;
+});
+document.getElementById('keysPasswordInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') submitUseKey();
+});
+
+// Show "My Keys" button if user has saved keys
+(async function checkSavedKeys() {
+  // Wait for auth
+  var waitCount = 0;
+  var interval = setInterval(async function() {
+    waitCount++;
+    if (waitCount > 20) { clearInterval(interval); return; }
+    if (!currentSession) return;
+    clearInterval(interval);
+    var res = await sb.from('meraki_keys').select('id', { count: 'exact', head: true }).eq('user_id', currentSession.user.id);
+    if (res.count > 0) {
+      document.getElementById('myKeysBtn').style.display = 'inline-flex';
+    }
+  }, 500);
+})();
