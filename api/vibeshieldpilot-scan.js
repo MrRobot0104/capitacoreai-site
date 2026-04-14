@@ -127,8 +127,8 @@ module.exports = async function handler(req, res) {
         return priority(a.path.toLowerCase()) - priority(b.path.toLowerCase());
       });
 
-      // Limit to 40 files — prioritized order ensures API/JS scanned first
-      if (codeFiles.length > 40) codeFiles = codeFiles.slice(0, 40);
+      // Limit to 30 files — prioritized order ensures API/JS scanned first
+      if (codeFiles.length > 30) codeFiles = codeFiles.slice(0, 30);
 
       // ── 2. Fetch file contents in parallel ──────────────
       var fileContents = [];
@@ -223,7 +223,9 @@ C = 0 critical, ≤5 high
 D = 1-2 critical OR >5 high
 F = 3+ critical
 
-Be thorough. Show exact file paths and line numbers. Think like a bug bounty hunter.`;
+Be thorough. Show exact file paths and line numbers. Think like a bug bounty hunter.
+
+IMPORTANT: Keep each finding concise — 1-2 sentences for description and fix. Do NOT write long explanations or multi-line code blocks in fixes. The total JSON response must be under 15000 tokens. If there are many findings, prioritize CRITICAL and HIGH over LOW.`;
 
       var userMessage = 'Scan this repository: ' + owner + '/' + repo + '\n\n## FILE TREE\n' + fileTree + '\n\n## FILE CONTENTS\n' + codeDoc;
 
@@ -236,7 +238,7 @@ Be thorough. Show exact file paths and line numbers. Think like a bug bounty hun
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
+          max_tokens: 16000,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }],
         }),
