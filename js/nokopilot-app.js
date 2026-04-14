@@ -290,8 +290,6 @@ async function switchOrg(orgId) {
 
 // ─── Load Dashboard → Feed Neural Viz ─────────────────────────────
 async function loadDashboard() {
-  document.getElementById('orgName').textContent = orgData.name;
-
   var results = await Promise.all([
     merakiGet('/organizations/' + orgData.id + '/devices'),
     merakiGet('/organizations/' + orgData.id + '/devices/statuses'),
@@ -355,26 +353,7 @@ function getFilteredData() {
 
 function updateDashboardStats() {
   var filtered = getFilteredData();
-  var devices = filtered.devices;
-  var networks = filtered.networks;
-
-  var total = devices.length;
-  var online = devices.filter(function(d) { return d.status === 'online'; }).length;
-  var offline = total - online;
-  var netCount = networks.length;
-
-  document.getElementById('statDevices').textContent = total;
-  document.getElementById('statOnline').textContent = online;
-  document.getElementById('statOffline').textContent = offline;
-  document.getElementById('statNetworks').textContent = netCount;
-  document.getElementById('neuralStats').style.display = 'flex';
-  document.getElementById('orgMeta').textContent = (selectedNetworkId === 'all' ? netCount + ' network' + (netCount !== 1 ? 's' : '') + ' \u00B7 ' : '') + total + ' device' + (total !== 1 ? 's' : '');
-  var previewNet = document.getElementById('previewNet');
-  if (previewNet) previewNet.style.display = 'none';
-
-  if (window.neuralVizUpdate) {
-    window.neuralVizUpdate({ devices: devices, networks: networks });
-  }
+  renderCliTopology(filtered.devices, filtered.networks);
 }
 
 // ─── Gather Network Context for Claude ────────────────────────────
@@ -404,33 +383,20 @@ async function gatherNetworkContext() {
 }
 
 // ─── CLI Terminal ───────────────────────────────────────────────
-var cliTerminal = document.getElementById('cliTerminal');
 var cliBody = document.getElementById('cliBody');
 var cliBadge = document.getElementById('cliBadge');
 var cliTitle = document.getElementById('cliTitle');
-var cliActive = false;
-var cliQueue = [];
-var cliTyping = false;
 
-function cliShow(title) {
-  cliBody.innerHTML = '';
-  cliTitle.textContent = title || 'NokoPilot CLI';
-  cliBadge.textContent = 'EXECUTING';
-  cliBadge.className = 'cli-badge';
-  cliTerminal.classList.add('active');
-  cliActive = true;
+function cliBadgeSet(text, cls) {
+  cliBadge.textContent = text;
+  cliBadge.className = 'cli-badge' + (cls ? ' ' + cls : '');
 }
 
-function cliHide() {
-  setTimeout(function() {
-    cliBadge.textContent = 'COMPLETE';
-    cliBadge.className = 'cli-badge done';
-    setTimeout(function() {
-      cliTerminal.classList.remove('active');
-      cliActive = false;
-    }, 2000);
-  }, 500);
-}
+// Welcome message
+cliAddLine('<span class="dim">NokoPilot CLI v1.0 — CapitaCoreAI</span>');
+cliAddLine('<span class="dim">Paste your Meraki API key in the chat to connect.</span>');
+cliAddLine('<span class="dim">───────────────────────────────────────</span>');
+cliAddCursor();
 
 function cliAddLine(html) {
   var line = document.createElement('div');
@@ -522,6 +488,58 @@ function pathToCliCommand(path, method) {
   return m === 'GET' ? 'show ' + path.split('/').slice(-2).join(' ') : 'configure ' + path.split('/').slice(-2).join(' ');
 }
 
+function renderCliTopology(devices, networks) {
+  cliRemoveCursor();
+  var oldTopo = document.getElementById('cliTopology');
+  if (oldTopo) oldTopo.remove();
+
+  var total = devices.length;
+  var online = devices.filter(function(d) { return d.status === 'online'; }).length;
+  var offline = total - online;
+
+  var topo = document.createElement('div');
+  topo.id = 'cliTopology';
+  var lines = [];
+  lines.push('<span class="dim">───────────────────────────────────────</span>');
+  lines.push('<span class="header">  NETWORK TOPOLOGY — ' + escapeHtml(orgData ? orgData.name : '') + '</span>');
+  lines.push('<span class="dim">───────────────────────────────────────</span>');
+  lines.push('<span class="output">  Devices: <span class="info">' + total + '</span>  Online: <span class="device-online">' + online + '</span>  Offline: <span class="device-offline">' + offline + '</span>  Networks: <span class="info">' + networks.length + '</span></span>');
+  lines.push('');
+
+  var netMap = {};
+  devices.forEach(function(d) { var nid = d.networkId || 'unknown'; if (!netMap[nid]) netMap[nid] = []; netMap[nid].push(d); });
+  var netKeys = Object.keys(netMap);
+  netKeys.forEach(function(nid, ni) {
+    var net = networks.find(function(n) { return n.id === nid; });
+    var netName = net ? net.name : nid;
+    var devs = netMap[nid];
+    var isLast = ni === netKeys.length - 1;
+    var branch = isLast ? '└' : '├';
+    var pipe = isLast ? ' ' : '│';
+    lines.push('<span class="cmd">  ' + branch + '── ' + escapeHtml(netName) + '</span> <span class="dim">(' + devs.length + ')</span>');
+    devs.forEach(function(d, di) {
+      var isLastDev = di === devs.length - 1;
+      var devBranch = isLastDev ? '└' : '├';
+      var statusIcon = d.status === 'online' ? '<span class="device-online">●</span>' : d.status === 'dormant' ? '<span class="warn">◐</span>' : '<span class="device-offline">○</span>';
+      var name = d.name || d.model || d.serial;
+      var detail = d.model + (d.lanIp ? ' ' + d.lanIp : '');
+      lines.push('<span class="output">  ' + pipe + '   ' + devBranch + '─ ' + statusIcon + ' ' + escapeHtml(name) + '</span> <span class="dim">' + escapeHtml(detail) + '</span>');
+    });
+    if (!isLast) lines.push('<span class="dim">  │</span>');
+  });
+  lines.push('');
+  lines.push('<span class="dim">  ● online  ◐ dormant  ○ offline</span>');
+  lines.push('<span class="dim">───────────────────────────────────────</span>');
+
+  topo.innerHTML = lines.map(function(l) { return '<div class="cli-line">' + l + '</div>'; }).join('');
+  cliBody.appendChild(topo);
+  cliAddCursor();
+  cliBody.scrollTop = cliBody.scrollHeight;
+
+  cliBadgeSet('CONNECTED');
+  cliTitle.textContent = 'noko@' + escapeHtml((orgData && orgData.name) || 'meraki').toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 20) + ' ~ %';
+}
+
 // ─── Network scope enforcement ──────────────────────────────────
 // When a specific network is selected, block fetches/actions targeting other networks
 function isPathAllowed(path) {
@@ -534,7 +552,7 @@ function isPathAllowed(path) {
 
 // ─── Execute Fetches (Claude requests data) ──────────────────────
 async function executeFetches(fetches) {
-  if (fetches.length > 0) cliShow('Fetching Network Data');
+  if (fetches.length > 0) { cliRemoveCursor(); cliBadgeSet('FETCHING', 'executing'); }
 
   var results = {};
   for (var fi = 0; fi < fetches.length; fi++) {
@@ -583,10 +601,10 @@ async function executeFetches(fetches) {
 
 // ─── Execute Actions (Claude makes changes) ──────────────────────
 async function executeActions(actions) {
-  if (actions.length > 0 && !cliActive) cliShow('Applying Configuration');
-  else if (actions.length > 0 && cliActive) {
+  if (actions.length > 0) {
     cliRemoveCursor();
-    cliAddLine('<span class="dim">─────────────────────────────────────</span>');
+    cliBadgeSet('CONFIGURING', 'executing');
+    cliAddLine('<span class="dim">───────────────────────────────────────</span>');
     cliAddOutput('Entering configuration mode...', 'info');
   }
 
@@ -766,7 +784,7 @@ async function handleSend() {
 
   chatHistory.push({ role: 'user', content: text });
   showTyping();
-  if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Processing: ' + text.substring(0, 60) + (text.length > 60 ? '...' : ''));
+
 
   try {
     var networkContext = await gatherNetworkContext();
@@ -826,7 +844,6 @@ async function handleSend() {
           showTyping();
         }
 
-        if (window.neuralVizAnalyzing) window.neuralVizAnalyzing('Fetching ' + data.fetches.length + ' endpoint' + (data.fetches.length > 1 ? 's' : '') + '...');
         var fetchResults = await executeFetches(data.fetches);
 
         // Keep assistant response short in history
@@ -856,8 +873,7 @@ async function handleSend() {
       msgCount++;
 
       if (msgCount >= msgLimit) { showLimitBar(); }
-      if (window.neuralVizDone) window.neuralVizDone();
-      if (cliActive) cliHide();
+      cliBadgeSet('CONNECTED');
 
       // Merge any pending actions from fetch loop with final response actions
       var allActions = (pendingActions || []).concat(data.actions || []);
@@ -869,7 +885,6 @@ async function handleSend() {
           var key = (a.method || '') + ':' + (a.path || '');
           if (!seen[key]) { seen[key] = true; uniqueActions.push(a); }
         });
-        if (window.neuralVizAction) window.neuralVizAction('Executing ' + uniqueActions.length + ' change' + (uniqueActions.length > 1 ? 's' : '') + '...');
         var actionResults = await executeActions(uniqueActions);
         var resultSummary = Object.keys(actionResults).map(function(path) {
           var r = actionResults[path];
