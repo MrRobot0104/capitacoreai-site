@@ -135,37 +135,26 @@ module.exports = async (req, res) => {
 
       // Send confirmation email
       var resendKey = process.env.RESEND_API_KEY;
-      if (resendKey) {
+      if (resendKey && user.email) {
         var topicList = topics.length > 0 ? topics.join(', ') : prompt.substring(0, 100);
-        fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: 'NewsPilot <digest@capitacoreai.io>',
-            to: [user.email],
-            subject: 'You\'re Subscribed to NewsPilot!',
-            html: '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#111;font-family:Arial,sans-serif;">' +
-              '<div style="max-width:520px;margin:0 auto;padding:40px 24px;">' +
-              '<div style="text-align:center;margin-bottom:24px;"><h1 style="color:#FF6A00;font-size:24px;margin:0;">You\'re Subscribed!</h1></div>' +
-              '<p style="color:#ccc;font-size:15px;line-height:1.7;">Your personalized news digest is set up. Here\'s what you\'re getting:</p>' +
-              '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:20px;margin:20px 0;">' +
-              '<p style="color:#FF6A00;font-size:13px;font-weight:600;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Your Topics</p>' +
-              '<p style="color:#fff;font-size:16px;margin:0;">' + topicList.replace(/</g, '&lt;') + '</p>' +
-              '</div>' +
-              '<div style="display:flex;gap:24px;margin:20px 0;">' +
-              '<div style="flex:1;text-align:center;padding:16px;background:#1a1a1a;border-radius:8px;">' +
-              '<p style="color:#FF6A00;font-size:20px;font-weight:700;margin:0;">Friday</p>' +
-              '<p style="color:#888;font-size:12px;margin:4px 0 0;">Delivery Day</p></div>' +
-              '<div style="flex:1;text-align:center;padding:16px;background:#1a1a1a;border-radius:8px;">' +
-              '<p style="color:#FF6A00;font-size:20px;font-weight:700;margin:0;">8 AM</p>' +
-              '<p style="color:#888;font-size:12px;margin:4px 0 0;">EST</p></div></div>' +
-              '<p style="color:#888;font-size:13px;line-height:1.6;">Your first digest arrives this Friday. Each email is AI-curated and personalized to your interests.</p>' +
-              '<div style="text-align:center;margin-top:24px;">' +
-              '<a href="https://capitacoreai.io/newspilot-app.html" style="display:inline-block;padding:12px 28px;background:#FF6A00;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Manage Subscription</a></div>' +
-              '<p style="color:#444;font-size:11px;text-align:center;margin-top:24px;">CapitaCoreAI &middot; capitacoreai.io</p>' +
-              '</div></body></html>',
-          }),
-        }).catch(function(e) { console.error('Confirmation email failed:', e.message); });
+        var emailBody = '<div style="max-width:520px;margin:0 auto;padding:40px 24px;background:#111;font-family:Arial,sans-serif;">' +
+          '<h1 style="color:#FF6A00;font-size:24px;text-align:center;">You\'re Subscribed!</h1>' +
+          '<p style="color:#ccc;font-size:15px;line-height:1.7;">Your personalized news digest is set up:</p>' +
+          '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:20px;margin:20px 0;">' +
+          '<p style="color:#FF6A00;font-size:13px;font-weight:600;margin:0 0 8px;">YOUR TOPICS</p>' +
+          '<p style="color:#fff;font-size:16px;margin:0;">' + topicList.replace(/</g, '&lt;') + '</p></div>' +
+          '<p style="color:#888;font-size:13px;">Delivery: <strong style="color:#fff;">Every Friday at 8AM EST</strong></p>' +
+          '<p style="text-align:center;margin-top:24px;"><a href="https://capitacoreai.io/newspilot-app.html" style="display:inline-block;padding:12px 28px;background:#FF6A00;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Manage Subscription</a></p>' +
+          '<p style="color:#444;font-size:11px;text-align:center;margin-top:24px;">CapitaCoreAI</p></div>';
+
+        try {
+          var sendRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: 'NewsPilot <onboarding@resend.dev>', to: [user.email], subject: 'You\'re Subscribed to NewsPilot!', html: emailBody }),
+          });
+          if (!sendRes.ok) { var eErr = await sendRes.text(); console.error('Resend error:', eErr); }
+        } catch (emailErr) { console.error('Email failed:', emailErr.message); }
       }
 
       return res.status(200).json({ ok: true, subscription: sub[0] || sub });
