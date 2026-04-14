@@ -260,16 +260,27 @@ module.exports = async (req, res) => {
       if (searches.length > 0 && serpKey) {
         var results = {};
         var searchPromises = searches.slice(0, 5).map(function(s) {
-          var searchUrl = 'https://serpapi.com/search.json?engine=google_news&q=' + encodeURIComponent(s.query) + '&api_key=' + serpKey;
-          return fetch(searchUrl, { signal: AbortSignal.timeout(10000) })
+          // Use regular Google search with news tab — more reliable than google_news engine
+          var searchUrl = 'https://serpapi.com/search.json?engine=google&tbm=nws&q=' + encodeURIComponent(s.query) + '&num=8&api_key=' + serpKey;
+          return fetch(searchUrl, { signal: AbortSignal.timeout(15000) })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-              var articles = (data.news_results || []).slice(0, 5).map(function(a) {
-                return { title: a.title, source: a.source && a.source.name, date: a.date, link: a.link, snippet: a.snippet || '' };
+              // Google news tab returns news_results
+              var articles = (data.news_results || []).slice(0, 6).map(function(a) {
+                return { title: a.title, source: a.source, date: a.date, link: a.link, snippet: a.snippet || '' };
               });
+              // Fallback: check organic_results if news_results is empty
+              if (articles.length === 0 && data.organic_results) {
+                articles = data.organic_results.slice(0, 6).map(function(a) {
+                  return { title: a.title, source: a.source || a.displayed_link, date: a.date || '', link: a.link, snippet: a.snippet || '' };
+                });
+              }
               results[s.topic || s.query] = articles;
             })
-            .catch(function() { results[s.topic || s.query] = []; });
+            .catch(function(e) {
+              console.error('SerpAPI error for query:', s.query, e.message);
+              results[s.topic || s.query] = [];
+            });
         });
         await Promise.all(searchPromises);
         searchResults = results;

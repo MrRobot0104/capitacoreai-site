@@ -54,6 +54,8 @@
     .input-wrapper:focus-within { border-color: rgba(255,106,0,0.5); }
     .chat-textarea { flex: 1; background: none; border: none; color: #ffffff; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
     .chat-textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .chat-textarea::-webkit-scrollbar { display: none; }
+    .chat-textarea { scrollbar-width: none; }
     .send-btn { width: 36px; height: 36px; border-radius: 10px; border: none; background: #FF6A00; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .send-btn:hover { background: #FF8000; }
     .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
