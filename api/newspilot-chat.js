@@ -257,34 +257,35 @@ module.exports = async (req, res) => {
 
       // Execute searches if present
       var searchResults = null;
-      if (searches.length > 0 && serpKey) {
+      if (searches.length > 0) {
         var results = {};
         var searchPromises = searches.slice(0, 5).map(function(s) {
-          // Use regular Google search with news tab — more reliable than google_news engine
-          var searchUrl = 'https://serpapi.com/search.json?engine=google&tbm=nws&q=' + encodeURIComponent(s.query) + '&num=8&api_key=' + serpKey;
-          return fetch(searchUrl, { signal: AbortSignal.timeout(15000) })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (data.error) {
-                console.error('SerpAPI error:', data.error);
-                results[s.topic || s.query] = [{ title: 'Search error: ' + data.error, source: '', date: '', link: '', snippet: '' }];
-                return;
-              }
-              var articles = (data.news_results || []).slice(0, 6).map(function(a) {
-                return { title: a.title, source: a.source, date: a.date, link: a.link, snippet: a.snippet || '' };
+          // Google News RSS — free, unlimited, no API key needed
+          var rssUrl = 'https://news.google.com/rss/search?q=' + encodeURIComponent(s.query + ' when:7d') + '&hl=en-US&gl=US&ceid=US:en';
+          return fetch(rssUrl, { signal: AbortSignal.timeout(10000) })
+            .then(function(r) { return r.text(); })
+            .then(function(xml) {
+              var articles = [];
+              // Parse RSS XML — extract <item> elements
+              var items = xml.split('<item>').slice(1);
+              items.slice(0, 6).forEach(function(item) {
+                var title = (item.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+                var link = (item.match(/<link\/?>(https?:\/\/[^\s<]+)/) || [])[1] || '';
+                var pubDate = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
+                var source = (item.match(/<source[^>]*>([\s\S]*?)<\/source>/) || [])[1] || '';
+                // Clean CDATA
+                title = title.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+                link = link.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+                source = source.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+                // Format date
+                var date = '';
+                try { date = new Date(pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch(e) { date = pubDate; }
+                if (title) articles.push({ title: title, source: source, date: date, link: link, snippet: '' });
               });
-              if (articles.length === 0 && data.organic_results) {
-                articles = data.organic_results.slice(0, 6).map(function(a) {
-                  return { title: a.title, source: a.source || a.displayed_link, date: a.date || '', link: a.link, snippet: a.snippet || '' };
-                });
-              }
-              if (articles.length === 0) {
-                console.error('SerpAPI: no results for query:', s.query, 'Keys in response:', Object.keys(data).join(', '));
-              }
               results[s.topic || s.query] = articles;
             })
             .catch(function(e) {
-              console.error('SerpAPI error for query:', s.query, e.message);
+              console.error('Google News RSS error:', s.query, e.message);
               results[s.topic || s.query] = [];
             });
         });
