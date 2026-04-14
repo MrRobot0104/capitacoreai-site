@@ -104,20 +104,34 @@ module.exports = async function handler(req, res) {
       var codeFiles = files.filter(function(f) {
         var path = f.path.toLowerCase();
         if (skipPatterns.some(function(p) { return path.includes(p); })) return false;
-        if (f.size > 100000) return false; // Skip files > 100KB
-        // Include if it has a code extension or is a config file at root
+        if (f.size > 50000) return false; // Skip files > 50KB
         return codeExtensions.some(function(ext) { return path.endsWith(ext); }) ||
                path === '.env' || path === '.env.example' || path === 'dockerfile' ||
                path.endsWith('.config.js') || path.endsWith('.config.ts');
       });
 
-      // Limit to ~60 files to stay within context
-      if (codeFiles.length > 60) codeFiles = codeFiles.slice(0, 60);
+      // Prioritize: API/backend files first, then JS, then config, then HTML last
+      codeFiles.sort(function(a, b) {
+        var priority = function(p) {
+          if (p.startsWith('api/')) return 0;
+          if (p.endsWith('.sql')) return 1;
+          if (p.endsWith('.env') || p.includes('.env.')) return 2;
+          if (p.endsWith('.json') || p.endsWith('.yml') || p.endsWith('.yaml')) return 3;
+          if (p.startsWith('js/') || p.endsWith('.js') || p.endsWith('.ts')) return 4;
+          if (p.endsWith('.html')) return 8;
+          if (p.endsWith('.css')) return 9;
+          return 5;
+        };
+        return priority(a.path.toLowerCase()) - priority(b.path.toLowerCase());
+      });
+
+      // Limit to 40 files — prioritized order ensures API/JS scanned first
+      if (codeFiles.length > 40) codeFiles = codeFiles.slice(0, 40);
 
       // ── 2. Fetch file contents in parallel ──────────────
       var fileContents = [];
       var totalChars = 0;
-      var maxTotalChars = 120000; // ~30K tokens
+      var maxTotalChars = 80000; // ~20K tokens — leaves room for Claude's response
 
       var batches = [];
       for (var b = 0; b < codeFiles.length; b += 10) {
