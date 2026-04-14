@@ -62,8 +62,8 @@ async function loadSubscription() {
   var active = subs.find(function(s) { return s.active; });
   if (active) {
     currentSubscription = active;
-    document.getElementById('subBar').classList.add('active');
-    document.getElementById('subTopics').textContent = (active.topics || []).join(', ') || active.prompt_text.substring(0, 50);
+    var _sb = document.getElementById('subBar'); if (_sb) _sb.classList.add('active');
+    var _st = document.getElementById('subTopics'); if (_st) _st.textContent = (active.topics || []).join(', ') || active.prompt_text.substring(0, 50);
     document.getElementById('manageSubsBtn').style.display = 'inline-flex';
     document.getElementById('subscribeBtn').style.display = 'none';
   }
@@ -79,8 +79,8 @@ async function handleSubscribe(data) {
   if (res.ok) {
     var result = await res.json();
     currentSubscription = result.subscription;
-    document.getElementById('subBar').classList.add('active');
-    document.getElementById('subTopics').textContent = (data.topics || []).join(', ');
+    var _sb = document.getElementById('subBar'); if (_sb) _sb.classList.add('active');
+    var _st = document.getElementById('subTopics'); if (_st) _st.textContent = (data.topics || []).join(', ');
     addMessage('Subscribed! You\'ll receive a weekly digest. You can edit or cancel anytime from the bar below.', 'bot');
     refreshCredits();
   } else {
@@ -98,7 +98,7 @@ async function handleCancelSub() {
     body: JSON.stringify({ action: 'cancel_sub', subId: currentSubscription.id }),
   });
   currentSubscription = null;
-  document.getElementById('subBar').classList.remove('active');
+  var _sb = document.getElementById('subBar'); if (_sb) _sb.classList.remove('active');
   addMessage('Subscription cancelled. You can re-subscribe anytime by asking me.', 'bot');
 }
 
@@ -289,7 +289,7 @@ function handleSubAction(action) {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
       body: JSON.stringify({ action: 'edit_sub', subId: currentSubscription.id, prompt: action.data.prompt, topics: action.data.topics }),
     }).then(function() {
-      document.getElementById('subTopics').textContent = (action.data.topics || []).join(', ');
+      var _st = document.getElementById('subTopics'); if (_st) _st.textContent = (action.data.topics || []).join(', ');
       addMessage('Subscription updated!', 'bot');
     });
   } else if (action.type === 'cancel_sub') {
@@ -438,8 +438,8 @@ document.getElementById('subscribeBtn').addEventListener('click', async function
     var data = await res.json();
     if (res.ok && data.ok) {
       currentSubscription = data.subscription;
-      document.getElementById('subBar').classList.add('active');
-      document.getElementById('subTopics').textContent = lastDigestTopics.join(', ') || lastDigestPrompt.substring(0, 50);
+      var _sb = document.getElementById('subBar'); if (_sb) _sb.classList.add('active');
+      var _st = document.getElementById('subTopics'); if (_st) _st.textContent = lastDigestTopics.join(', ') || lastDigestPrompt.substring(0, 50);
       btn.style.display = 'none';
       document.getElementById('manageSubsBtn').style.display = 'inline-flex';
       addMessage('Subscribed! You\'ll receive a personalized digest every Friday. Check your email for confirmation.\n\n**Topics:** ' + (lastDigestTopics.join(', ') || lastDigestPrompt) + '\n\n**Delivery:** Every Friday at 8AM EST\n\nManage your subscription from **My Subscriptions** in the top bar.', 'bot');
