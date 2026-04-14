@@ -88,6 +88,7 @@ module.exports = async function handler(req, res) {
       for (var ri = 0; ri < refs.length; ri++) {
         treeRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/git/trees/' + refs[ri] + '?recursive=1', {
           headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'VibeShieldPilot' },
+          signal: AbortSignal.timeout(15000),
         });
         if (treeRes.ok) break;
       }
@@ -145,6 +146,7 @@ module.exports = async function handler(req, res) {
         var batchResults = await Promise.all(batches[bi].map(function(f) {
           return fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + f.path, {
             headers: { 'Accept': 'application/vnd.github.v3.raw', 'User-Agent': 'VibeShieldPilot' },
+            signal: AbortSignal.timeout(15000),
           }).then(function(r) {
             if (!r.ok) return { path: f.path, content: '(failed to fetch)', size: 0 };
             return r.text().then(function(text) {

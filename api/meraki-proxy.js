@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
         console.error('[SECURITY] meraki-proxy: blocked path:', resolvedPath);
         return res.status(400).json({ error: 'Invalid API path' });
       }
-      cleanPath = resolvedPath;
+      cleanPath = resolvedPath.split('?')[0];
     } catch (e) {
       return res.status(400).json({ error: 'Invalid API path' });
     }
@@ -71,6 +71,7 @@ module.exports = async (req, res) => {
       fetchOptions.body = JSON.stringify(body);
     }
 
+    fetchOptions.signal = AbortSignal.timeout(10000);
     const merakiRes = await fetch(url, fetchOptions);
     const responseText = await merakiRes.text();
 

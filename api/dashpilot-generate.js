@@ -142,6 +142,10 @@ module.exports = async (req, res) => {
   if (!userRes.ok) { console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown'); return res.status(401).json({ error: 'Invalid session' }); }
   const user = await userRes.json();
 
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
+    return res.status(400).json({ error: 'Invalid user' });
+  }
+
   const adminCheck = await fetch(
     supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=is_admin',
     { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
@@ -266,9 +270,6 @@ module.exports = async (req, res) => {
             type: 'enabled',
             budget_tokens: 10000
           },
-          tools: [
-            { type: 'web_search_20250305', name: 'web_search', max_uses: 3 }
-          ],
           system: DESIGN_PROMPT,
           messages: [{
             role: 'user',
