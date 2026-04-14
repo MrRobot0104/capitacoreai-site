@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NewsPilot — AI News Curator | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
+    .nav-brand img { width: 38px; height: 38px; }
+    .nav-brand .wordmark { font-size: 17px; letter-spacing: -0.02em; display: flex; align-items: baseline; }
+    .nav-brand .wordmark .w-capita { font-weight: 300; }
+    .nav-brand .wordmark .w-core { font-weight: 700; }
+    .nav-brand .wordmark .w-ai { font-weight: 300; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 2px; opacity: 0.5; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: #ffffff; }
+    .nav-links a.active { color: #FF6A00; }
+    .btn-nav { background: #FF6A00; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 999px; text-decoration: none; }
+    .btn-nav:hover { background: #FF8000; }
+
+    .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 30%, rgba(255,106,0,0.06) 0%, transparent 60%), radial-gradient(ellipse at 60% 70%, rgba(59,130,246,0.05) 0%, transparent 50%), #0a0a0a; }
+    .hero-bg::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.01) 59px, rgba(255,255,255,0.01) 60px); }
+    .hero-inner { position: relative; z-index: 2; text-align: center; max-width: 760px; padding: 0 32px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,106,0,0.1); border: 1px solid rgba(255,106,0,0.25); border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 500; color: #FF6A00; margin-bottom: 28px; }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #FF6A00; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px; }
+    .hero h1 .grad { background: linear-gradient(135deg, #FF6A00, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-inner > p { font-size: 17px; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 36px; max-width: 580px; margin-left: auto; margin-right: auto; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
+    .btn-hero { display: inline-flex; align-items: center; gap: 8px; background: #FF6A00; color: #fff; padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 24px rgba(255,106,0,0.25); }
+    .btn-hero:hover { background: #FF8000; box-shadow: 0 6px 32px rgba(255,106,0,0.35); transform: translateY(-1px); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); padding: 14px 30px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+    .btn-outline:hover { color: #FF6A00; border-color: #FF6A00; }
+    .hero-stats { display: flex; gap: 40px; justify-content: center; }
+    .hero-stat { text-align: center; }
+    .hero-stat .hs-val { font-size: 24px; font-weight: 800; color: #ffffff; }
+    .hero-stat .hs-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+    .section { max-width: 1152px; margin: 0 auto; padding: 100px 32px; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+    .section-header p { font-size: 15px; color: rgba(255,255,255,0.45); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+    .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .how-step { text-align: center; padding: 32px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: border-color 0.2s; }
+    .how-step:hover { border-color: rgba(255,106,0,0.3); }
+    .how-step-num { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,106,0,0.1); color: #FF6A00; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .how-step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .how-step p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+
+    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .feature { padding: 28px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: border-color 0.2s; }
+    .feature:hover { border-color: rgba(255,106,0,0.3); }
+    .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #FF6A00; }
+    .feature p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+
+    .digest-preview { max-width: 640px; margin: 48px auto 0; background: #111; border: 1px solid rgba(255,106,0,0.15); border-radius: 16px; padding: 40px 32px; text-align: left; }
+    .digest-preview .dp-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .digest-preview .dp-date { font-size: 12px; color: rgba(255,255,255,0.3); text-align: center; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 24px; }
+    .digest-preview .dp-divider { border: none; border-top: 2px solid rgba(255,106,0,0.2); margin: 0 0 24px; }
+    .digest-preview .dp-article { margin-bottom: 20px; }
+    .digest-preview .dp-article h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .digest-preview .dp-article h4 a { color: #FF6A00; text-decoration: none; }
+    .digest-preview .dp-article .dp-source { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+    .digest-preview .dp-article p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+    .cta-section { text-align: center; max-width: 600px; margin: 0 auto; padding: 100px 32px 120px; }
+    .cta-section h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 12px; }
+    .cta-section p { font-size: 15px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-bottom: 28px; }
+
+    .footer { background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08); }
+    .footer-inner { max-width: 1152px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-inner p { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .footer-nav { display: flex; gap: 24px; }
+    .footer-nav a { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: none; }
+    .footer-nav a:hover { color: #FF6A00; }
+
+    .hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px; z-index: 101; }
+    .mobile-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: #111111; z-index: 150; padding: 100px 32px 32px; transition: right 0.3s ease; box-shadow: -4px 0 24px rgba(0,0,0,0.3); }
+    .mobile-menu.active { right: 0; }
+    .mobile-menu a { display: block; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .mobile-menu a:hover { color: #ffffff; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; }
+    .mobile-overlay.active { display: block; }
+
+    @media (max-width: 768px) {
+      .nav-links, .nav .btn-nav { display: none; }
+      .nav-inner { padding: 0 20px; height: 64px; }
+      .hero { min-height: 92vh; }
+      .hero-inner { padding: 0 20px; }
+      .hero h1 { font-size: 2rem; margin-bottom: 16px; }
+      .hero-inner > p { font-size: 15px; margin-bottom: 28px; }
+      .hero-stats { gap: 28px; }
+      .hero-stat .hs-val { font-size: 20px; }
+      .section { padding: 64px 20px; }
+      .how-grid { grid-template-columns: 1fr; gap: 16px; }
+      .features { grid-template-columns: 1fr; gap: 16px; }
+      .digest-preview { padding: 28px 20px; }
+      .cta-section { padding: 64px 20px 80px; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; padding: 20px; }
+      .footer-nav { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.75rem; }
+      .hero-inner > p { font-size: 14px; }
+      .hero-buttons { flex-direction: column; align-items: stretch; }
+      .btn-hero, .btn-outline { justify-content: center; padding: 14px 24px; }
+      .hero-stats { gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><img src="logo.svg" alt="CapitaCoreAI"><span class="wordmark"><span class="w-capita">Capita</span><span class="w-core">Core</span><span class="w-ai">AI</span></span></a>
+      <div class="nav-links">
+        <a href="/#services">Services</a>
+        <a href="/#about">About</a>
+        <a href="/#contact">Contact</a>
+        <a href="agents.html" class="active">Agents</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="account.html" id="navMyAgents" style="display:none;">My Account</a>
+      </div>
+      <a href="account.html" id="navLoginBtn" class="btn-nav" style="display:none;">Log In</a>
+      <button class="hamburger" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#FF6A00" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="22" y2="7"/><circle cx="4" cy="7" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="7" r="2" fill="#FF6A00" stroke="none"/><line x1="4" y1="13" x2="22" y2="13"/><circle cx="4" cy="13" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="13" r="2" fill="#FF6A00" stroke="none"/><line x1="4" y1="19" x2="22" y2="19"/><circle cx="4" cy="19" r="2" fill="#FF6A00" stroke="none"/><circle cx="22" cy="19" r="2" fill="#FF6A00" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/#services">Services</a><a href="/#about">About</a><a href="/#contact">Contact</a><a href="agents.html">Agents</a><a href="pricing.html">Pricing</a>
+    <div id="menuAuth" style="padding-top:24px;"><a href="account.html" style="display:block;padding:12px 20px;background:#FF6A00;color:#fff;border-radius:10px;font-size:14px;font-weight:500;text-align:center;border-bottom:none;text-decoration:none;">Log In / Sign Up</a></div>
+    <div id="menuMyAgents" style="display:none;padding-top:24px;"></div>
+  </div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-badge"><span class="dot"></span> AI-Powered News Curator</div>
+      <h1>Your Personalized<br><span class="grad">News Intelligence</span></h1>
+      <p>Tell NewsPilot what you follow — companies, industries, people, trends. It builds a premium newsletter-quality digest personalized to you, delivered every Friday.</p>
+      <div class="hero-buttons">
+        <a href="newspilot-app.html" class="btn-hero launch-btn" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+          Launch NewsPilot
+        </a>
+        <a href="#how" class="btn-outline">How It Works</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hs-val">AI</div><div class="hs-label">Curated</div></div>
+        <div class="hero-stat"><div class="hs-val">Friday</div><div class="hs-label">Weekly Delivery</div></div>
+        <div class="hero-stat"><div class="hs-val">9</div><div class="hs-label">Max Subscriptions</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="how-section" id="how">
+    <div class="section">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>From conversation to curated digest in under a minute.</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <h3>Tell Us What You Follow</h3>
+          <p>Chat with NewsPilot about your interests. Companies, industries, people, trends — be as specific or broad as you want.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <h3>AI Curates Your Digest</h3>
+          <p>NewsPilot searches real-time news sources, then Claude AI writes personalized summaries explaining why each story matters to you.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <h3>Subscribe for Weekly Updates</h3>
+          <p>Love your digest? Subscribe and get a fresh, personalized newsletter delivered to your inbox every Friday at 8AM EST.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Built For Professionals</h2>
+      <p>Not another news aggregator. NewsPilot understands your role and tailors every digest to your needs.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>Sales Intelligence</h3>
+        <p>Track target accounts, competitor moves, and industry shifts. Know what your prospects are doing before the call.</p>
+      </div>
+      <div class="feature">
+        <h3>Tech & Product Tracking</h3>
+        <p>Follow specific technologies, platforms, and product launches. Stay ahead of what's shipping in your space.</p>
+      </div>
+      <div class="feature">
+        <h3>Investment Research</h3>
+        <p>Track public companies, earnings signals, M&A activity, and market trends. AI separates signal from noise.</p>
+      </div>
+      <div class="feature">
+        <h3>Competitive Intelligence</h3>
+        <p>Monitor competitors, their partnerships, hiring, and product announcements. Never be surprised again.</p>
+      </div>
+    </div>
+
+    <div class="digest-preview">
+      <div class="dp-title">Your News Digest</div>
+      <div class="dp-date">Friday, April 14, 2026</div>
+      <hr class="dp-divider">
+      <div class="dp-article">
+        <h4><a href="#">Fanatics Inks Wide-Ranging Sponsor Deal With AT&T</a></h4>
+        <div class="dp-source">Yahoo Finance &middot; Apr 14</div>
+        <p>AT&T becomes Fanatics' official connectivity provider in a 5-year deal spanning sports merchandise, betting, and collectibles. For Cisco sellers, this signals Fanatics' infrastructure is scaling fast — networking and security opportunities across their expanding platform.</p>
+      </div>
+      <div class="dp-article">
+        <h4><a href="#">Fidelity National Financial: Housing Pessimism Is Too Extreme</a></h4>
+        <div class="dp-source">Seeking Alpha &middot; Apr 14</div>
+        <p>Analysts upgrade FNF, arguing the real estate title insurance market is closer to recovery than Wall Street thinks. A potential buying signal for investors watching the housing cycle inflection point.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <h2>Stop Scrolling. Start Knowing.</h2>
+    <p>Every professional needs a briefing. NewsPilot delivers yours — curated by AI, personalized to your world, every Friday morning.</p>
+    <a href="newspilot-app.html" class="btn-hero launch-btn" style="display:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+      Launch NewsPilot
+    </a>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 CapitaCoreAI. All rights reserved.</p>
+      <nav class="footer-nav">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/newspilot.js"></script>
+  <script src="js/premium.js?v=2"></script>
+</body>
+</html>
