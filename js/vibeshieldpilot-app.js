@@ -389,14 +389,12 @@ async function startScan() {
 
   addConsoleLine('Connecting to VibeShieldPilot agent...', 'msg');
 
-  // Start SSE stream
   try {
-    abortController = new AbortController();
+    // 1. Start the scan — returns session ID immediately
     var response = await fetch('/api/vibeshieldpilot-scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ action: 'scan', repoUrl: cleanUrl }),
-      signal: abortController.signal,
     });
 
     if (!response.ok) {
@@ -407,45 +405,80 @@ async function startScan() {
       return;
     }
 
-    // Stream SSE events
-    var reader = response.body.getReader();
-    var decoder = new TextDecoder();
-    var buffer = '';
+    var scanData = await response.json();
+    var sessionId = scanData.sessionId;
 
-    while (true) {
-      var chunk = await reader.read();
-      if (chunk.done) break;
+    handleEvent({ type: 'session_created', sessionId: sessionId, repo: scanData.repo });
+    handleEvent({ type: 'scan_started' });
 
-      buffer += decoder.decode(chunk.value, { stream: true });
-      var parts = buffer.split('\n\n');
-      buffer = parts.pop() || '';
+    // 2. Poll for events from the client side
+    var seenIds = {};
+    var pollDone = false;
+    var pollCount = 0;
+    var maxPolls = 150; // ~6 minutes at 2.5s intervals
 
-      for (var i = 0; i < parts.length; i++) {
-        var part = parts[i].trim();
-        if (!part) continue;
-        var dataMatch = part.match(/^data:\s*(.+)$/m);
-        if (!dataMatch) continue;
-        try {
-          var event = JSON.parse(dataMatch[1]);
-          handleEvent(event);
-        } catch (e) {}
+    while (!pollDone && pollCount < maxPolls) {
+      pollCount++;
+      await new Promise(function(r) { setTimeout(r, 2500); });
+
+      try {
+        var pollRes = await fetch('/api/vibeshieldpilot-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ action: 'poll', sessionId: sessionId }),
+        });
+
+        if (!pollRes.ok) {
+          addConsoleLine('Poll error: ' + pollRes.status, 'err');
+          continue;
+        }
+
+        var eventsData = await pollRes.json();
+        var events = eventsData.data || [];
+
+        for (var i = 0; i < events.length; i++) {
+          var evt = events[i];
+          if (!evt.id || seenIds[evt.id]) continue;
+          seenIds[evt.id] = true;
+
+          if (evt.type === 'agent.message') {
+            var content = '';
+            if (Array.isArray(evt.content)) {
+              content = evt.content.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
+            }
+            if (content) handleEvent({ type: 'message', content: content });
+          } else if (evt.type === 'agent.tool_use') {
+            var toolName = evt.name || '';
+            var toolInput = evt.input || {};
+            var summary = {};
+            if (toolInput.command) summary.command = String(toolInput.command).substring(0, 300);
+            else if (toolInput.path || toolInput.file_path) summary.path = toolInput.path || toolInput.file_path;
+            else if (toolInput.pattern) summary.pattern = toolInput.pattern;
+            handleEvent({ type: 'tool_use', tool: toolName, input: summary });
+          } else if (evt.type === 'session.status_idle') {
+            handleEvent({ type: 'scan_complete' });
+            pollDone = true;
+            break;
+          } else if (evt.type === 'session.status_terminated') {
+            handleEvent({ type: 'terminated', message: 'Session ended.' });
+            pollDone = true;
+            break;
+          }
+        }
+      } catch (pollErr) {
+        addConsoleLine('Poll error: ' + pollErr.message, 'err');
       }
     }
 
-    // Process remaining buffer
-    if (buffer.trim()) {
-      var match = buffer.match(/^data:\s*(.+)$/m);
-      if (match) {
-        try { handleEvent(JSON.parse(match[1])); } catch (e) {}
-      }
+    if (!pollDone) {
+      addConsoleLine('Scan timed out.', 'warn');
     }
 
+    handleEvent({ type: 'done' });
     finishScan();
 
   } catch (err) {
-    if (err.name !== 'AbortError') {
-      addConsoleLine('Connection error: ' + err.message, 'err');
-    }
+    addConsoleLine('Error: ' + err.message, 'err');
     finishScan();
   }
 }

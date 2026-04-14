@@ -4,14 +4,11 @@ const AGENT_ID = 'agent_011Ca1nwHde79Cu2d5MGwkcZ';
 const ENV_ID = 'env_01XMHEozPMWKn1whmws4czfk';
 
 module.exports = async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  // Rate limit: 5 scans per minute per IP
   if (applyRateLimit(req, res, 'vibeshieldpilot', 5, 60000)) return;
 
   var supabaseUrl = process.env.SUPABASE_URL;
@@ -22,18 +19,13 @@ module.exports = async function handler(req, res) {
   // ── Auth ──────────────────────────────────────────────
   var authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown');
     return res.status(401).json({ error: 'Not authenticated' });
   }
   var token = authHeader.split(' ')[1];
-
   var userRes = await fetch(supabaseUrl + '/auth/v1/user', {
     headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
   });
-  if (!userRes.ok) {
-    console.error('[SECURITY] Auth failure:', req.headers['x-forwarded-for'] || 'unknown');
-    return res.status(401).json({ error: 'Invalid session' });
-  }
+  if (!userRes.ok) return res.status(401).json({ error: 'Invalid session' });
   var user = await userRes.json();
 
   var adminCheck = await fetch(
@@ -49,13 +41,11 @@ module.exports = async function handler(req, res) {
   // ── Credit deduction ──────────────────────────────────
   if (action === 'start_conversation') {
     if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999, cost: 2 });
-
     var deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_credits', {
       method: 'POST',
       headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_uuid: user.id, amount: 2 }),
     });
-
     if (!deductRes.ok) {
       var fallbackRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_token', {
         method: 'POST',
@@ -68,34 +58,20 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, remaining: fb, cost: 1 });
     }
     var newBalance = await deductRes.json();
-    if (newBalance === -1) return res.status(402).json({ error: 'VibeShieldPilot requires 2 credits. You don\'t have enough.' });
+    if (newBalance === -1) return res.status(402).json({ error: 'Not enough credits.' });
     return res.status(200).json({ ok: true, remaining: newBalance, cost: 2 });
   }
 
-  // ── Scan ──────────────────────────────────────────────
+  // ── Start scan — create session, send kickoff, return session ID ──
   if (action === 'scan') {
     var repoUrl = body.repoUrl;
     if (!repoUrl || typeof repoUrl !== 'string') {
       return res.status(400).json({ error: 'Missing repository URL.' });
     }
 
-    // Strict URL validation — only github.com, prevent SSRF
     var cleanUrl = repoUrl.trim().replace(/\/+$/, '').split('?')[0].split('#')[0];
-    var urlPattern = /^https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
-    if (!urlPattern.test(cleanUrl)) {
-      return res.status(400).json({ error: 'Invalid URL. Must be a public GitHub repository (https://github.com/owner/repo).' });
-    }
-
-    // Balance check before expensive operation
-    if (!isAdmin) {
-      var balCheck = await fetch(
-        supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=token_balance',
-        { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
-      );
-      var balData = await balCheck.json();
-      if ((balData[0]?.token_balance || 0) <= 0) {
-        return res.status(402).json({ error: 'No credits remaining. Purchase more to continue.' });
-      }
+    if (!/^https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(cleanUrl)) {
+      return res.status(400).json({ error: 'Invalid URL. Must be a public GitHub repo.' });
     }
 
     var agentHeaders = {
@@ -108,212 +84,83 @@ module.exports = async function handler(req, res) {
     try {
       var repoName = cleanUrl.split('/').slice(-2).join('/');
 
-      // 1. Create session (agent clones the repo itself via git)
+      // Create session
       var sessionRes = await fetch('https://api.anthropic.com/v1/sessions', {
         method: 'POST',
         headers: agentHeaders,
-        body: JSON.stringify({
-          agent: AGENT_ID,
-          environment_id: ENV_ID,
-        }),
+        body: JSON.stringify({ agent: AGENT_ID, environment_id: ENV_ID }),
       });
 
       if (!sessionRes.ok) {
         var sessionErr = await sessionRes.text();
-        console.error('Session create failed:', sessionRes.status, sessionErr);
         var errDetail = '';
-        try { var parsed = JSON.parse(sessionErr); errDetail = parsed.error && parsed.error.message ? ': ' + parsed.error.message : ''; } catch(e) {}
-        return res.status(500).json({ error: 'Failed to create scan session (HTTP ' + sessionRes.status + ')' + errDetail });
+        try { errDetail = ': ' + JSON.parse(sessionErr).error.message; } catch(e) {}
+        return res.status(500).json({ error: 'Session creation failed' + errDetail });
       }
 
       var session = await sessionRes.json();
-      var sessionId = session.id;
 
-      // 2. Set SSE headers for streaming to client
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      });
-
-      function sendEvent(data) {
-        res.write('data: ' + JSON.stringify(data) + '\n\n');
-      }
-
-      sendEvent({ type: 'session_created', sessionId: sessionId, repo: repoName });
-
-      // 3. Send kickoff message
-      var kickoffRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/events', {
+      // Send kickoff message
+      var kickoffRes = await fetch('https://api.anthropic.com/v1/sessions/' + session.id + '/events', {
         method: 'POST',
         headers: agentHeaders,
         body: JSON.stringify({
           events: [{
             type: 'user.message',
-            content: [{
-              type: 'text',
-              text: 'First, clone this public GitHub repository: git clone ' + cleanUrl + ' /workspace/repo\n\nThen perform a complete security audit of /workspace/repo (' + repoName + '). Follow your full 3-phase process: PHASE 1 RECONNAISSANCE, then PHASE 2 THREAT ANALYSIS (all 14 categories), then PHASE 3 SECURITY SCORECARD. Clearly label each phase and category as you analyze them. Be thorough — check every file.',
-            }],
+            content: [{ type: 'text', text: 'Clone this repo: git clone ' + cleanUrl + ' /workspace/repo\n\nThen perform a full security audit of /workspace/repo (' + repoName + '). Follow your 3-phase process. Be thorough.' }],
           }],
         }),
       });
 
       if (!kickoffRes.ok) {
-        sendEvent({ type: 'error', message: 'Failed to start scan.' });
-        res.end();
-        return;
+        return res.status(500).json({ error: 'Failed to send scan command.' });
       }
 
-      sendEvent({ type: 'scan_started' });
+      // Log usage
+      fetch(supabaseUrl + '/rest/v1/usage_log', {
+        method: 'POST',
+        headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ user_id: user.id, prompt: 'VibeShieldPilot: ' + cleanUrl.substring(0, 200) }),
+      }).catch(function() {});
 
-      // 4. Poll for events using list endpoint with pagination
-      var seenEventIds = {};
-      var pollDone = false;
-      var pollCount = 0;
-      var maxPolls = 120; // 120 * 2.5s = 5 minutes max
-
-      while (!pollDone && pollCount < maxPolls) {
-        pollCount++;
-        // Fetch latest events — order=desc gives newest first, we want all
-        var pollUrl = 'https://api.anthropic.com/v1/sessions/' + sessionId + '/events?limit=50&order=asc';
-
-        var pollRes = await fetch(pollUrl, {
-          method: 'GET',
-          headers: agentHeaders,
-        });
-
-        if (!pollRes.ok) {
-          if (pollRes.status >= 500) { await new Promise(function(r) { setTimeout(r, 3000); }); continue; }
-          var pollErr = await pollRes.text().catch(function() { return ''; });
-          sendEvent({ type: 'error', message: 'Poll failed (HTTP ' + pollRes.status + '): ' + pollErr.substring(0, 200) });
-          break;
-        }
-
-        var eventsData = await pollRes.json();
-        var events = eventsData.data || eventsData || [];
-        if (!Array.isArray(events)) events = [];
-
-        // Filter to only new events we haven't seen
-        var newEvents = events.filter(function(e) { return e.id && !seenEventIds[e.id]; });
-
-        if (newEvents.length === 0) {
-          // No new events — wait before polling again
-          await new Promise(function(r) { setTimeout(r, 2500); });
-          continue;
-        }
-
-        for (var i = 0; i < newEvents.length; i++) {
-          var evt = newEvents[i];
-          seenEventIds[evt.id] = true;
-
-          if (evt.type === 'agent.message') {
-            var content = '';
-            var contentArr = evt.content || [];
-            if (typeof contentArr === 'string') content = contentArr;
-            else if (Array.isArray(contentArr)) content = contentArr.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
-            if (content) sendEvent({ type: 'message', content: content });
-          } else if (evt.type === 'agent.tool_use') {
-            var toolName = evt.name || '';
-            var toolInput = evt.input || {};
-            var inputSummary = {};
-            if (typeof toolInput.command === 'string') inputSummary.command = toolInput.command.substring(0, 300);
-            else if (typeof toolInput.path === 'string') inputSummary.path = toolInput.path;
-            else if (typeof toolInput.file_path === 'string') inputSummary.path = toolInput.file_path;
-            else if (typeof toolInput.pattern === 'string') inputSummary.pattern = toolInput.pattern;
-            sendEvent({ type: 'tool_use', tool: toolName, input: inputSummary });
-          } else if (evt.type === 'session.status_idle') {
-            sendEvent({ type: 'scan_complete' });
-            pollDone = true;
-            break;
-          } else if (evt.type === 'session.status_terminated') {
-            sendEvent({ type: 'terminated', message: 'Scan session ended.' });
-            pollDone = true;
-            break;
-          }
-        }
-      }
-
-      if (!pollDone) {
-        sendEvent({ type: 'terminated', message: 'Scan timed out after 5 minutes.' });
-      }
-
-      // 5. Fetch output files (security scorecard HTML)
-      try {
-        var filesRes = await fetch('https://api.anthropic.com/v1/files?scope=' + sessionId, {
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'managed-agents-2026-04-01',
-          },
-        });
-
-        if (filesRes.ok) {
-          var filesData = await filesRes.json();
-          if (filesData.data && filesData.data.length > 0) {
-            var scorecard = null;
-            for (var f = 0; f < filesData.data.length; f++) {
-              var file = filesData.data[f];
-              var fname = (file.name || '') + (file.path || '');
-              if (fname.indexOf('scorecard') !== -1 || fname.indexOf('.html') !== -1) {
-                scorecard = file;
-                break;
-              }
-            }
-            if (!scorecard) scorecard = filesData.data[0];
-
-            if (scorecard) {
-              var contentRes = await fetch('https://api.anthropic.com/v1/files/' + scorecard.id + '/content', {
-                headers: {
-                  'x-api-key': apiKey,
-                  'anthropic-version': '2023-06-01',
-                  'anthropic-beta': 'managed-agents-2026-04-01',
-                },
-              });
-              if (contentRes.ok) {
-                var reportHtml = await contentRes.text();
-                sendEvent({ type: 'report', html: reportHtml });
-              }
-            }
-          }
-        }
-      } catch (filesErr) {
-        console.error('Failed to fetch output files:', filesErr.message);
-      }
-
-      // 6. Log usage
-      try {
-        await fetch(supabaseUrl + '/rest/v1/usage_log', {
-          method: 'POST',
-          headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ user_id: user.id, prompt: 'VibeShieldPilot: ' + cleanUrl.substring(0, 200) }),
-        });
-      } catch (e) {}
-
-      // 7. Archive session
-      try {
-        await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/archive', {
-          method: 'POST',
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'managed-agents-2026-04-01',
-          },
-        });
-      } catch (e) {}
-
-      sendEvent({ type: 'done' });
-      res.end();
+      // Return session ID — frontend polls for events
+      return res.status(200).json({ sessionId: session.id, repo: repoName });
 
     } catch (err) {
-      console.error('VibeShieldPilot scan error:', err.message);
-      if (!res.headersSent) {
-        return res.status(500).json({ error: 'Scan failed: ' + err.message });
-      }
-      try { res.write('data: ' + JSON.stringify({ type: 'error', message: err.message }) + '\n\n'); } catch (e) {}
-      res.end();
+      return res.status(500).json({ error: 'Scan failed: ' + err.message });
     }
-    return;
   }
 
-  return res.status(400).json({ error: 'Invalid action. Expected start_conversation or scan.' });
+  // ── Poll events — lightweight endpoint for client-side polling ──
+  if (action === 'poll') {
+    var sessionId = body.sessionId;
+    if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
+
+    var agHeaders = {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'managed-agents-2026-04-01',
+      'content-type': 'application/json',
+    };
+
+    try {
+      var pollRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/events?limit=100&order=asc', {
+        method: 'GET',
+        headers: agHeaders,
+      });
+
+      if (!pollRes.ok) {
+        var pollErr = await pollRes.text().catch(function() { return ''; });
+        return res.status(pollRes.status).json({ error: 'Poll failed: ' + pollErr.substring(0, 200) });
+      }
+
+      var eventsData = await pollRes.json();
+      return res.status(200).json(eventsData);
+
+    } catch (err) {
+      return res.status(500).json({ error: 'Poll error: ' + err.message });
+    }
+  }
+
+  return res.status(400).json({ error: 'Invalid action.' });
 };
