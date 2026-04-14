@@ -260,9 +260,11 @@ async function connectMeraki(key) {
   });
   if (orgs.length > 1) {
     orgSelector.style.display = 'block';
-    document.getElementById('orgLabel').classList.add('visible');
+    var orgLabel = document.getElementById('orgLabel');
+    if (orgLabel) orgLabel.classList.add('visible');
   }
-  document.getElementById('netLabel').classList.add('visible');
+  var netLabel = document.getElementById('netLabel');
+  if (netLabel) netLabel.classList.add('visible');
 
   // If multiple orgs, prompt the user to choose
   if (orgs.length > 1) {
