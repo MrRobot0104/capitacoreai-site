@@ -172,7 +172,7 @@ module.exports = async function handler(req, res) {
         headers: {
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'managed-agents-2026-04-01',
+          'anthropic-beta': 'managed-agents-2026-04-01,agent-api-2026-03-01',
           'Accept': 'text/event-stream',
         },
       });
