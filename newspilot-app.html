@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NewsPilot — AI News Curator | CapitaCoreAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #ffffff; -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden; }
+
+    .topbar { height: 56px; background: rgba(10,10,10,0.95); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-left a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #ffffff; font-weight: 600; font-size: 14px; }
+    .topbar-left a img { width: 24px; height: 24px; }
+    .topbar-left .sep { width: 1px; height: 20px; background: rgba(255,255,255,0.12); }
+    .topbar-left .app-name { font-size: 14px; font-weight: 600; color: #FF6A00; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.5); cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .topbar-btn:hover { background: rgba(255,255,255,0.05); color: #ffffff; }
+    .credits-chip { font-size: 12px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); }
+    .credits-chip strong { color: #FF6A00; }
+
+    .app-layout { display: flex; height: calc(100vh - 56px); }
+
+    /* CHAT PANEL */
+    .chat-panel { width: 420px; min-width: 380px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.08); background: #0f0f0f; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; scrollbar-color: rgba(255,106,0,0.35) transparent; }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,106,0,0.35); border-radius: 10px; }
+    .msg { max-width: 92%; }
+    .msg.user { align-self: flex-end; }
+    .msg.bot { align-self: flex-start; }
+    .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.65; word-break: break-word; }
+    .msg.user .msg-bubble { background: #FF6A00; color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot .msg-bubble { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.06); }
+    .msg.bot .msg-bubble strong { color: #ffffff; }
+    .msg.bot .msg-bubble code { background: rgba(255,255,255,0.1); color: #FF6A00; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .msg.bot .msg-bubble a { color: #FF6A00; }
+    .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; }
+    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: #FF6A00; animation: bounce 1.4s infinite ease-in-out both; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    .chat-input-area { padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .chat-limit-bar { padding: 12px 16px; text-align: center; display: none; }
+    .limit-msg { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+    .limit-actions { display: flex; gap: 8px; justify-content: center; }
+    .limit-btn { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; border: none; }
+    .limit-btn.primary { background: #FF6A00; color: #fff; }
+    .limit-btn.secondary { background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); text-decoration: none; display: inline-block; }
+    .input-wrapper { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; display: flex; align-items: flex-end; padding: 8px 8px 8px 16px; gap: 8px; transition: border-color 0.2s; }
+    .input-wrapper:focus-within { border-color: rgba(255,106,0,0.5); }
+    .chat-textarea { flex: 1; background: none; border: none; color: #ffffff; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 120px; line-height: 1.5; padding: 6px 0; }
+    .chat-textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .send-btn { width: 36px; height: 36px; border-radius: 10px; border: none; background: #FF6A00; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .send-btn:hover { background: #FF8000; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* DIGEST PANEL */
+    .digest-panel { flex: 1; overflow-y: auto; background: #0a0a0a; padding: 0; scrollbar-width: thin; scrollbar-color: rgba(255,106,0,0.2) transparent; }
+    .digest-panel::-webkit-scrollbar { width: 5px; }
+    .digest-panel::-webkit-scrollbar-thumb { background: rgba(255,106,0,0.2); border-radius: 10px; }
+    .digest-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; text-align: center; }
+    .digest-empty h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 800; color: rgba(255,255,255,0.9); margin-bottom: 12px; letter-spacing: -0.02em; }
+    .digest-empty p { font-size: 14px; color: rgba(255,255,255,0.4); max-width: 400px; line-height: 1.7; }
+    .digest-content { max-width: 720px; margin: 0 auto; padding: 48px 32px; }
+    .digest-content .digest-header { text-align: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid rgba(255,106,0,0.2); }
+    .digest-content .digest-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: #ffffff; margin-bottom: 8px; }
+    .digest-content .digest-date { font-size: 13px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; }
+    .digest-content .digest-body { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.75); }
+    .digest-content .digest-body h2, .digest-content .digest-body h3 { font-family: 'Playfair Display', serif; color: #FF6A00; margin: 32px 0 12px; font-weight: 700; }
+    .digest-content .digest-body h2 { font-size: 22px; }
+    .digest-content .digest-body h3 { font-size: 18px; }
+    .digest-content .digest-body strong { color: #ffffff; }
+    .digest-content .digest-body a { color: #FF6A00; text-decoration: underline; text-underline-offset: 3px; }
+    .digest-content .digest-body a:hover { color: #FF8000; }
+    .digest-content .digest-body ul, .digest-content .digest-body ol { margin: 12px 0; padding-left: 20px; }
+    .digest-content .digest-body li { margin-bottom: 8px; }
+    .digest-content .digest-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 28px 0; }
+    .digest-content .digest-body blockquote { border-left: 3px solid #FF6A00; padding: 12px 16px; margin: 16px 0; background: rgba(255,106,0,0.04); border-radius: 0 8px 8px 0; color: rgba(255,255,255,0.6); font-style: italic; }
+    .digest-content .digest-body code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .digest-content .digest-body p { margin-bottom: 14px; }
+
+    /* SUBSCRIPTION BAR */
+    .sub-bar { display: none; padding: 12px 20px; background: rgba(255,106,0,0.04); border-top: 1px solid rgba(255,106,0,0.1); }
+    .sub-bar.active { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .sub-info { font-size: 12px; color: #94a3b8; }
+    .sub-info strong { color: #FF6A00; }
+    .sub-actions { display: flex; gap: 6px; }
+    .sub-btn { font-size: 11px; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+    .sub-btn.edit { background: rgba(255,106,0,0.1); color: #FF6A00; }
+    .sub-btn.cancel { background: transparent; color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+
+    @media (max-width: 768px) {
+      .topbar { height: 48px; padding: 0 12px; }
+      .topbar-right .topbar-btn { display: none; }
+      .app-layout { flex-direction: column; }
+      .chat-panel { width: 100%; min-width: 100%; height: 50%; }
+      .digest-panel { height: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/"><img src="logo.svg" alt="CapitaCoreAI">CapitaCoreAI</a>
+      <div class="sep"></div>
+      <span class="app-name">NewsPilot</span>
+    </div>
+    <div class="topbar-right">
+      <span class="credits-chip" id="creditDisplay" style="display:none;">Credits: <strong id="creditCount">0</strong></span>
+      <a href="pricing.html" class="topbar-btn">Buy Credits</a>
+      <a href="agents.html" class="topbar-btn">All Agents</a>
+      <button class="topbar-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <div class="app-layout">
+
+    <div class="chat-panel">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-limit-bar" id="limitBar">
+        <p class="limit-msg" id="limitMsg">You've used all messages for this credit.</p>
+        <div class="limit-actions">
+          <button class="limit-btn primary" id="continueBtn">Continue (1 credit)</button>
+          <a href="pricing.html" class="limit-btn secondary">Buy Credits</a>
+        </div>
+      </div>
+      <div class="chat-input-area" id="chatInputArea">
+        <div class="input-wrapper">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Tell NewsPilot what you want to follow..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sub-bar" id="subBar">
+        <div class="sub-info">Subscribed: <strong id="subTopics">--</strong></div>
+        <div class="sub-actions">
+          <button class="sub-btn edit" id="editSubBtn">Edit</button>
+          <button class="sub-btn cancel" id="cancelSubBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="digest-panel" id="digestPanel">
+      <div class="digest-empty" id="digestEmpty">
+        <h2>Your Daily Brief</h2>
+        <p>Tell NewsPilot what you're interested in — companies, industries, people, trends. It'll curate a personalized news digest just for you, styled like a premium newsletter.</p>
+      </div>
+      <div class="digest-content" id="digestContent" style="display:none;">
+        <div class="digest-header">
+          <div class="digest-title" id="digestTitle">Your News Digest</div>
+          <div class="digest-date" id="digestDate"></div>
+        </div>
+        <div class="digest-body" id="digestBody"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/newspilot-app.js"></script>
+</body>
+</html>
