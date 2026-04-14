@@ -336,28 +336,7 @@ async function startScan() {
   scanBtn.disabled = true;
   scanBtn.classList.add('loading');
 
-  // Deduct credits
-  try {
-    var creditRes = await fetch('/api/vibeshieldpilot-scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-      body: JSON.stringify({ action: 'start_conversation' }),
-    });
-    var creditData = await creditRes.json();
-    if (!creditRes.ok) {
-      alert(creditData.error || 'Failed to deduct credits.');
-      scanBtn.disabled = false;
-      scanBtn.classList.remove('loading');
-      return;
-    }
-    creditBalance = creditData.remaining;
-    $('creditDisplay').textContent = isAdmin ? '\u221E' : creditBalance;
-  } catch (e) {
-    alert('Network error. Please try again.');
-    scanBtn.disabled = false;
-    scanBtn.classList.remove('loading');
-    return;
-  }
+  // VibeShieldPilot is free — no credit deduction needed
 
   // Reset state
   reportHtml = null;

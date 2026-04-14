@@ -71,16 +71,8 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid URL. Must be a public GitHub repo.' });
     }
 
-    if (!isAdmin) {
-      var balCheck = await fetch(
-        supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=token_balance',
-        { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
-      );
-      var balData = await balCheck.json();
-      if ((balData[0]?.token_balance || 0) <= 0) {
-        return res.status(402).json({ error: 'No credits remaining.' });
-      }
-    }
+    // VibeShieldPilot is free — no credit check needed
+    // Auth is still required (user must be logged in)
 
     try {
       var parts = cleanUrl.replace('https://github.com/', '').split('/');
