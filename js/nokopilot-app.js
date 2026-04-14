@@ -838,9 +838,9 @@ async function handleSend() {
     }
     return true;
   });
-  // Keep history manageable — only last 6 real messages
-  if (chatHistory.length > 6) {
-    chatHistory = chatHistory.slice(-6);
+  // Keep history tight — only last 4 messages to prevent topic bleed
+  if (chatHistory.length > 4) {
+    chatHistory = chatHistory.slice(-4);
   }
 
   chatHistory.push({ role: 'user', content: text });
