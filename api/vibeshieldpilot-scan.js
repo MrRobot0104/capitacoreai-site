@@ -88,12 +88,18 @@ module.exports = async function handler(req, res) {
       var repo = parts[1];
 
       // ── 1. Fetch repo tree from GitHub API ──────────────
-      var treeRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/git/trees/HEAD?recursive=1', {
-        headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'VibeShieldPilot' },
-      });
+      // Try HEAD first, then main, then master
+      var treeRes = null;
+      var refs = ['HEAD', 'main', 'master'];
+      for (var ri = 0; ri < refs.length; ri++) {
+        treeRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/git/trees/' + refs[ri] + '?recursive=1', {
+          headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'VibeShieldPilot' },
+        });
+        if (treeRes.ok) break;
+      }
 
-      if (!treeRes.ok) {
-        return res.status(400).json({ error: 'Could not access repository. It may be private or not exist.' });
+      if (!treeRes || !treeRes.ok) {
+        return res.status(400).json({ error: 'Could not access repository. It may be private, not exist, or GitHub may be rate-limiting. Try again in a minute.' });
       }
 
       var treeData = await treeRes.json();
