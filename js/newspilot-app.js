@@ -306,15 +306,18 @@ chatInput.addEventListener('input', function() {
   chatInput.style.height = 'auto';
   chatInput.style.height = chatInput.scrollHeight + 'px';
 });
-document.getElementById('continueBtn').addEventListener('click', continueConversation);
+// continueBtn no longer needed — no credit gating
+var continueEl = document.getElementById('continueBtn');
+if (continueEl) continueEl.addEventListener('click', function() { startConversation(); });
 document.getElementById('logoutBtn').addEventListener('click', function() {
   sb.auth.signOut().catch(function() {});
   localStorage.clear(); sessionStorage.clear(); window.location.href = '/';
 });
-document.getElementById('editSubBtn').addEventListener('click', function() {
-  openSubsModal();
-});
-document.getElementById('cancelSubBtn').addEventListener('click', handleCancelSub);
+// Sub bar buttons removed — managed via modal only
+var editSubEl = document.getElementById('editSubBtn');
+if (editSubEl) editSubEl.addEventListener('click', openSubsModal);
+var cancelSubEl = document.getElementById('cancelSubBtn');
+if (cancelSubEl) cancelSubEl.addEventListener('click', handleCancelSub);
 
 // Subscriptions modal
 document.getElementById('manageSubsBtn').addEventListener('click', openSubsModal);
@@ -354,20 +357,31 @@ async function openSubsModal() {
       '<div class="sub-meta">Created ' + date + ' &middot; ' + status + ' &middot; Weekly (Friday 8AM EST)</div>' +
       '<div class="sub-prompt">' + escapeHtml(s.prompt_text.substring(0, 200)) + '</div>' +
       (s.active ? '<div class="sub-actions">' +
-        '<button class="sub-btn edit" onclick="toggleEditSub(\'' + s.id + '\')">Edit Prompt</button>' +
-        '<button class="sub-btn cancel" onclick="cancelSubFromModal(\'' + s.id + '\')">Cancel Subscription</button>' +
+        '<button class="sub-btn edit" data-action="edit" data-id="' + s.id + '">Edit Prompt</button>' +
+        '<button class="sub-btn cancel" data-action="cancel-sub" data-id="' + s.id + '">Cancel Subscription</button>' +
       '</div>' +
       '<div class="sub-edit-area" id="edit-' + s.id + '">' +
         '<textarea id="edittext-' + s.id + '">' + escapeHtml(s.prompt_text) + '</textarea>' +
         '<div class="edit-actions">' +
-          '<button class="sub-btn edit" onclick="saveEditSub(\'' + s.id + '\')">Save</button>' +
-          '<button class="sub-btn cancel" onclick="toggleEditSub(\'' + s.id + '\')">Cancel</button>' +
+          '<button class="sub-btn edit" data-action="save" data-id="' + s.id + '">Save</button>' +
+          '<button class="sub-btn cancel" data-action="edit" data-id="' + s.id + '">Cancel</button>' +
         '</div>' +
       '</div>' : '') +
       '</div>';
   });
   list.innerHTML = html;
 }
+
+// Event delegation for subscription modal buttons
+document.getElementById('subsList').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.getAttribute('data-action');
+  var id = btn.getAttribute('data-id');
+  if (action === 'edit') toggleEditSub(id);
+  else if (action === 'save') saveEditSub(id);
+  else if (action === 'cancel-sub') cancelSubFromModal(id);
+});
 
 function toggleEditSub(id) {
   var el = document.getElementById('edit-' + id);
