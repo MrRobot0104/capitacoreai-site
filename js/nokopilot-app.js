@@ -765,32 +765,56 @@ async function callChatAPI(messages, networkContext) {
   return resp;
 }
 
+var isSending = false;
+var pendingMessages = [];
+
 async function handleSend() {
   var text = chatInput.value.trim();
   if (!text) return;
+
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+
+  // If already processing, queue the message and combine when ready
+  if (isSending) {
+    pendingMessages.push(text);
+    addMessage(text, 'user');
+    return;
+  }
 
   if (!currentSession) {
     addMessage('Please <a href="account.html" style="color:#111;text-decoration:underline;">log in</a> to use NokoPilot.', 'bot');
     return;
   }
 
+  // Wait briefly to catch rapid follow-up messages
+  addMessage(text, 'user');
+  pendingMessages = [];
+  await new Promise(function(r) { setTimeout(r, 800); });
+
+  // Combine with any messages sent during the 800ms window
+  if (pendingMessages.length > 0) {
+    text = text + '\n\n' + pendingMessages.join('\n\n');
+    pendingMessages = [];
+  }
+
+  isSending = true;
+
   // Save to command history
   if (commandHistory[commandHistory.length - 1] !== text) commandHistory.push(text);
   if (commandHistory.length > 50) commandHistory.shift();
   historyIndex = commandHistory.length;
 
-  chatInput.value = '';
-  chatInput.style.height = 'auto';
-  addMessage(text, 'user');
-
   // Check if this looks like a Meraki API key
   if (!connected && text.length > 30 && !text.includes(' ')) {
     await connectMeraki(text);
+    isSending = false;
     return;
   }
 
   if (!connected) {
     addMessage("I need your Meraki API key first. Paste it here and I'll connect to your network.", 'bot');
+    isSending = false;
     return;
   }
 
@@ -935,6 +959,8 @@ async function handleSend() {
     hideTyping();
     console.error('Chat error:', e);
     addMessage('Lost connection to the AI. Check your internet and try again.', 'bot');
+  } finally {
+    isSending = false;
   }
 }
 
