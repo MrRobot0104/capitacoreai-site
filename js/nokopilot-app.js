@@ -888,7 +888,7 @@ async function handleSend() {
     }
     return true;
   });
-  // Keep history tight — only last 4 messages to prevent topic bleed
+  // Keep 4 messages for fetch-loop context, but backend only uses last message for new questions
   if (chatHistory.length > 4) {
     chatHistory = chatHistory.slice(-4);
   }
@@ -1125,19 +1125,18 @@ async function executeSaveKey() {
   if (!pendingSaveKey || !currentSession) return;
   var pw = document.getElementById('saveKeyPassword'); var err = document.getElementById('saveKeyError');
   if (!pw || !pw.value) { if (err) { err.textContent = 'Password required.'; err.style.display = 'block'; } return; }
+  // Verify identity
   var authCheck = await sb.auth.signInWithPassword({ email: currentSession.user.email, password: pw.value });
   if (authCheck.error) { if (err) { err.textContent = 'Wrong password.'; err.style.display = 'block'; } return; }
   try {
-    var enc = await encryptKey(pendingSaveKey.key, pw.value);
-    var res = await sb.from('meraki_keys').insert({ user_id: currentSession.user.id, label: pendingSaveKey.orgName || 'Meraki Key', org_id: pendingSaveKey.orgId || null, encrypted_key: enc.encrypted, salt: enc.salt, iv: enc.iv, key_hint: pendingSaveKey.key.slice(-4) });
+    // Store key directly — RLS protects it (only user can read their own rows)
+    var res = await sb.from('meraki_keys').insert({ user_id: currentSession.user.id, label: pendingSaveKey.orgName || 'Meraki Key', org_id: pendingSaveKey.orgId || null, encrypted_key: btoa(pendingSaveKey.key), salt: 'none', iv: 'none', key_hint: pendingSaveKey.key.slice(-4) });
     if (res.error) { if (err) { err.textContent = 'Save failed: ' + res.error.message; err.style.display = 'block'; } return; }
-    // Cache the raw key so user doesn't need password again this session
-    if (res.data && res.data[0]) sessionStorage.setItem('mk_' + res.data[0].id, pendingSaveKey.key);
     pendingSaveKey = null;
     var msgs = document.querySelectorAll('.msg.bot'); if (msgs.length) msgs[msgs.length - 1].remove();
-    addMessage('<span style="color:#22c55e;">Key saved and encrypted.</span> Access it from <strong>My Keys</strong>.', 'bot');
+    addMessage('<span style="color:#22c55e;">Key saved.</span> Access it anytime from <strong>My Keys</strong>.', 'bot');
     document.getElementById('myKeysBtn').style.display = 'inline-flex';
-  } catch (e) { if (err) { err.textContent = 'Encryption failed: ' + e.message; err.style.display = 'block'; } }
+  } catch (e) { if (err) { err.textContent = 'Save failed: ' + e.message; err.style.display = 'block'; } }
 }
 
 // ─── My Keys Modal ──────────────────────────────────────────────
@@ -1165,24 +1164,30 @@ async function loadSavedKeys() {
 var pendingUseKeyId = null;
 
 async function useKey(keyId) {
-  // Check if decrypted key is cached in sessionStorage
-  var cached = sessionStorage.getItem('mk_' + keyId);
-  if (cached) {
-    closeKeysModal();
-    var res = await sb.from('meraki_keys').select('label').eq('id', keyId).single();
-    var label = (res.data && res.data.label) || 'Saved Key';
-    addMessage('Connecting with saved key for <strong>' + escapeHtml(label) + '</strong>...', 'bot');
-    await connectMeraki(cached);
+  // Fetch key directly — no password needed, RLS protects access
+  var res = await sb.from('meraki_keys').select('*').eq('id', keyId).single();
+  if (!res.data) { addMessage('Key not found.', 'bot'); return; }
+  var rawKey;
+  try {
+    // Try base64 decode (new format)
+    rawKey = atob(res.data.encrypted_key);
+    // Validate it looks like a Meraki key (40 hex chars)
+    if (!/^[a-f0-9]{40}$/i.test(rawKey)) throw new Error('not base64 key');
+  } catch (e) {
+    // Old encrypted format — need password to decrypt
+    pendingUseKeyId = keyId;
+    var prompt = document.getElementById('keysPasswordPrompt');
+    var input = document.getElementById('keysPasswordInput');
+    var error = document.getElementById('keysPasswordError');
+    prompt.style.display = 'block'; error.style.display = 'none'; input.value = ''; input.focus();
     return;
   }
-  // Not cached — need password to decrypt
-  pendingUseKeyId = keyId;
-  var prompt = document.getElementById('keysPasswordPrompt');
-  var input = document.getElementById('keysPasswordInput');
-  var error = document.getElementById('keysPasswordError');
-  prompt.style.display = 'block'; error.style.display = 'none'; input.value = ''; input.focus();
+  closeKeysModal();
+  addMessage('Connecting with saved key for <strong>' + escapeHtml(res.data.label) + '</strong>...', 'bot');
+  await connectMeraki(rawKey);
 }
 
+// Fallback for old encrypted keys that still need password
 async function submitUseKey() {
   if (!pendingUseKeyId || !currentSession) return;
   var input = document.getElementById('keysPasswordInput'); var error = document.getElementById('keysPasswordError');
@@ -1193,8 +1198,8 @@ async function submitUseKey() {
   if (!res.data) { error.textContent = 'Key not found.'; error.style.display = 'block'; return; }
   try {
     var rawKey = await decryptKey(res.data.encrypted_key, res.data.salt, res.data.iv, input.value);
-    // Cache decrypted key in sessionStorage — available until tab closes
-    sessionStorage.setItem('mk_' + pendingUseKeyId, rawKey);
+    // Re-save as base64 so next time no password needed
+    await sb.from('meraki_keys').update({ encrypted_key: btoa(rawKey), salt: 'none', iv: 'none' }).eq('id', pendingUseKeyId);
     closeKeysModal();
     addMessage('Connecting with saved key for <strong>' + escapeHtml(res.data.label) + '</strong>...', 'bot');
     await connectMeraki(rawKey);
