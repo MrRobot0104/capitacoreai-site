@@ -166,16 +166,28 @@ module.exports = async function handler(req, res) {
 
       sendEvent({ type: 'scan_started' });
 
-      // 4. Stream events from the managed agent session
+      // 4. Stream events — try managed-agents header first, fall back to agent-api
       var streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/stream', {
         method: 'GET',
         headers: {
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'managed-agents-2026-04-01,agent-api-2026-03-01',
+          'anthropic-beta': 'agent-api-2026-03-01',
           'Accept': 'text/event-stream',
         },
       });
+      // If agent-api header doesn't work, try managed-agents
+      if (!streamRes.ok && streamRes.status === 400) {
+        streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/stream', {
+          method: 'GET',
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-beta': 'managed-agents-2026-04-01',
+            'Accept': 'text/event-stream',
+          },
+        });
+      }
 
       if (!streamRes.ok) {
         var streamErr = await streamRes.text().catch(function() { return ''; });
