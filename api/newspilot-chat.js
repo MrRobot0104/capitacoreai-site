@@ -122,6 +122,15 @@ module.exports = async (req, res) => {
       var topics = body.topics || [];
       if (!prompt) return res.status(400).json({ error: 'Missing subscription prompt' });
 
+      // Limit to 5 active subscriptions per user
+      var countRes = await fetch(supabaseUrl + '/rest/v1/news_subscriptions?user_id=eq.' + user.id + '&active=eq.true&select=id', {
+        headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey },
+      });
+      var existingSubs = await countRes.json();
+      if (Array.isArray(existingSubs) && existingSubs.length >= 9) {
+        return res.status(400).json({ error: 'Maximum 9 subscriptions. Delete one to add a new one.' });
+      }
+
       var insertRes = await fetch(supabaseUrl + '/rest/v1/news_subscriptions', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
