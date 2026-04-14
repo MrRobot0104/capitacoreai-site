@@ -125,8 +125,10 @@ module.exports = async function handler(req, res) {
 
       if (!sessionRes.ok) {
         var sessionErr = await sessionRes.text();
-        console.error('Session create failed:', sessionErr);
-        return res.status(500).json({ error: 'Failed to create scan session. The repository may be private or inaccessible.' });
+        console.error('Session create failed:', sessionRes.status, sessionErr);
+        var errDetail = '';
+        try { var parsed = JSON.parse(sessionErr); errDetail = parsed.error && parsed.error.message ? ': ' + parsed.error.message : ''; } catch(e) {}
+        return res.status(500).json({ error: 'Failed to create scan session (HTTP ' + sessionRes.status + ')' + errDetail });
       }
 
       var session = await sessionRes.json();
