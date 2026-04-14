@@ -197,16 +197,15 @@ module.exports = async (req, res) => {
       if (!cancelId) return res.status(400).json({ error: 'Missing subscription ID' });
 
       await fetch(supabaseUrl + '/rest/v1/news_subscriptions?id=eq.' + cancelId + '&user_id=eq.' + user.id, {
-        method: 'PATCH',
-        headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: false, updated_at: new Date().toISOString() }),
+        method: 'DELETE',
+        headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey },
       });
       return res.status(200).json({ ok: true });
     }
 
     // ── Get subscriptions ───────────────────────────────
     if (action === 'get_subs') {
-      var subsRes = await fetch(supabaseUrl + '/rest/v1/news_subscriptions?user_id=eq.' + user.id + '&order=created_at.desc', {
+      var subsRes = await fetch(supabaseUrl + '/rest/v1/news_subscriptions?user_id=eq.' + user.id + '&active=eq.true&order=created_at.desc', {
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey },
       });
       var subs = await subsRes.json();
