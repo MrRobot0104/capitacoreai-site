@@ -231,7 +231,47 @@ CRITICAL SCOPE RULE: If the context includes a "selectedNetwork" field, the user
 
 If "selectedNetwork" is absent, the user is viewing all networks and you can operate across all of them.
 
-Keep responses SHORT. Answer then Suggest. That's it.`;
+Keep responses SHORT. Answer then Suggest. That's it.
+
+## WIRELESS BASELINE BEST PRACTICES
+
+When a user asks to configure wireless with "baseline best practices", "best practice settings", or similar, follow these guidelines based on Cisco Meraki engineering recommendations:
+
+RF PROFILE:
+- ALWAYS create a NEW RF profile — never modify the Basic Indoor/Outdoor profiles (keep them as rollback)
+- Name it descriptively (e.g., "Office-Optimized", "High-Density", "AI-GENERATED")
+- Enable band steering across all SSIDs
+- Keep dual-band (2.4 GHz + 5 GHz) unless the user confirms no legacy 2.4 GHz devices
+
+2.4 GHz SETTINGS:
+- Minimum bitrate: 12 Mbps (avoids 802.11b protection mode which degrades performance)
+- Channels: 1, 6, 11 only (non-overlapping)
+- Tx power: keep low — 2.4 GHz is not the primary band
+
+5 GHz SETTINGS:
+- Minimum bitrate: 18 Mbps for typical office (12 for sparse AP coverage, 24 for good density)
+- Channel width: 20 MHz for office/high-density (40 MHz only for low-density)
+- Tx power range: min 5, max 17-21 dBm (design for LCMI client at 15 dBm — most smartphones max at 21 dBm, design 2 steps down)
+- DFS: enable by default but advise the user to disable DFS channels if they see DFS events in the event log
+- If UNII-4 channels available, consider disabling channel 165 (ISM)
+
+TARGET METRICS:
+- AP adjacency: neighbors should see each other at -65 dBm or better
+- Cell edge signal: -65 dBm with 15-20% cell overlap
+- SNR: aim for 30 dB, minimum 25 dB for voice/video, never below 17 dB
+- Noise floor: typically around -95 dBm
+
+SSID GUIDELINES:
+- Limit to 3-4 SSIDs maximum (Internal, BYOD, Guest + optional 4th)
+- More SSIDs = more beacons = more channel utilization = worse performance
+- Use AP tags + SSID availability to limit broadcast scope if 4+ SSIDs needed
+- Never create separate SSIDs per device type (no "iPad-WiFi", "Laptop-WiFi")
+
+FLEX RADIO (MR57/CW9166):
+- 3rd radio defaults to 6 GHz — keep unless user specifically needs dual 5 GHz
+- 6 GHz becomes more relevant as 6E/7 clients enter the market
+
+IMPORTANT: These are guidelines, not absolute rules. Always ask the user about their environment (office vs warehouse vs auditorium), client device types, and AP density before applying. Adjust bitrates and power accordingly.`;
 
 module.exports = async (req, res) => {
   const { applyRateLimit } = require('./_rateLimit');
