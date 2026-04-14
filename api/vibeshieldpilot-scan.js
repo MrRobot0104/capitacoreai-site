@@ -166,16 +166,16 @@ module.exports = async function handler(req, res) {
 
       sendEvent({ type: 'scan_started' });
 
-      // 4. Poll for events (streaming requires incompatible beta header, so we poll)
-      var lastEventId = null;
+      // 4. Poll for events using list endpoint with pagination
+      var seenEventIds = {};
       var pollDone = false;
       var pollCount = 0;
       var maxPolls = 120; // 120 * 2.5s = 5 minutes max
 
       while (!pollDone && pollCount < maxPolls) {
         pollCount++;
-        var pollUrl = 'https://api.anthropic.com/v1/sessions/' + sessionId + '/events';
-        if (lastEventId) pollUrl += '?after_id=' + lastEventId;
+        // Fetch latest events — order=desc gives newest first, we want all
+        var pollUrl = 'https://api.anthropic.com/v1/sessions/' + sessionId + '/events?limit=50&order=asc';
 
         var pollRes = await fetch(pollUrl, {
           method: 'GET',
@@ -183,7 +183,6 @@ module.exports = async function handler(req, res) {
         });
 
         if (!pollRes.ok) {
-          // Wait and retry on transient errors
           if (pollRes.status >= 500) { await new Promise(function(r) { setTimeout(r, 3000); }); continue; }
           var pollErr = await pollRes.text().catch(function() { return ''; });
           sendEvent({ type: 'error', message: 'Poll failed (HTTP ' + pollRes.status + '): ' + pollErr.substring(0, 200) });
@@ -194,15 +193,18 @@ module.exports = async function handler(req, res) {
         var events = eventsData.data || eventsData || [];
         if (!Array.isArray(events)) events = [];
 
-        if (events.length === 0) {
+        // Filter to only new events we haven't seen
+        var newEvents = events.filter(function(e) { return e.id && !seenEventIds[e.id]; });
+
+        if (newEvents.length === 0) {
           // No new events — wait before polling again
           await new Promise(function(r) { setTimeout(r, 2500); });
           continue;
         }
 
-        for (var i = 0; i < events.length; i++) {
-          var evt = events[i];
-          lastEventId = evt.id || lastEventId;
+        for (var i = 0; i < newEvents.length; i++) {
+          var evt = newEvents[i];
+          seenEventIds[evt.id] = true;
 
           if (evt.type === 'agent.message') {
             var content = '';
