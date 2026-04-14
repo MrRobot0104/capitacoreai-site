@@ -343,6 +343,15 @@ module.exports = async (req, res) => {
         };
       });
 
+      // Inject current date/time into system prompt so Claude knows when "today" is
+      const now = new Date();
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayAbbr = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dateStr = days[now.getDay()] + ', ' + now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+      const todayDayAbbr = dayAbbr[now.getDay()];
+
+      const dateContext = `\n\n## CURRENT DATE & TIME\nRight now it is: ${dateStr}\nToday's day abbreviation for Meraki API: "${todayDayAbbr}"\n\nWhen the user says "tonight" or "today", use today's day. When they say a specific date like "April 17th", calculate the correct day of the week and use its abbreviation. The Meraki firmware upgrade API uses day abbreviations: sun, mon, tue, wed, thu, fri, sat. Always confirm the day of week with the user if scheduling. The API only supports top-of-the-hour times (e.g., "2:00", not "2:30").`;
+
       // Call Claude
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -354,7 +363,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 8000,
-          system: SYSTEM_PROMPT,
+          system: SYSTEM_PROMPT + dateContext,
           messages: claudeMessages,
         }),
       });
