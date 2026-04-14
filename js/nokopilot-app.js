@@ -825,39 +825,31 @@ async function handleSend() {
   chatInput.value = '';
   chatInput.style.height = 'auto';
 
-  // If already processing, queue the message and combine when ready
+  // If already processing, queue — but safety reset after 30s
   if (isSending) {
     pendingMessages.push(text);
     addMessage(text, 'user');
     return;
   }
 
+  // Safety: reset isSending if it got stuck
+  setTimeout(function() { isSending = false; }, 30000);
+
   if (!currentSession) {
     addMessage('Please <a href="account.html" style="color:#111;text-decoration:underline;">log in</a> to use NokoPilot.', 'bot');
     return;
   }
 
-  // Wait briefly to catch rapid follow-up messages
   addMessage(text, 'user');
-  pendingMessages = [];
-  await new Promise(function(r) { setTimeout(r, 800); });
-
-  // Combine with any messages sent during the 800ms window
-  if (pendingMessages.length > 0) {
-    text = text + '\n\n' + pendingMessages.join('\n\n');
-    pendingMessages = [];
-  }
-
   isSending = true;
 
-  // Save to command history
-  if (commandHistory[commandHistory.length - 1] !== text) commandHistory.push(text);
-  if (commandHistory.length > 50) commandHistory.shift();
-  historyIndex = commandHistory.length;
-
-  // Check if this looks like a Meraki API key
+  // Check if this looks like a Meraki API key — do this IMMEDIATELY, no delay
   if (!connected && text.length > 30 && !text.includes(' ')) {
-    await connectMeraki(text);
+    try {
+      await connectMeraki(text);
+    } catch (e) {
+      addMessage('Connection error: ' + e.message, 'bot');
+    }
     isSending = false;
     return;
   }
@@ -866,6 +858,14 @@ async function handleSend() {
     addMessage("I need your Meraki API key first. Paste it here and I'll connect to your network.", 'bot');
     isSending = false;
     return;
+  }
+
+  // Wait briefly to catch rapid follow-up messages (only for chat, not API key)
+  pendingMessages = [];
+  await new Promise(function(r) { setTimeout(r, 800); });
+  if (pendingMessages.length > 0) {
+    text = text + '\n\n' + pendingMessages.join('\n\n');
+    pendingMessages = [];
   }
 
   // Start conversation (deduct credit) if not started
