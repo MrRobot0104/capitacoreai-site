@@ -408,10 +408,15 @@ async function cancelSubFromModal(id) {
   });
   if (currentSubscription && currentSubscription.id === id) {
     currentSubscription = null;
-    document.getElementById('subBar').classList.remove('active');
-    document.getElementById('subscribeBtn').style.display = 'inline-flex';
   }
-  openSubsModal(); // Refresh
+  // Remove the item from the modal immediately
+  var item = document.querySelector('.sub-item[data-sub-id="' + id + '"]');
+  if (item) item.remove();
+  // Check if any subs left
+  var remaining = document.querySelectorAll('.sub-item');
+  if (remaining.length === 0) {
+    document.getElementById('subsList').innerHTML = '<p style="color:#64748b;text-align:center;padding:24px 0;">No active subscriptions.</p>';
+  }
 }
 
 // Subscribe button
