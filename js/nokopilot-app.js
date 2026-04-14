@@ -213,8 +213,21 @@ async function merakiPut(path, data) { return merakiCall(path, 'PUT', data); }
 async function connectMeraki(key) {
   merakiKey = key.trim();
   showTyping();
+  var chip = document.getElementById('statusChip');
+  chip.className = 'status-chip';
+  chip.querySelector('#statusText').textContent = 'Connecting...';
 
-  var orgs = await merakiGet('/organizations');
+  var orgs;
+  try {
+    orgs = await merakiGet('/organizations');
+  } catch (e) {
+    chip.className = 'status-chip disconnected';
+    chip.querySelector('#statusText').textContent = 'Not Connected';
+    hideTyping();
+    addMessage("Connection failed: " + e.message + ". Check your internet and try again.", 'bot');
+    merakiKey = null;
+    return;
+  }
   hideTyping();
 
   if (!orgs || !Array.isArray(orgs) || orgs.length === 0) {
