@@ -69,12 +69,12 @@ module.exports = async (req, res) => {
     const session = await stripeRes.json();
     if (!stripeRes.ok) {
       console.error('Stripe error:', JSON.stringify(session));
-      return res.status(500).json({ error: 'Failed to create checkout: ' + (session.error?.message || 'Unknown') });
+      return res.status(500).json({ error: 'Payment processing failed. Please try again.' });
     }
 
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('Checkout error:', err.message);
-    res.status(500).json({ error: 'Checkout failed: ' + err.message });
+    res.status(500).json({ error: 'Payment processing failed. Please try again.' });
   }
 };

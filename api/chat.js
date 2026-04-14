@@ -42,12 +42,15 @@ module.exports = async (req, res) => {
   if (!apiKey) return res.status(500).json({ error: "AI not configured" });
 
   // Build conversation with up to last 6 messages for context
+  var safeHistory = (history || []).filter(function(h) {
+    return h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string';
+  }).map(function(h) {
+    return { role: h.role, content: h.content.substring(0, 4000) };
+  });
   const messages = [];
-  if (Array.isArray(history)) {
-    history.slice(-6).forEach(h => {
-      messages.push({ role: h.role, content: h.content });
-    });
-  }
+  safeHistory.slice(-6).forEach(h => {
+    messages.push({ role: h.role, content: h.content });
+  });
   messages.push({ role: "user", content: message.trim() });
 
   try {
@@ -68,8 +71,8 @@ module.exports = async (req, res) => {
 
     const data = await response.json();
     if (!response.ok) {
-      const detail = data.error ? data.error.message : "AI error";
-      return res.status(500).json({ error: detail });
+      console.error("Anthropic API error:", data.error ? data.error.message : "Unknown");
+      return res.status(500).json({ error: 'AI service error. Please try again.' });
     }
 
     let reply = data.content[0].text;

@@ -316,13 +316,14 @@ module.exports = async (req, res) => {
       if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
       // Validate networkContext to prevent prompt injection
-      if (networkContext) {
-        if (typeof networkContext !== 'object' || Array.isArray(networkContext)) {
-          networkContext = null;
-        } else {
-          var contextStr = JSON.stringify(networkContext);
-          if (contextStr.length > 50000) networkContext = null;
-        }
+      if (networkContext && typeof networkContext === 'object' && !Array.isArray(networkContext)) {
+        var allowed = ['orgName','orgId','totalDevices','onlineDevices','offlineDevices','devices','networks','selectedNetwork','selectedNetworkName'];
+        var cleaned = {};
+        allowed.forEach(function(k) { if (networkContext[k] !== undefined) cleaned[k] = networkContext[k]; });
+        networkContext = cleaned;
+        if (JSON.stringify(networkContext).length > 50000) networkContext = null;
+      } else {
+        networkContext = null;
       }
 
       // Build the messages array for Claude

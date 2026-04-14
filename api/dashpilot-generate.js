@@ -194,10 +194,12 @@ module.exports = async (req, res) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
 
-    const messages = history.slice(-10).map(h => ({
-      role: h.role === 'assistant' ? 'assistant' : 'user',
-      content: typeof h.content === 'string' ? h.content.substring(0, 20000) : String(h.content).substring(0, 20000)
-    }));
+    var safeHistory = (history || []).filter(function(h) {
+      return h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string';
+    }).map(function(h) {
+      return { role: h.role, content: h.content.substring(0, 4000) };
+    });
+    const messages = safeHistory.slice(-10);
 
     try {
       // Safe JSON parser — handles text error responses from API
