@@ -249,21 +249,71 @@ async function connectMeraki(key) {
 
   allOrgs = orgs;
 
-  // Populate org selector
+  // Populate org selector dropdown
   var orgSelector = document.getElementById('orgSelector');
   orgSelector.innerHTML = '';
+  orgs.forEach(function(o) {
+    var opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = o.name;
+    orgSelector.appendChild(opt);
+  });
   if (orgs.length > 1) {
-    orgs.forEach(function(o) {
-      var opt = document.createElement('option');
-      opt.value = o.id;
-      opt.textContent = o.name;
-      orgSelector.appendChild(opt);
-    });
     orgSelector.style.display = 'block';
     document.getElementById('orgLabel').classList.add('visible');
-    document.getElementById('netLabel').classList.add('visible');
+  }
+  document.getElementById('netLabel').classList.add('visible');
+
+  // If multiple orgs, prompt the user to choose
+  if (orgs.length > 1) {
+    var orgHtml = '<strong>Found ' + orgs.length + ' organizations.</strong> Which one do you want to connect to?<br><br>';
+    orgs.forEach(function(org, i) {
+      orgHtml += '<button class="org-pick-btn" data-org-idx="' + i + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:rgba(255,106,0,0.06);border:1px solid rgba(255,106,0,0.2);border-radius:10px;color:#f1f5f9;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;">' +
+        '<strong style="color:#FF6A00;">' + escapeHtml(org.name) + '</strong>' +
+        '<br><span style="font-size:12px;color:#94a3b8;">ID: ' + org.id + '</span>' +
+        '</button>';
+    });
+    addMessage(orgHtml, 'bot');
+
+    // Bind click handlers
+    setTimeout(function() {
+      document.querySelectorAll('.org-pick-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          var idx = parseInt(this.getAttribute('data-org-idx'));
+          var selectedOrg = allOrgs[idx];
+          // Remove the org selection message
+          var msgs = document.querySelectorAll('.msg.bot');
+          if (msgs.length) msgs[msgs.length - 1].remove();
+          // Connect to selected org
+          orgData = selectedOrg;
+          orgSelector.value = selectedOrg.id;
+          connected = true;
+          var chip = document.getElementById('statusChip');
+          chip.className = 'status-chip';
+          chip.querySelector('#statusText').textContent = orgData.name;
+          addMessage('Connecting to <strong>' + escapeHtml(orgData.name) + '</strong>...', 'bot');
+          await loadDashboard();
+          addMessage(
+            'Your dashboard is ready — ' + allNetworks.length + ' networks, ' + allDevices.length + ' devices.<br><br>' +
+            'Try asking me:<br>' +
+            '<code>Show offline devices</code><br>' +
+            '<code>Run a health scan</code><br>' +
+            '<code>Are my networks secure?</code>',
+            'bot'
+          );
+          if (currentSession && merakiKey && orgData) {
+            var existing = await sb.from('meraki_keys').select('id').eq('user_id', currentSession.user.id).eq('org_id', orgData.id);
+            if (!existing.data || existing.data.length === 0) offerSaveKey(merakiKey, orgData.name, orgData.id);
+          }
+        });
+        btn.addEventListener('mouseenter', function() { this.style.borderColor = '#FF6A00'; this.style.background = 'rgba(255,106,0,0.12)'; });
+        btn.addEventListener('mouseleave', function() { this.style.borderColor = 'rgba(255,106,0,0.2)'; this.style.background = 'rgba(255,106,0,0.06)'; });
+      });
+    }, 100);
+    return;
   }
 
+  // Single org — connect immediately
   orgData = orgs[0];
   orgSelector.value = orgData.id;
   connected = true;
@@ -272,7 +322,7 @@ async function connectMeraki(key) {
   chip.className = 'status-chip';
   chip.querySelector('#statusText').textContent = orgData.name;
 
-  addMessage('Connected to <strong>' + orgData.name + '</strong>' + (orgs.length > 1 ? ' (' + orgs.length + ' orgs found — switch in the top-right panel)' : '') + '. Loading your network...', 'bot');
+  addMessage('Connected to <strong>' + escapeHtml(orgData.name) + '</strong>. Loading your network...', 'bot');
   await loadDashboard();
   addMessage(
     'Your dashboard is ready. I found your devices and networks on the right panel.<br><br>' +
