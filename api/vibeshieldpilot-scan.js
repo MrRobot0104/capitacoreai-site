@@ -1,8 +1,5 @@
 const { applyRateLimit } = require('./_rateLimit');
 
-const AGENT_ID = 'agent_011Ca1nwHde79Cu2d5MGwkcZ';
-const ENV_ID = 'env_01XMHEozPMWKn1whmws4czfk';
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -62,7 +59,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, remaining: newBalance, cost: 2 });
   }
 
-  // ── Start scan — create session, send kickoff, return session ID ──
+  // ── Scan ──────────────────────────────────────────────
   if (action === 'scan') {
     var repoUrl = body.repoUrl;
     if (!repoUrl || typeof repoUrl !== 'string') {
@@ -74,47 +71,197 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid URL. Must be a public GitHub repo.' });
     }
 
-    var agentHeaders = {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'managed-agents-2026-04-01',
-      'content-type': 'application/json',
-    };
+    if (!isAdmin) {
+      var balCheck = await fetch(
+        supabaseUrl + '/rest/v1/profiles?id=eq.' + user.id + '&select=token_balance',
+        { headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey } }
+      );
+      var balData = await balCheck.json();
+      if ((balData[0]?.token_balance || 0) <= 0) {
+        return res.status(402).json({ error: 'No credits remaining.' });
+      }
+    }
 
     try {
-      var repoName = cleanUrl.split('/').slice(-2).join('/');
+      var parts = cleanUrl.replace('https://github.com/', '').split('/');
+      var owner = parts[0];
+      var repo = parts[1];
 
-      // Create session
-      var sessionRes = await fetch('https://api.anthropic.com/v1/sessions', {
-        method: 'POST',
-        headers: agentHeaders,
-        body: JSON.stringify({ agent: AGENT_ID, environment_id: ENV_ID }),
+      // ── 1. Fetch repo tree from GitHub API ──────────────
+      var treeRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/git/trees/HEAD?recursive=1', {
+        headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'VibeShieldPilot' },
       });
 
-      if (!sessionRes.ok) {
-        var sessionErr = await sessionRes.text();
-        var errDetail = '';
-        try { errDetail = ': ' + JSON.parse(sessionErr).error.message; } catch(e) {}
-        return res.status(500).json({ error: 'Session creation failed' + errDetail });
+      if (!treeRes.ok) {
+        return res.status(400).json({ error: 'Could not access repository. It may be private or not exist.' });
       }
 
-      var session = await sessionRes.json();
+      var treeData = await treeRes.json();
+      var files = (treeData.tree || []).filter(function(f) { return f.type === 'blob'; });
 
-      // Send kickoff message
-      var kickoffRes = await fetch('https://api.anthropic.com/v1/sessions/' + session.id + '/events', {
+      // Filter to code files only — skip images, fonts, lockfiles, minified bundles
+      var codeExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.rb', '.go', '.rs', '.java', '.php', '.cs', '.swift', '.kt', '.vue', '.svelte', '.html', '.css', '.scss', '.json', '.yaml', '.yml', '.toml', '.env', '.sql', '.sh', '.bash', '.zsh', '.dockerfile', '.tf', '.hcl', '.xml', '.graphql', '.prisma', '.sol'];
+      var skipPatterns = ['node_modules/', 'vendor/', '.min.js', '.min.css', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.mp4', '.mp3', '.zip', '.tar', '.gz', '.pdf', '.DS_Store'];
+
+      var codeFiles = files.filter(function(f) {
+        var path = f.path.toLowerCase();
+        if (skipPatterns.some(function(p) { return path.includes(p); })) return false;
+        if (f.size > 100000) return false; // Skip files > 100KB
+        // Include if it has a code extension or is a config file at root
+        return codeExtensions.some(function(ext) { return path.endsWith(ext); }) ||
+               path === '.env' || path === '.env.example' || path === 'dockerfile' ||
+               path.endsWith('.config.js') || path.endsWith('.config.ts');
+      });
+
+      // Limit to ~60 files to stay within context
+      if (codeFiles.length > 60) codeFiles = codeFiles.slice(0, 60);
+
+      // ── 2. Fetch file contents in parallel ──────────────
+      var fileContents = [];
+      var totalChars = 0;
+      var maxTotalChars = 120000; // ~30K tokens
+
+      var batches = [];
+      for (var b = 0; b < codeFiles.length; b += 10) {
+        batches.push(codeFiles.slice(b, b + 10));
+      }
+
+      for (var bi = 0; bi < batches.length; bi++) {
+        if (totalChars >= maxTotalChars) break;
+        var batchResults = await Promise.all(batches[bi].map(function(f) {
+          return fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + f.path, {
+            headers: { 'Accept': 'application/vnd.github.v3.raw', 'User-Agent': 'VibeShieldPilot' },
+          }).then(function(r) {
+            if (!r.ok) return { path: f.path, content: '(failed to fetch)', size: 0 };
+            return r.text().then(function(text) {
+              return { path: f.path, content: text, size: text.length };
+            });
+          }).catch(function() {
+            return { path: f.path, content: '(failed to fetch)', size: 0 };
+          });
+        }));
+
+        for (var ri = 0; ri < batchResults.length; ri++) {
+          var file = batchResults[ri];
+          if (totalChars + file.size > maxTotalChars) {
+            file.content = file.content.substring(0, maxTotalChars - totalChars) + '\n...(truncated)';
+            fileContents.push(file);
+            totalChars = maxTotalChars;
+            break;
+          }
+          fileContents.push(file);
+          totalChars += file.size;
+        }
+      }
+
+      // ── 3. Build the codebase document ──────────────────
+      var fileTree = files.map(function(f) { return f.path; }).join('\n');
+      var codeDoc = fileContents.map(function(f) {
+        return '=== FILE: ' + f.path + ' ===\n' + f.content;
+      }).join('\n\n');
+
+      // ── 4. Call Claude for security audit ───────────────
+      var systemPrompt = `You are VibeShieldPilot, an elite cybersecurity auditor built by CapitaCoreAI. You analyze codebases and produce security scorecards.
+
+You will receive a complete codebase (file tree + file contents). Analyze EVERY file for vulnerabilities.
+
+## OUTPUT FORMAT — You MUST respond with valid JSON only. No markdown, no text before or after.
+
+{
+  "grade": "A|B|C|D|F",
+  "summary": "2-3 sentence executive summary",
+  "stats": { "total": 0, "critical": 0, "high": 0, "medium": 0, "low": 0 },
+  "techStack": ["React", "Node.js", "Supabase"],
+  "categories": [
+    {
+      "name": "Secrets & Exposure",
+      "status": "pass|warn|fail",
+      "findings": [
+        { "severity": "CRITICAL|HIGH|MEDIUM|LOW", "file": "path/to/file.js", "line": 42, "title": "Short title", "description": "What's wrong", "fix": "How to fix it with code example" }
+      ]
+    }
+  ],
+  "topFixes": [
+    { "priority": 1, "title": "Fix this first", "description": "Why and how" }
+  ]
+}
+
+## CATEGORIES TO CHECK (all 14):
+1. Secrets & Exposure — hardcoded keys, .env committed, service keys in client code
+2. Authentication — missing auth on endpoints, weak JWT, no brute-force protection
+3. Authorization (IDOR) — user A accessing user B data, missing ownership checks, broken RLS
+4. Injection — SQL/NoSQL/command injection, template injection, path traversal
+5. Cross-Site Scripting — innerHTML with user input, unescaped AI output, DOM XSS
+6. API Security — no rate limiting, CORS *, SSRF, mass assignment, verbose errors
+7. Data Protection — PII in plaintext, missing encryption, insecure cookies
+8. CSRF — missing tokens, SameSite issues
+9. File Upload — no type validation, no size limits, path traversal in filenames
+10. Dependencies — known CVEs, outdated packages, missing lockfile
+11. Infrastructure & Config — debug mode in prod, missing security headers, default creds
+12. Business Logic — race conditions, price manipulation, account enumeration
+13. Denial of Service — ReDoS, unbound loops, missing pagination
+14. Logging & Monitoring — no audit trail, secrets in logs
+
+## GRADING:
+A = 0 critical, 0 high, ≤2 medium
+B = 0 critical, ≤2 high, ≤5 medium
+C = 0 critical, ≤5 high
+D = 1-2 critical OR >5 high
+F = 3+ critical
+
+Be thorough. Show exact file paths and line numbers. Think like a bug bounty hunter.`;
+
+      var userMessage = 'Scan this repository: ' + owner + '/' + repo + '\n\n## FILE TREE\n' + fileTree + '\n\n## FILE CONTENTS\n' + codeDoc;
+
+      var claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: agentHeaders,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
         body: JSON.stringify({
-          events: [{
-            type: 'user.message',
-            content: [{ type: 'text', text: 'Clone this repo: git clone ' + cleanUrl + ' /workspace/repo\n\nThen perform a full security audit of /workspace/repo (' + repoName + '). Follow your 3-phase process. Be thorough.' }],
-          }],
+          model: 'claude-sonnet-4-6',
+          max_tokens: 8000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
         }),
       });
 
-      if (!kickoffRes.ok) {
-        return res.status(500).json({ error: 'Failed to send scan command.' });
+      if (!claudeRes.ok) {
+        var claudeErr = await claudeRes.text();
+        console.error('Claude API error:', claudeRes.status, claudeErr.substring(0, 200));
+        return res.status(500).json({ error: 'AI analysis failed. Try again.' });
       }
+
+      var claudeData = await claudeRes.json();
+      var responseText = claudeData.content
+        .filter(function(b) { return b.type === 'text'; })
+        .map(function(b) { return b.text; })
+        .join('');
+
+      // Parse JSON from response — handle markdown code blocks
+      var jsonStr = responseText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '').trim();
+      var scanResult;
+      try {
+        scanResult = JSON.parse(jsonStr);
+      } catch (e) {
+        // Try to extract JSON from the response
+        var jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { scanResult = JSON.parse(jsonMatch[0]); } catch (e2) {
+            return res.status(500).json({ error: 'Failed to parse scan results.', raw: responseText.substring(0, 500) });
+          }
+        } else {
+          return res.status(500).json({ error: 'Failed to parse scan results.', raw: responseText.substring(0, 500) });
+        }
+      }
+
+      // Add metadata
+      scanResult.repo = owner + '/' + repo;
+      scanResult.filesScanned = fileContents.length;
+      scanResult.totalFiles = files.length;
+      scanResult.scannedAt = new Date().toISOString();
 
       // Log usage
       fetch(supabaseUrl + '/rest/v1/usage_log', {
@@ -123,42 +270,11 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ user_id: user.id, prompt: 'VibeShieldPilot: ' + cleanUrl.substring(0, 200) }),
       }).catch(function() {});
 
-      // Return session ID — frontend polls for events
-      return res.status(200).json({ sessionId: session.id, repo: repoName });
+      return res.status(200).json(scanResult);
 
     } catch (err) {
-      return res.status(500).json({ error: 'Scan failed: ' + err.message });
-    }
-  }
-
-  // ── Poll events — lightweight endpoint for client-side polling ──
-  if (action === 'poll') {
-    var sessionId = body.sessionId;
-    if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
-
-    var agHeaders = {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'managed-agents-2026-04-01',
-      'content-type': 'application/json',
-    };
-
-    try {
-      var pollRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/events?limit=100&order=asc', {
-        method: 'GET',
-        headers: agHeaders,
-      });
-
-      if (!pollRes.ok) {
-        var pollErr = await pollRes.text().catch(function() { return ''; });
-        return res.status(pollRes.status).json({ error: 'Poll failed: ' + pollErr.substring(0, 200) });
-      }
-
-      var eventsData = await pollRes.json();
-      return res.status(200).json(eventsData);
-
-    } catch (err) {
-      return res.status(500).json({ error: 'Poll error: ' + err.message });
+      console.error('VibeShieldPilot error:', err.message);
+      return res.status(500).json({ error: 'Scan failed. Please try again.' });
     }
   }
 

@@ -387,104 +387,165 @@ async function startScan() {
   $('consoleToggle').classList.add('open');
   $('consoleBox').classList.add('open');
 
-  addConsoleLine('Connecting to VibeShieldPilot agent...', 'msg');
+  addConsoleLine('Fetching repository from GitHub...', 'msg');
+  setPhase('phase1');
 
   try {
-    // 1. Start the scan — returns session ID immediately
+    var controller = new AbortController();
+    var timeout = setTimeout(function() { controller.abort(); }, 180000); // 3 min timeout
+
     var response = await fetch('/api/vibeshieldpilot-scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({ action: 'scan', repoUrl: cleanUrl }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       var errData = {};
       try { errData = await response.json(); } catch (e) {}
-      addConsoleLine('Error: ' + (errData.error || 'Scan request failed.'), 'err');
+      addConsoleLine('Error: ' + (errData.error || 'Scan failed.'), 'err');
       finishScan();
       return;
     }
 
-    var scanData = await response.json();
-    var sessionId = scanData.sessionId;
+    addConsoleLine('AI is analyzing the codebase...', 'ok');
+    setPhase('phase2');
 
-    handleEvent({ type: 'session_created', sessionId: sessionId, repo: scanData.repo });
-    handleEvent({ type: 'scan_started' });
+    var scanResult = await response.json();
 
-    // 2. Poll for events from the client side
-    var seenIds = {};
-    var pollDone = false;
-    var pollCount = 0;
-    var maxPolls = 60; // ~6 minutes at 6s intervals
+    // ── Populate the UI from scan results ──────────────
+    addConsoleLine('Scan complete — building scorecard.', 'ok');
+    setPhase('phase3');
 
-    while (!pollDone && pollCount < maxPolls) {
-      pollCount++;
-      // Wait 6 seconds between polls to avoid rate limiting
-      await new Promise(function(r) { setTimeout(r, 6000); });
+    // Recon stats
+    $('reconFiles').textContent = scanResult.filesScanned || '?';
+    $('reconEndpoints').textContent = scanResult.totalFiles || '?';
+    $('reconAuthFlows').textContent = (scanResult.techStack || []).length || '?';
 
-      try {
-        var pollRes = await fetch('/api/vibeshieldpilot-scan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ action: 'poll', sessionId: sessionId }),
-        });
+    // Tech stack
+    if (scanResult.techStack && scanResult.techStack.length > 0) {
+      var details = $('reconDetails');
+      var row = document.createElement('div');
+      row.className = 'recon-row';
+      row.innerHTML = '<span class="label">Tech Stack</span><span class="value">' + escapeHtml(scanResult.techStack.join(', ')) + '</span>';
+      details.appendChild(row);
+    }
 
-        if (!pollRes.ok) {
-          if (pollRes.status === 429) {
-            // Rate limited — back off 10 seconds
-            await new Promise(function(r) { setTimeout(r, 10000); });
-          }
-          continue;
-        }
-
-        var eventsData = await pollRes.json();
-        var events = eventsData.data || [];
-
-        for (var i = 0; i < events.length; i++) {
-          var evt = events[i];
-          if (!evt.id || seenIds[evt.id]) continue;
-          seenIds[evt.id] = true;
-
-          if (evt.type === 'agent.message') {
-            var content = '';
-            if (Array.isArray(evt.content)) {
-              content = evt.content.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
+    // Categories
+    if (scanResult.categories) {
+      scanResult.categories.forEach(function(cat) {
+        var catId = cat.name.toLowerCase().replace(/[^a-z]/g, '').substring(0, 10);
+        // Find matching category in our list
+        for (var ci = 0; ci < CATEGORIES.length; ci++) {
+          var c = CATEGORIES[ci];
+          if (cat.name.toLowerCase().includes(c.keywords[0])) {
+            updateCategory(c.id, 'done');
+            var row = document.getElementById('cat-' + c.id);
+            if (row) {
+              var findingsCount = (cat.findings || []).length;
+              var hasCritical = (cat.findings || []).some(function(f) { return f.severity === 'CRITICAL'; });
+              var hasHigh = (cat.findings || []).some(function(f) { return f.severity === 'HIGH'; });
+              if (hasCritical) row.classList.add('has-critical');
+              else if (hasHigh) row.classList.add('has-high');
+              var findingsEl = row.querySelector('.cat-findings');
+              if (findingsEl) findingsEl.textContent = findingsCount > 0 ? findingsCount + ' found' : 'clean';
             }
-            if (content) handleEvent({ type: 'message', content: content });
-          } else if (evt.type === 'agent.tool_use') {
-            var toolName = evt.name || '';
-            var toolInput = evt.input || {};
-            var summary = {};
-            if (toolInput.command) summary.command = String(toolInput.command).substring(0, 300);
-            else if (toolInput.path || toolInput.file_path) summary.path = toolInput.path || toolInput.file_path;
-            else if (toolInput.pattern) summary.pattern = toolInput.pattern;
-            handleEvent({ type: 'tool_use', tool: toolName, input: summary });
-          } else if (evt.type === 'session.status_idle') {
-            handleEvent({ type: 'scan_complete' });
-            pollDone = true;
-            break;
-          } else if (evt.type === 'session.status_terminated') {
-            handleEvent({ type: 'terminated', message: 'Session ended.' });
-            pollDone = true;
             break;
           }
         }
-      } catch (pollErr) {
-        addConsoleLine('Poll error: ' + pollErr.message, 'err');
-      }
+      });
     }
 
-    if (!pollDone) {
-      addConsoleLine('Scan timed out.', 'warn');
+    // Mark remaining categories as done
+    CATEGORIES.forEach(function(c) {
+      if (categoryStatuses[c.id] !== 'done') updateCategory(c.id, 'done');
+    });
+
+    // Severity counts
+    if (scanResult.stats) {
+      severityCounts = {
+        critical: scanResult.stats.critical || 0,
+        high: scanResult.stats.high || 0,
+        medium: scanResult.stats.medium || 0,
+        low: scanResult.stats.low || 0,
+      };
+      updateSeverityDisplay();
     }
 
-    handleEvent({ type: 'done' });
+    // Grade
+    if (scanResult.grade) {
+      showGrade(scanResult.grade);
+    }
+
+    // Build HTML report for download
+    reportHtml = buildReportHtml(scanResult);
+    $('viewReportBtn').style.display = 'inline-flex';
+    $('downloadReportBtn').style.display = 'inline-flex';
+    $('downloadBtn').style.display = 'inline-flex';
+
+    // Console summary
+    addConsoleLine('Grade: ' + (scanResult.grade || '?') + ' — ' + (scanResult.stats ? scanResult.stats.total + ' findings' : ''), 'ok');
+
+    setPhase('complete');
     finishScan();
 
   } catch (err) {
-    addConsoleLine('Error: ' + err.message, 'err');
+    if (err.name === 'AbortError') {
+      addConsoleLine('Scan timed out. Try a smaller repository.', 'err');
+    } else {
+      addConsoleLine('Error: ' + err.message, 'err');
+    }
     finishScan();
   }
+}
+
+// ── Build downloadable HTML report from scan results ────────
+function buildReportHtml(result) {
+  var cats = (result.categories || []).map(function(cat) {
+    var findings = (cat.findings || []).map(function(f) {
+      var sevColor = f.severity === 'CRITICAL' ? '#ef4444' : f.severity === 'HIGH' ? '#f59e0b' : f.severity === 'MEDIUM' ? '#3b82f6' : '#22c55e';
+      return '<div style="margin:12px 0;padding:14px;background:rgba(255,255,255,0.02);border-left:3px solid ' + sevColor + ';border-radius:0 8px 8px 0;">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><strong>' + escapeHtml(f.title || '') + '</strong><span style="color:' + sevColor + ';font-size:12px;font-weight:600;">' + (f.severity || '') + '</span></div>' +
+        '<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px;">' + escapeHtml(f.file || '') + (f.line ? ':' + f.line : '') + '</div>' +
+        '<div style="font-size:13px;color:rgba(255,255,255,0.7);">' + escapeHtml(f.description || '') + '</div>' +
+        (f.fix ? '<div style="margin-top:8px;padding:10px;background:rgba(34,197,94,0.06);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.6);"><strong style="color:#22c55e;">Fix:</strong> ' + escapeHtml(f.fix) + '</div>' : '') +
+        '</div>';
+    }).join('');
+    var statusColor = cat.status === 'pass' ? '#22c55e' : cat.status === 'fail' ? '#ef4444' : '#f59e0b';
+    return '<div style="margin-bottom:24px;">' +
+      '<h3 style="color:#FF6A00;margin-bottom:8px;display:flex;align-items:center;gap:8px;">' + escapeHtml(cat.name) + ' <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.05);color:' + statusColor + ';">' + (cat.status || '').toUpperCase() + '</span></h3>' +
+      (findings || '<div style="color:rgba(255,255,255,0.3);font-size:13px;">No issues found.</div>') +
+      '</div>';
+  }).join('');
+
+  var topFixes = (result.topFixes || []).map(function(f, i) {
+    return '<div style="margin:8px 0;padding:12px;background:rgba(255,106,0,0.04);border:1px solid rgba(255,106,0,0.15);border-radius:8px;">' +
+      '<strong style="color:#FF6A00;">#' + (i + 1) + ' ' + escapeHtml(f.title || '') + '</strong>' +
+      '<div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">' + escapeHtml(f.description || '') + '</div></div>';
+  }).join('');
+
+  var gradeColor = result.grade === 'A' ? '#22c55e' : result.grade === 'B' ? '#3b82f6' : result.grade === 'C' ? '#f59e0b' : result.grade === 'D' ? '#FF6A00' : '#ef4444';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Security Scorecard — ' + escapeHtml(result.repo || '') + '</title>' +
+    '<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;padding:48px 40px;max-width:900px;margin:0 auto;line-height:1.6;}</style></head><body>' +
+    '<div style="text-align:center;margin-bottom:36px;padding:32px 0;border-bottom:2px solid rgba(255,106,0,0.3);">' +
+    '<h1 style="font-size:28px;color:#FF6A00;">VibeShieldPilot Security Scorecard</h1>' +
+    '<div style="font-size:15px;color:rgba(255,255,255,0.6);margin-top:8px;">' + escapeHtml(result.repo || '') + '</div>' +
+    '<div style="font-size:64px;font-weight:800;color:' + gradeColor + ';margin:20px 0;">' + (result.grade || '?') + '</div>' +
+    '<div style="font-size:14px;color:rgba(255,255,255,0.5);">' + escapeHtml(result.summary || '') + '</div>' +
+    '<div style="display:flex;justify-content:center;gap:16px;margin-top:16px;">' +
+    '<span style="color:#ef4444;">' + (result.stats ? result.stats.critical : 0) + ' Critical</span>' +
+    '<span style="color:#f59e0b;">' + (result.stats ? result.stats.high : 0) + ' High</span>' +
+    '<span style="color:#3b82f6;">' + (result.stats ? result.stats.medium : 0) + ' Medium</span>' +
+    '<span style="color:#22c55e;">' + (result.stats ? result.stats.low : 0) + ' Low</span>' +
+    '</div></div>' +
+    (topFixes ? '<h2 style="color:#FF6A00;margin-bottom:12px;">Top Priority Fixes</h2>' + topFixes + '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:32px 0;">' : '') +
+    cats +
+    '<div style="text-align:center;margin-top:48px;padding:24px 0;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:rgba(255,255,255,0.2);">' +
+    '<span style="color:#FF6A00;font-weight:600;">VibeShieldPilot</span> by CapitaCoreAI &middot; ' + (result.filesScanned || '?') + ' files scanned &middot; ' + (result.scannedAt ? new Date(result.scannedAt).toLocaleDateString() : '') +
+    '</div></body></html>';
 }
 
 // ── Report ──────────────────────────────────────────────
