@@ -181,7 +181,13 @@ function hideTyping() {
 
 // ─── Meraki API (proxied through Vercel to bypass CORS) ──────────
 async function merakiCall(path, method, body) {
-  if (!currentSession) return { errors: ['Not authenticated — session expired'] };
+  // Refresh session token before every API call to prevent stale JWT
+  var freshSession = await sb.auth.getSession();
+  if (freshSession.data.session) currentSession = freshSession.data.session;
+  if (!currentSession) {
+    addMessage('Session expired. Please <a href="account.html" style="color:#FF6A00;">log in again</a>.', 'bot');
+    return { errors: ['Not authenticated — session expired'] };
+  }
   try {
     var resp = await fetch('/api/meraki-proxy', {
       method: 'POST',
