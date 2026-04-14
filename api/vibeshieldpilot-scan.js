@@ -99,7 +99,7 @@ module.exports = async function handler(req, res) {
 
       // Filter to code files only — skip images, fonts, lockfiles, minified bundles
       var codeExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.rb', '.go', '.rs', '.java', '.php', '.cs', '.swift', '.kt', '.vue', '.svelte', '.html', '.css', '.scss', '.json', '.yaml', '.yml', '.toml', '.env', '.sql', '.sh', '.bash', '.zsh', '.dockerfile', '.tf', '.hcl', '.xml', '.graphql', '.prisma', '.sol'];
-      var skipPatterns = ['node_modules/', 'vendor/', '.min.js', '.min.css', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.mp4', '.mp3', '.zip', '.tar', '.gz', '.pdf', '.DS_Store'];
+      var skipPatterns = ['node_modules/', 'vendor/', 'dist/', 'build/', 'dashboards/', '.min.js', '.min.css', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'leaflet.js', 'leaflet.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.mp4', '.mp3', '.zip', '.tar', '.gz', '.pdf', '.DS_Store'];
 
       var codeFiles = files.filter(function(f) {
         var path = f.path.toLowerCase();
@@ -238,20 +238,28 @@ Be thorough. Show exact file paths and line numbers. Think like a bug bounty hun
         .map(function(b) { return b.text; })
         .join('');
 
-      // Parse JSON from response — handle markdown code blocks
-      var jsonStr = responseText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '').trim();
+      // Parse JSON from response — handle markdown fences, preamble text, etc.
       var scanResult;
+      // Strip markdown code fences
+      var jsonStr = responseText.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '').trim();
+
+      // Try parsing the cleaned string directly
       try {
         scanResult = JSON.parse(jsonStr);
       } catch (e) {
-        // Try to extract JSON from the response
-        var jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try { scanResult = JSON.parse(jsonMatch[0]); } catch (e2) {
-            return res.status(500).json({ error: 'Failed to parse scan results.', raw: responseText.substring(0, 500) });
+        // Try extracting the outermost JSON object
+        var startIdx = jsonStr.indexOf('{');
+        var endIdx = jsonStr.lastIndexOf('}');
+        if (startIdx !== -1 && endIdx > startIdx) {
+          try {
+            scanResult = JSON.parse(jsonStr.substring(startIdx, endIdx + 1));
+          } catch (e2) {
+            console.error('JSON parse failed:', e2.message, 'Raw:', responseText.substring(0, 300));
+            return res.status(500).json({ error: 'Failed to parse scan results. The AI response may have been too large. Try a smaller repo.' });
           }
         } else {
-          return res.status(500).json({ error: 'Failed to parse scan results.', raw: responseText.substring(0, 500) });
+          console.error('No JSON found in response. Raw:', responseText.substring(0, 300));
+          return res.status(500).json({ error: 'Failed to parse scan results.' });
         }
       }
 
