@@ -272,12 +272,12 @@ IMPORTANT: Keep each finding concise — 1-2 sentences for description and fix. 
           try {
             scanResult = JSON.parse(jsonStr.substring(startIdx, endIdx + 1));
           } catch (e2) {
-            console.error('JSON parse failed:', e2.message, 'Raw:', responseText.substring(0, 300));
-            return res.status(500).json({ error: 'Failed to parse scan results. The AI response may have been too large. Try a smaller repo.' });
+            console.error('JSON parse failed:', e2.message, 'Raw start:', responseText.substring(0, 200), 'Raw end:', responseText.substring(responseText.length - 200));
+            return res.status(500).json({ error: 'Failed to parse scan results.', rawStart: responseText.substring(0, 300), rawEnd: responseText.substring(responseText.length - 300) });
           }
         } else {
           console.error('No JSON found in response. Raw:', responseText.substring(0, 300));
-          return res.status(500).json({ error: 'Failed to parse scan results.' });
+          return res.status(500).json({ error: 'Failed to parse scan results.', rawStart: responseText.substring(0, 300), rawEnd: responseText.substring(responseText.length - 300) });
         }
       }
 

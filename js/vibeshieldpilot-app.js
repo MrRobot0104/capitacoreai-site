@@ -394,6 +394,15 @@ async function startScan() {
 
     var scanResult = await response.json();
 
+    // Check for server-side errors
+    if (scanResult.error) {
+      addConsoleLine('Error: ' + scanResult.error, 'err');
+      if (scanResult.rawStart) addConsoleLine('Response start: ' + scanResult.rawStart.substring(0, 150), 'warn');
+      if (scanResult.rawEnd) addConsoleLine('Response end: ' + scanResult.rawEnd.substring(0, 150), 'warn');
+      finishScan();
+      return;
+    }
+
     // ── Populate the UI from scan results ──────────────
     addConsoleLine('Scan complete — building scorecard.', 'ok');
     setPhase('phase3');
