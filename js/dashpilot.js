@@ -56,47 +56,7 @@ async function buyPrebuilt(btn) {
       return;
     }
 
-    // Check credit balance
-    var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
-    var data = result.data;
-    var isAdmin = data && data.is_admin === true;
-    var balance = isAdmin ? 9999 : (data ? data.token_balance : 0);
-
-    if (balance <= 0) {
-      btn.disabled = false;
-      btn.textContent = origText;
-      prebuiltInProgress = false;
-      showBtnMessage(btn, 'No credits remaining. <a href="pricing.html" style="color:#dc2626;font-weight:600;">Buy credits</a> to continue.', true);
-      return;
-    }
-
-    btn.textContent = 'Processing...';
-
-    // Deduct 1 credit
-    var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 30000);
-
-    var res = await fetch('/api/dashpilot-generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-      body: JSON.stringify({ action: 'start_conversation' }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      var err = await res.json().catch(function() { return {}; });
-      btn.disabled = false;
-      btn.textContent = origText;
-      prebuiltInProgress = false;
-      if (res.status === 402) {
-        showBtnMessage(btn, 'No credits remaining. <a href="pricing.html" style="color:#dc2626;font-weight:600;">Buy credits</a> to continue.', true);
-      } else {
-        showBtnMessage(btn, err.error || 'Something went wrong. Please try again.', true);
-      }
-      return;
-    }
-
+    // Prebuilt dashboards are free — just download
     // Download the HTML file
     btn.textContent = 'Downloading...';
     var htmlRes = await fetch('/dashboards/' + file);
