@@ -166,7 +166,16 @@ function renderDigest(text) {
 
   document.getElementById('digestBody').innerHTML = '<p>' + html + '</p>';
   document.getElementById('digestPanel').scrollTop = 0;
+
+  // Show subscribe button after digest is generated
+  if (!currentSubscription) {
+    document.getElementById('subscribeBtn').style.display = 'inline-flex';
+  }
 }
+
+// Track what the last digest was about for subscription
+var lastDigestPrompt = '';
+var lastDigestTopics = [];
 
 // ─── Conversation ────────────────────────────────────────────
 async function startConversation() {
@@ -260,10 +269,13 @@ async function handleSend() {
         var digestData = await digestResp.json();
         if (digestData.response) {
           chatHistory.push({ role: 'assistant', content: digestData.response });
-          addMessage('Your digest is ready! Check the right panel.', 'bot');
+          addMessage('Your digest is ready! Check the right panel. Want this every Friday? Click **Subscribe** in the top bar.', 'bot');
           renderDigest(digestData.response);
 
-          // Handle subscription action from digest
+          // Track what this digest was about for subscription
+          lastDigestTopics = (data.searches || []).map(function(s) { return s.topic || s.query; });
+          lastDigestPrompt = lastDigestTopics.join(', ');
+
           if (digestData.subAction) handleSubAction(digestData.subAction);
         }
       } else {
@@ -323,3 +335,39 @@ document.getElementById('editSubBtn').addEventListener('click', function() {
   addMessage('What would you like to change about your subscription? Tell me your updated interests.', 'bot');
 });
 document.getElementById('cancelSubBtn').addEventListener('click', handleCancelSub);
+
+// Subscribe button
+document.getElementById('subscribeBtn').addEventListener('click', async function() {
+  if (!currentSession || !lastDigestPrompt) {
+    addMessage('Generate a digest first, then subscribe to get it weekly.', 'bot');
+    return;
+  }
+  var btn = document.getElementById('subscribeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Subscribing...';
+
+  try {
+    var res = await fetch('/api/newspilot-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+      body: JSON.stringify({ action: 'subscribe', prompt: lastDigestPrompt, topics: lastDigestTopics }),
+    });
+    var data = await res.json();
+    if (res.ok && data.ok) {
+      currentSubscription = data.subscription;
+      document.getElementById('subBar').classList.add('active');
+      document.getElementById('subTopics').textContent = lastDigestTopics.join(', ') || lastDigestPrompt.substring(0, 50);
+      btn.style.display = 'none';
+      addMessage('Subscribed! You\'ll receive a personalized digest every Friday. 1 credit will be deducted each week. Here\'s what you\'re getting:\n\n**Topics:** ' + (lastDigestTopics.join(', ') || lastDigestPrompt) + '\n\n**Delivery:** Every Friday\n**Cost:** 1 credit per email\n\nYou can edit or cancel anytime from the bar below.', 'bot');
+      refreshCredits();
+    } else {
+      addMessage('Failed to subscribe: ' + (data.error || 'Try again.'), 'bot');
+      btn.disabled = false;
+      btn.textContent = 'Subscribe (1 credit)';
+    }
+  } catch (e) {
+    addMessage('Error: ' + e.message, 'bot');
+    btn.disabled = false;
+    btn.textContent = 'Subscribe (1 credit)';
+  }
+});

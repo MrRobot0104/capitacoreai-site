@@ -36,6 +36,36 @@ module.exports = async function handler(req, res) {
       if (!email) { results.push({ id: sub.id, status: 'skipped', reason: 'no email' }); continue; }
 
       try {
+        // Check credits first
+        var balRes = await fetch(supabaseUrl + '/rest/v1/profiles?id=eq.' + sub.user_id + '&select=token_balance,is_admin', {
+          headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey },
+        });
+        var balData = await balRes.json();
+        var isAdmin = balData[0] && balData[0].is_admin === true;
+        var balance = (balData[0] && balData[0].token_balance) || 0;
+
+        if (!isAdmin && balance < 1) {
+          // Send "no credits" email
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: 'NewsPilot <digest@capitacoreai.io>',
+              to: [email],
+              subject: 'Your NewsPilot Digest is Paused — Buy Credits to Resume',
+              html: '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#111;font-family:Arial,sans-serif;"><div style="max-width:500px;margin:0 auto;padding:40px 24px;text-align:center;">' +
+                '<h1 style="color:#FF6A00;font-size:22px;">Your Weekly Digest is Paused</h1>' +
+                '<p style="color:#ccc;font-size:15px;line-height:1.6;">Hey ' + name + ', your NewsPilot subscription needs credits to continue. Each weekly digest costs 1 credit.</p>' +
+                '<a href="https://capitacoreai.io/pricing.html" style="display:inline-block;margin:20px 0;padding:14px 32px;background:#FF6A00;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;">Buy Credits</a>' +
+                '<p style="color:#666;font-size:12px;margin-top:24px;">Once you have credits, your digest will automatically resume next Friday.</p>' +
+                '<p style="color:#444;font-size:11px;margin-top:16px;">CapitaCoreAI &middot; <a href="https://capitacoreai.io/newspilot-app.html" style="color:#FF6A00;">Manage Subscription</a></p>' +
+                '</div></body></html>',
+            }),
+          });
+          results.push({ id: sub.id, email: email, status: 'paused', reason: 'no credits' });
+          continue;
+        }
+
         // 2. Fetch news for this subscription's topics
         var topics = sub.topics || [];
         var prompt = sub.prompt_text || topics.join(', ');
