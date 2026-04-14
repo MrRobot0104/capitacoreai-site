@@ -1131,6 +1131,8 @@ async function executeSaveKey() {
     var enc = await encryptKey(pendingSaveKey.key, pw.value);
     var res = await sb.from('meraki_keys').insert({ user_id: currentSession.user.id, label: pendingSaveKey.orgName || 'Meraki Key', org_id: pendingSaveKey.orgId || null, encrypted_key: enc.encrypted, salt: enc.salt, iv: enc.iv, key_hint: pendingSaveKey.key.slice(-4) });
     if (res.error) { if (err) { err.textContent = 'Save failed: ' + res.error.message; err.style.display = 'block'; } return; }
+    // Cache the raw key so user doesn't need password again this session
+    if (res.data && res.data[0]) sessionStorage.setItem('mk_' + res.data[0].id, pendingSaveKey.key);
     pendingSaveKey = null;
     var msgs = document.querySelectorAll('.msg.bot'); if (msgs.length) msgs[msgs.length - 1].remove();
     addMessage('<span style="color:#22c55e;">Key saved and encrypted.</span> Access it from <strong>My Keys</strong>.', 'bot');
@@ -1162,7 +1164,18 @@ async function loadSavedKeys() {
 
 var pendingUseKeyId = null;
 
-function useKey(keyId) {
+async function useKey(keyId) {
+  // Check if decrypted key is cached in sessionStorage
+  var cached = sessionStorage.getItem('mk_' + keyId);
+  if (cached) {
+    closeKeysModal();
+    var res = await sb.from('meraki_keys').select('label').eq('id', keyId).single();
+    var label = (res.data && res.data.label) || 'Saved Key';
+    addMessage('Connecting with saved key for <strong>' + escapeHtml(label) + '</strong>...', 'bot');
+    await connectMeraki(cached);
+    return;
+  }
+  // Not cached — need password to decrypt
   pendingUseKeyId = keyId;
   var prompt = document.getElementById('keysPasswordPrompt');
   var input = document.getElementById('keysPasswordInput');
@@ -1180,6 +1193,8 @@ async function submitUseKey() {
   if (!res.data) { error.textContent = 'Key not found.'; error.style.display = 'block'; return; }
   try {
     var rawKey = await decryptKey(res.data.encrypted_key, res.data.salt, res.data.iv, input.value);
+    // Cache decrypted key in sessionStorage — available until tab closes
+    sessionStorage.setItem('mk_' + pendingUseKeyId, rawKey);
     closeKeysModal();
     addMessage('Connecting with saved key for <strong>' + escapeHtml(res.data.label) + '</strong>...', 'bot');
     await connectMeraki(rawKey);
