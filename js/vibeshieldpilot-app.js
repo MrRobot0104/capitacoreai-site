@@ -415,11 +415,12 @@ async function startScan() {
     var seenIds = {};
     var pollDone = false;
     var pollCount = 0;
-    var maxPolls = 150; // ~6 minutes at 2.5s intervals
+    var maxPolls = 60; // ~6 minutes at 6s intervals
 
     while (!pollDone && pollCount < maxPolls) {
       pollCount++;
-      await new Promise(function(r) { setTimeout(r, 2500); });
+      // Wait 6 seconds between polls to avoid rate limiting
+      await new Promise(function(r) { setTimeout(r, 6000); });
 
       try {
         var pollRes = await fetch('/api/vibeshieldpilot-scan', {
@@ -429,7 +430,10 @@ async function startScan() {
         });
 
         if (!pollRes.ok) {
-          addConsoleLine('Poll error: ' + pollRes.status, 'err');
+          if (pollRes.status === 429) {
+            // Rate limited — back off 10 seconds
+            await new Promise(function(r) { setTimeout(r, 10000); });
+          }
           continue;
         }
 
