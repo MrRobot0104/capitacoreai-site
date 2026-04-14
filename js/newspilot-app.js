@@ -64,6 +64,8 @@ async function loadSubscription() {
     currentSubscription = active;
     document.getElementById('subBar').classList.add('active');
     document.getElementById('subTopics').textContent = (active.topics || []).join(', ') || active.prompt_text.substring(0, 50);
+    document.getElementById('manageSubsBtn').style.display = 'inline-flex';
+    document.getElementById('subscribeBtn').style.display = 'none';
   }
 }
 
@@ -177,34 +179,12 @@ function renderDigest(text) {
 var lastDigestPrompt = '';
 var lastDigestTopics = [];
 
-// ─── Conversation ────────────────────────────────────────────
-async function startConversation() {
-  if (!currentSession) return false;
-  try {
-    var res = await fetch('/api/newspilot-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
-      body: JSON.stringify({ action: 'start_conversation' }),
-    });
-    if (res.status === 402) { addMessage('No credits remaining. [Buy credits](pricing.html) to continue.', 'bot'); return false; }
-    if (!res.ok) { addMessage('Failed to start. Try again.', 'bot'); return false; }
-    var data = await res.json();
-    creditBalance = data.remaining;
-    refreshCredits();
-    conversationStarted = true;
-    msgCount = 0;
-    msgLimit = MSGS_PER_CREDIT;
-    enableInput();
-    return true;
-  } catch (e) { addMessage('Error: ' + e.message, 'bot'); return false; }
-}
-
-async function continueConversation() {
-  var ok = await startConversation();
-  if (ok) {
-    msgLimit += MSGS_PER_CREDIT;
-    addMessage('Added ' + MSGS_PER_CREDIT + ' more messages.', 'bot');
-  }
+// ─── Conversation — no credit gate, subscription model ───────
+function startConversation() {
+  conversationStarted = true;
+  msgCount = 0;
+  msgLimit = 999; // unlimited for subscribers
+  return true;
 }
 
 async function handleSend() {
@@ -332,9 +312,93 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
   localStorage.clear(); sessionStorage.clear(); window.location.href = '/';
 });
 document.getElementById('editSubBtn').addEventListener('click', function() {
-  addMessage('What would you like to change about your subscription? Tell me your updated interests.', 'bot');
+  openSubsModal();
 });
 document.getElementById('cancelSubBtn').addEventListener('click', handleCancelSub);
+
+// Subscriptions modal
+document.getElementById('manageSubsBtn').addEventListener('click', openSubsModal);
+document.getElementById('subsClose').addEventListener('click', function() {
+  document.getElementById('subsOverlay').classList.remove('active');
+});
+document.getElementById('subsOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('active');
+});
+
+async function openSubsModal() {
+  document.getElementById('subsOverlay').classList.add('active');
+  var list = document.getElementById('subsList');
+  list.innerHTML = '<p style="color:#64748b;text-align:center;">Loading...</p>';
+
+  var res = await fetch('/api/newspilot-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ action: 'get_subs' }),
+  });
+  if (!res.ok) { list.innerHTML = '<p style="color:#ef4444;">Failed to load.</p>'; return; }
+  var data = await res.json();
+  var subs = data.subscriptions || [];
+
+  if (subs.length === 0) {
+    list.innerHTML = '<p style="color:#64748b;text-align:center;padding:24px 0;">No subscriptions yet. Generate a digest and click Subscribe to get started.</p>';
+    return;
+  }
+
+  var html = '';
+  subs.forEach(function(s) {
+    var date = new Date(s.created_at).toLocaleDateString();
+    var status = s.active ? '<span style="color:#22c55e;">Active</span>' : '<span style="color:#ef4444;">Cancelled</span>';
+    var topicStr = (s.topics || []).join(', ') || s.prompt_text.substring(0, 80);
+    html += '<div class="sub-item" data-sub-id="' + s.id + '">' +
+      '<div class="sub-topics">' + escapeHtml(topicStr) + '</div>' +
+      '<div class="sub-meta">Created ' + date + ' &middot; ' + status + ' &middot; Weekly (Friday 8AM EST)</div>' +
+      '<div class="sub-prompt">' + escapeHtml(s.prompt_text.substring(0, 200)) + '</div>' +
+      (s.active ? '<div class="sub-actions">' +
+        '<button class="sub-btn edit" onclick="toggleEditSub(\'' + s.id + '\')">Edit Prompt</button>' +
+        '<button class="sub-btn cancel" onclick="cancelSubFromModal(\'' + s.id + '\')">Cancel Subscription</button>' +
+      '</div>' +
+      '<div class="sub-edit-area" id="edit-' + s.id + '">' +
+        '<textarea id="edittext-' + s.id + '">' + escapeHtml(s.prompt_text) + '</textarea>' +
+        '<div class="edit-actions">' +
+          '<button class="sub-btn edit" onclick="saveEditSub(\'' + s.id + '\')">Save</button>' +
+          '<button class="sub-btn cancel" onclick="toggleEditSub(\'' + s.id + '\')">Cancel</button>' +
+        '</div>' +
+      '</div>' : '') +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function toggleEditSub(id) {
+  var el = document.getElementById('edit-' + id);
+  if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+async function saveEditSub(id) {
+  var textarea = document.getElementById('edittext-' + id);
+  if (!textarea || !textarea.value.trim()) return;
+  await fetch('/api/newspilot-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ action: 'edit_sub', subId: id, prompt: textarea.value.trim() }),
+  });
+  openSubsModal(); // Refresh
+}
+
+async function cancelSubFromModal(id) {
+  if (!confirm('Cancel this subscription? You won\'t receive weekly digests anymore.')) return;
+  await fetch('/api/newspilot-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ action: 'cancel_sub', subId: id }),
+  });
+  if (currentSubscription && currentSubscription.id === id) {
+    currentSubscription = null;
+    document.getElementById('subBar').classList.remove('active');
+    document.getElementById('subscribeBtn').style.display = 'inline-flex';
+  }
+  openSubsModal(); // Refresh
+}
 
 // Subscribe button
 document.getElementById('subscribeBtn').addEventListener('click', async function() {
@@ -358,16 +422,17 @@ document.getElementById('subscribeBtn').addEventListener('click', async function
       document.getElementById('subBar').classList.add('active');
       document.getElementById('subTopics').textContent = lastDigestTopics.join(', ') || lastDigestPrompt.substring(0, 50);
       btn.style.display = 'none';
-      addMessage('Subscribed! You\'ll receive a personalized digest every Friday. 1 credit will be deducted each week. Here\'s what you\'re getting:\n\n**Topics:** ' + (lastDigestTopics.join(', ') || lastDigestPrompt) + '\n\n**Delivery:** Every Friday\n**Cost:** 1 credit per email\n\nYou can edit or cancel anytime from the bar below.', 'bot');
+      document.getElementById('manageSubsBtn').style.display = 'inline-flex';
+      addMessage('Subscribed! You\'ll receive a personalized digest every Friday. Check your email for confirmation.\n\n**Topics:** ' + (lastDigestTopics.join(', ') || lastDigestPrompt) + '\n\n**Delivery:** Every Friday at 8AM EST\n\nManage your subscription from **My Subscriptions** in the top bar.', 'bot');
       refreshCredits();
     } else {
       addMessage('Failed to subscribe: ' + (data.error || 'Try again.'), 'bot');
       btn.disabled = false;
-      btn.textContent = 'Subscribe (1 credit)';
+      btn.textContent = 'Subscribe Weekly';
     }
   } catch (e) {
     addMessage('Error: ' + e.message, 'bot');
     btn.disabled = false;
-    btn.textContent = 'Subscribe (1 credit)';
+    btn.textContent = 'Subscribe Weekly';
   }
 });
