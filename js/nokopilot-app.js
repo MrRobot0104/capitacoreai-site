@@ -181,16 +181,13 @@ function hideTyping() {
 
 // ─── Meraki API (proxied through Vercel to bypass CORS) ──────────
 async function merakiCall(path, method, body) {
-  // Force token refresh before API calls
-  try {
-    var refreshResult = await sb.auth.refreshSession();
-    if (refreshResult.data.session) {
-      currentSession = refreshResult.data.session;
-    } else {
-      var fallback = await sb.auth.getSession();
-      if (fallback.data.session) currentSession = fallback.data.session;
-    }
-  } catch (e) {}
+  // Get current session — only refresh if token is near expiry
+  if (!currentSession || !currentSession.access_token) {
+    try {
+      var freshSession = await sb.auth.getSession();
+      if (freshSession.data.session) currentSession = freshSession.data.session;
+    } catch (e) {}
+  }
   if (!currentSession || !currentSession.access_token) {
     addMessage('Session expired. Please <a href="account.html" style="color:#FF6A00;">log in again</a>.', 'bot');
     return { errors: ['Not authenticated — session expired'] };
@@ -300,6 +297,7 @@ async function switchOrg(orgId) {
   var org = allOrgs.find(function(o) { return o.id === orgId; });
   if (!org) return;
   orgData = org;
+  connected = true;
   selectedNetworkId = 'all';
   var selector = document.getElementById('networkSelector');
   selector.value = 'all';
