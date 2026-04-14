@@ -348,11 +348,11 @@ module.exports = async (req, res) => {
 
     // ─── Start Conversation (deduct 1 credit) ─────────────────
     if (action === 'start_conversation') {
-      if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999, cost: 1 });
+      if (isAdmin) return res.status(200).json({ ok: true, remaining: 9999, cost: 2 });
       const deductRes = await fetch(supabaseUrl + '/rest/v1/rpc/deduct_credits', {
         method: 'POST',
         headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_uuid: user.id, amount: 1 }),
+        body: JSON.stringify({ user_uuid: user.id, amount: 2 }),
       });
       if (!deductRes.ok) {
         // Fallback to deduct_token if deduct_credits doesn't exist yet
@@ -364,11 +364,11 @@ module.exports = async (req, res) => {
         if (!fallbackRes.ok) return res.status(500).json({ error: 'Failed to check credits' });
         const fb = await fallbackRes.json();
         if (fb === -1) return res.status(402).json({ error: 'No credits remaining.' });
-        return res.status(200).json({ ok: true, remaining: fb, cost: 1 });
+        return res.status(200).json({ ok: true, remaining: fb, cost: 2 });
       }
       const newBalance = await deductRes.json();
       if (newBalance === -1) return res.status(402).json({ error: 'No credits remaining.' });
-      return res.status(200).json({ ok: true, remaining: newBalance, cost: 1 });
+      return res.status(200).json({ ok: true, remaining: newBalance, cost: 2 });
     }
 
     // ─── Chat (send message to Claude) ────────────────────────

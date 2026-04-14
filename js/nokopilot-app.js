@@ -1,5 +1,5 @@
 var MSGS_PER_CREDIT = 10;
-var CREDIT_COST = 1;
+var CREDIT_COST = 2;
 var connected = false;
 var merakiKey = null;
 var orgData = null;

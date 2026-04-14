@@ -183,7 +183,7 @@ async function showDashboard(user) {
   var agents = [
     { name: 'DashPilot', desc: 'AI-powered dashboard builder', url: 'dashpilot-app.html', cost: 3 },
     { name: 'VoyagePilot', desc: 'AI-powered travel planner', url: 'voyagepilot-app.html', cost: 2 },
-    { name: 'NokoPilot', desc: 'AI-powered Meraki network agent', url: 'nokopilot-app.html', cost: 1 },
+    { name: 'NokoPilot', desc: 'AI-powered Meraki network agent', url: 'nokopilot-app.html', cost: 2 },
     { name: 'NewsPilot', desc: 'AI-powered news curator', url: 'newspilot-app.html', cost: 1 },
     { name: 'VibeShieldPilot', desc: 'AI-powered security scanner — FREE', url: 'vibeshieldpilot-app.html', cost: 0 },
   ];
