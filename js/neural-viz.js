@@ -213,15 +213,14 @@
       if (Math.random() > 0.5) spawnParticle(from, to, color);
       else spawnParticle(to, from, color);
     }
-    // Spawn data streams during analysis/action — heavy
-    if (state === 'analyzing' && Math.random() < 0.35) {
+    // Light data streams — most action now shows in the CLI terminal
+    if (state === 'analyzing' && Math.random() < 0.08) {
       spawnDataStream();
     }
-    if (state === 'acting' && Math.random() < 0.5) {
+    if (state === 'acting' && Math.random() < 0.1) {
       spawnDataStream();
     }
-    // Ambient data streams when connected — noticeable
-    if (state === 'connected' && Math.random() < 0.06) {
+    if (state === 'connected' && Math.random() < 0.015) {
       spawnDataStream();
     }
   }
@@ -481,9 +480,9 @@
   // ─── Idle animation — ambient hex rain ───────────────────
   setInterval(function() {
     if (state === 'idle') {
-      if (Math.random() < 0.5) spawnDataStream();
+      if (Math.random() < 0.15) spawnDataStream();
     }
-  }, 500);
+  }, 1000);
 
   draw();
 })();

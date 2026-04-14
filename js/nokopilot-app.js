@@ -403,6 +403,125 @@ async function gatherNetworkContext() {
   }
 }
 
+// ─── CLI Terminal ───────────────────────────────────────────────
+var cliTerminal = document.getElementById('cliTerminal');
+var cliBody = document.getElementById('cliBody');
+var cliBadge = document.getElementById('cliBadge');
+var cliTitle = document.getElementById('cliTitle');
+var cliActive = false;
+var cliQueue = [];
+var cliTyping = false;
+
+function cliShow(title) {
+  cliBody.innerHTML = '';
+  cliTitle.textContent = title || 'NokoPilot CLI';
+  cliBadge.textContent = 'EXECUTING';
+  cliBadge.className = 'cli-badge';
+  cliTerminal.classList.add('active');
+  cliActive = true;
+}
+
+function cliHide() {
+  setTimeout(function() {
+    cliBadge.textContent = 'COMPLETE';
+    cliBadge.className = 'cli-badge done';
+    setTimeout(function() {
+      cliTerminal.classList.remove('active');
+      cliActive = false;
+    }, 2000);
+  }, 500);
+}
+
+function cliAddLine(html) {
+  var line = document.createElement('div');
+  line.className = 'cli-line';
+  line.innerHTML = html;
+  cliBody.appendChild(line);
+  cliBody.scrollTop = cliBody.scrollHeight;
+}
+
+function cliAddPrompt(cmd) {
+  cliAddLine('<span class="prompt">noko#</span> <span class="cmd">' + cmd + '</span>');
+}
+
+function cliAddOutput(text, cls) {
+  cliAddLine('<span class="' + (cls || 'output') + '">' + text + '</span>');
+}
+
+function cliAddCursor() {
+  var cursor = document.createElement('div');
+  cursor.className = 'cli-line';
+  cursor.id = 'cliCursorLine';
+  cursor.innerHTML = '<span class="prompt">noko#</span> <span class="cli-cursor"></span>';
+  cliBody.appendChild(cursor);
+  cliBody.scrollTop = cliBody.scrollHeight;
+}
+
+function cliRemoveCursor() {
+  var c = document.getElementById('cliCursorLine');
+  if (c) c.remove();
+}
+
+// Map Meraki API paths to realistic CLI commands
+function pathToCliCommand(path, method) {
+  var m = method || 'GET';
+  // Organizations
+  if (path.match(/\/organizations\/[^/]+\/devices\/statuses/)) return 'show devices status';
+  if (path.match(/\/organizations\/[^/]+\/devices$/)) return 'show inventory devices';
+  if (path.match(/\/organizations\/[^/]+\/networks/)) return 'show networks';
+  if (path.match(/\/organizations\/[^/]+\/uplinks/)) return 'show uplinks status';
+  if (path.match(/\/organizations\/[^/]+\/licenses/)) return 'show license';
+  if (path.match(/\/organizations\/[^/]+\/firmware/)) return 'show firmware upgrades';
+  if (path.match(/\/organizations$/)) return 'show organizations';
+  // Security
+  if (path.includes('/security/intrusion')) return m === 'PUT' ? 'configure security intrusion-prevention' : 'show security intrusion-detection';
+  if (path.includes('/security/malware')) return m === 'PUT' ? 'configure security malware-protection' : 'show security malware-protection';
+  if (path.includes('/contentFiltering')) return m === 'PUT' ? 'configure content-filter' : 'show content-filter';
+  // Firewall
+  if (path.includes('/l3FirewallRules')) return m === 'PUT' ? 'configure access-list' : 'show access-lists';
+  if (path.includes('/l7FirewallRules')) return m === 'PUT' ? 'configure app-firewall' : 'show app-firewall rules';
+  if (path.includes('/portForwardingRules')) return 'show ip nat translations';
+  if (path.includes('/oneToOneNat')) return 'show ip nat static';
+  if (path.includes('/oneToManyNat')) return 'show ip nat pool';
+  // VPN
+  if (path.includes('/vpn/siteToSiteVpn')) return m === 'PUT' ? 'configure crypto isakmp policy' : 'show crypto ipsec sa';
+  // VLANs
+  if (path.includes('/appliance/vlans') && m === 'POST') return 'vlan ' + (path.split('/').pop() || 'new');
+  if (path.includes('/appliance/vlans') && m === 'DELETE') return 'no vlan ' + path.split('/').pop();
+  if (path.includes('/appliance/vlans')) return m === 'PUT' ? 'configure vlan' : 'show vlan brief';
+  if (path.includes('/singleLan')) return 'show ip interface brief';
+  // Wireless
+  if (path.includes('/wireless/ssids') && m === 'PUT') return 'configure dot11 ssid';
+  if (path.includes('/wireless/ssids')) return 'show dot11 associations';
+  if (path.includes('/wireless/rfProfiles')) return 'show dot11 radio';
+  if (path.includes('/wireless/settings')) return 'show wireless config';
+  // Switch
+  if (path.includes('/switch/ports/statuses')) return 'show interfaces status';
+  if (path.includes('/switch/ports') && m === 'PUT') return 'configure interface';
+  if (path.includes('/switch/ports')) return 'show interfaces switchport';
+  if (path.includes('/switch/stp')) return m === 'PUT' ? 'configure spanning-tree' : 'show spanning-tree';
+  if (path.includes('/switch/accessPolicies')) return 'show dot1x';
+  // Devices
+  if (path.includes('/reboot')) return 'reload';
+  if (path.includes('/devices/remove')) return 'no network-device';
+  if (path.includes('/devices/claim')) return 'network-device add';
+  if (path.match(/\/devices\/[^/]+$/) && m === 'PUT') return 'configure hostname';
+  if (path.match(/\/devices\/[^/]+$/)) return 'show version';
+  if (path.includes('/lldpCdp')) return 'show cdp neighbors';
+  if (path.includes('/managementInterface')) return 'show ip interface management';
+  if (path.includes('/clients')) return 'show mac address-table';
+  // Network
+  if (path.match(/\/networks\/[^/]+$/) && m === 'PUT') return 'configure network';
+  if (path.includes('/firmwareUpgrades')) return m === 'PUT' ? 'configure firmware upgrade-window' : 'show firmware versions';
+  if (path.includes('/alerts/settings')) return 'show snmp alerts';
+  if (path.includes('/settings')) return 'show running-config';
+  if (path.includes('/staticRoutes')) return 'show ip route static';
+  if (path.includes('/trafficShaping/uplinkBandwidth')) return m === 'PUT' ? 'configure bandwidth' : 'show bandwidth';
+  if (path.includes('/camera')) return 'show camera config';
+  // Fallback
+  return m === 'GET' ? 'show ' + path.split('/').slice(-2).join(' ') : 'configure ' + path.split('/').slice(-2).join(' ');
+}
+
 // ─── Network scope enforcement ──────────────────────────────────
 // When a specific network is selected, block fetches/actions targeting other networks
 function isPathAllowed(path) {
@@ -415,35 +534,79 @@ function isPathAllowed(path) {
 
 // ─── Execute Fetches (Claude requests data) ──────────────────────
 async function executeFetches(fetches) {
+  if (fetches.length > 0) cliShow('Fetching Network Data');
+
   var results = {};
-  var promises = fetches.map(function(f) {
+  for (var fi = 0; fi < fetches.length; fi++) {
+    var f = fetches[fi];
+    var cliCmd = pathToCliCommand(f.path, 'GET');
+    cliRemoveCursor();
+    cliAddPrompt(cliCmd);
+
     if (!isPathAllowed(f.path)) {
-      results[f.path] = { errors: ['Blocked: this network is not selected. Switch to "All Networks" or select the correct network.'] };
-      return Promise.resolve();
+      results[f.path] = { errors: ['Blocked: this network is not selected.'] };
+      cliAddOutput('% Access denied — network not in scope', 'error');
+      cliAddCursor();
+      continue;
     }
-    return merakiGet(f.path).then(function(data) {
+
+    try {
+      var data = await merakiGet(f.path);
       results[f.path] = data;
-    }).catch(function(e) {
+      if (data && data.errors) {
+        cliAddOutput('% Error: ' + data.errors.join('; '), 'error');
+      } else if (Array.isArray(data)) {
+        cliAddOutput(data.length + ' entries returned', 'success');
+        // Show first couple items as preview
+        data.slice(0, 3).forEach(function(item) {
+          var preview = item.name || item.serial || item.id || item.status || JSON.stringify(item).substring(0, 60);
+          cliAddOutput('  ' + preview, 'dim');
+        });
+        if (data.length > 3) cliAddOutput('  ... and ' + (data.length - 3) + ' more', 'dim');
+      } else if (data && typeof data === 'object') {
+        // Show key fields
+        var keys = Object.keys(data).slice(0, 4);
+        keys.forEach(function(k) {
+          var v = data[k];
+          if (typeof v === 'object') v = JSON.stringify(v).substring(0, 50);
+          cliAddOutput('  ' + k + ': ' + v, 'output');
+        });
+      }
+    } catch (e) {
       results[f.path] = { _error: e.message };
-    });
-  });
-  await Promise.all(promises);
+      cliAddOutput('% Error: ' + e.message, 'error');
+    }
+    cliAddCursor();
+  }
   return results;
 }
 
 // ─── Execute Actions (Claude makes changes) ──────────────────────
 async function executeActions(actions) {
+  if (actions.length > 0 && !cliActive) cliShow('Applying Configuration');
+  else if (actions.length > 0 && cliActive) {
+    cliRemoveCursor();
+    cliAddLine('<span class="dim">─────────────────────────────────────</span>');
+    cliAddOutput('Entering configuration mode...', 'info');
+  }
+
   var results = {};
   var failures = [];
   for (var i = 0; i < actions.length; i++) {
     var a = actions[i];
+    var method = (a.method || 'GET').toUpperCase();
+    var cliCmd = pathToCliCommand(a.path, method);
+    cliRemoveCursor();
+    cliAddPrompt(cliCmd);
+
     if (!isPathAllowed(a.path)) {
       results[a.path] = { _error: 'Blocked: this network is not selected.' };
       failures.push(a.path + ': Blocked — wrong network selected');
+      cliAddOutput('% Access denied — network not in scope', 'error');
+      cliAddCursor();
       continue;
     }
     try {
-      var method = (a.method || 'GET').toUpperCase();
       var data;
       if (method === 'POST') data = await merakiPost(a.path, a.body || {});
       else if (method === 'PUT') data = await merakiPut(a.path, a.body || {});
@@ -454,16 +617,21 @@ async function executeActions(actions) {
         var errMsg = data.errors.join('; ');
         results[a.path] = { _error: errMsg, _status: data._status };
         failures.push(a.path + ': ' + errMsg);
+        cliAddOutput('% Error: ' + errMsg, 'error');
       } else if (data === null) {
         results[a.path] = { _error: 'No response from Meraki API' };
         failures.push(a.path + ': No response');
+        cliAddOutput('% No response from device', 'error');
       } else {
         results[a.path] = data;
+        cliAddOutput('Configuration applied successfully.', 'success');
       }
     } catch (e) {
       results[a.path] = { _error: e.message };
       failures.push(a.path + ': ' + e.message);
+      cliAddOutput('% Error: ' + e.message, 'error');
     }
+    cliAddCursor();
   }
   if (failures.length > 0) {
     addMessage('<strong style="color:#ef4444;">Action failed:</strong><br>' + failures.map(function(f) { return '&bull; ' + escapeHtml(f); }).join('<br>') + '<br><br><span style="color:#94a3b8;font-size:12px;">The requested changes were NOT applied.</span>', 'bot');
@@ -689,6 +857,7 @@ async function handleSend() {
 
       if (msgCount >= msgLimit) { showLimitBar(); }
       if (window.neuralVizDone) window.neuralVizDone();
+      if (cliActive) cliHide();
 
       // Merge any pending actions from fetch loop with final response actions
       var allActions = (pendingActions || []).concat(data.actions || []);
