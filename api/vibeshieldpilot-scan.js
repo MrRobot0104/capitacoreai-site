@@ -178,7 +178,9 @@ module.exports = async function handler(req, res) {
       });
 
       if (!streamRes.ok) {
-        sendEvent({ type: 'error', message: 'Failed to connect to scan stream.' });
+        var streamErr = await streamRes.text().catch(function() { return ''; });
+        console.error('Stream connect failed:', streamRes.status, streamErr);
+        sendEvent({ type: 'error', message: 'Failed to connect to scan stream (HTTP ' + streamRes.status + '). ' + streamErr.substring(0, 200) });
         res.end();
         return;
       }
