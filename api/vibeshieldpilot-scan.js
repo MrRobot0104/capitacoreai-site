@@ -170,7 +170,7 @@ module.exports = async function handler(req, res) {
       sendEvent({ type: 'scan_started' });
 
       // 4. Stream events from the managed agent session
-      var streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/events', {
+      var streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/stream', {
         method: 'GET',
         headers: {
           'x-api-key': apiKey,
@@ -210,29 +210,27 @@ module.exports = async function handler(req, res) {
             var evt = JSON.parse(dataMatch[1]);
 
             if (evt.type === 'agent.message') {
+              // Per docs: agent.message has .content[] array of blocks
               var content = '';
-              if (evt.agent_message) {
-                if (typeof evt.agent_message.content === 'string') {
-                  content = evt.agent_message.content;
-                } else if (Array.isArray(evt.agent_message.content)) {
-                  content = evt.agent_message.content.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
-                } else {
-                  content = JSON.stringify(evt.agent_message.content);
-                }
+              var contentArr = evt.content || (evt.agent_message && evt.agent_message.content);
+              if (typeof contentArr === 'string') {
+                content = contentArr;
+              } else if (Array.isArray(contentArr)) {
+                content = contentArr.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
+              } else if (contentArr) {
+                content = JSON.stringify(contentArr);
               }
-              sendEvent({ type: 'message', content: content });
+              if (content) sendEvent({ type: 'message', content: content });
             } else if (evt.type === 'agent.tool_use') {
-              var toolInput = {};
-              if (evt.tool_use && evt.tool_use.input) {
-                if (typeof evt.tool_use.input.command === 'string') {
-                  toolInput.command = evt.tool_use.input.command.substring(0, 300);
-                } else if (typeof evt.tool_use.input.path === 'string') {
-                  toolInput.path = evt.tool_use.input.path;
-                } else if (typeof evt.tool_use.input.pattern === 'string') {
-                  toolInput.pattern = evt.tool_use.input.pattern;
-                }
-              }
-              sendEvent({ type: 'tool_use', tool: (evt.tool_use && evt.tool_use.name) || '', input: toolInput });
+              // Per docs: agent.tool_use has .name and .input at top level
+              var toolName = evt.name || (evt.tool_use && evt.tool_use.name) || '';
+              var toolInput = evt.input || (evt.tool_use && evt.tool_use.input) || {};
+              var inputSummary = {};
+              if (typeof toolInput.command === 'string') inputSummary.command = toolInput.command.substring(0, 300);
+              else if (typeof toolInput.path === 'string') inputSummary.path = toolInput.path;
+              else if (typeof toolInput.pattern === 'string') inputSummary.pattern = toolInput.pattern;
+              else if (typeof toolInput.file_path === 'string') inputSummary.path = toolInput.file_path;
+              sendEvent({ type: 'tool_use', tool: toolName, input: inputSummary });
             } else if (evt.type === 'session.status_idle') {
               sendEvent({ type: 'scan_complete' });
               streamDone = true;
