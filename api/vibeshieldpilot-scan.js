@@ -108,18 +108,13 @@ module.exports = async function handler(req, res) {
     try {
       var repoName = cleanUrl.split('/').slice(-2).join('/');
 
-      // 1. Create session with repo mounted
+      // 1. Create session (agent clones the repo itself via git)
       var sessionRes = await fetch('https://api.anthropic.com/v1/sessions', {
         method: 'POST',
         headers: agentHeaders,
         body: JSON.stringify({
           agent: AGENT_ID,
           environment_id: ENV_ID,
-          resources: [{
-            type: 'github_repository',
-            url: cleanUrl,
-            mount_path: '/workspace/repo',
-          }],
         }),
       });
 
@@ -157,7 +152,7 @@ module.exports = async function handler(req, res) {
             type: 'user.message',
             content: [{
               type: 'text',
-              text: 'Perform a complete security audit of the repository mounted at /workspace/repo (' + repoName + '). Follow your full 3-phase process: PHASE 1 RECONNAISSANCE, then PHASE 2 THREAT ANALYSIS (all 14 categories), then PHASE 3 SECURITY SCORECARD. Clearly label each phase and category as you analyze them. Be thorough — check every file.',
+              text: 'First, clone this public GitHub repository: git clone ' + cleanUrl + ' /workspace/repo\n\nThen perform a complete security audit of /workspace/repo (' + repoName + '). Follow your full 3-phase process: PHASE 1 RECONNAISSANCE, then PHASE 2 THREAT ANALYSIS (all 14 categories), then PHASE 3 SECURITY SCORECARD. Clearly label each phase and category as you analyze them. Be thorough — check every file.',
             }],
           }],
         }),
