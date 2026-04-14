@@ -265,15 +265,21 @@ module.exports = async (req, res) => {
           return fetch(searchUrl, { signal: AbortSignal.timeout(15000) })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-              // Google news tab returns news_results
+              if (data.error) {
+                console.error('SerpAPI error:', data.error);
+                results[s.topic || s.query] = [{ title: 'Search error: ' + data.error, source: '', date: '', link: '', snippet: '' }];
+                return;
+              }
               var articles = (data.news_results || []).slice(0, 6).map(function(a) {
                 return { title: a.title, source: a.source, date: a.date, link: a.link, snippet: a.snippet || '' };
               });
-              // Fallback: check organic_results if news_results is empty
               if (articles.length === 0 && data.organic_results) {
                 articles = data.organic_results.slice(0, 6).map(function(a) {
                   return { title: a.title, source: a.source || a.displayed_link, date: a.date || '', link: a.link, snippet: a.snippet || '' };
                 });
+              }
+              if (articles.length === 0) {
+                console.error('SerpAPI: no results for query:', s.query, 'Keys in response:', Object.keys(data).join(', '));
               }
               results[s.topic || s.query] = articles;
             })
