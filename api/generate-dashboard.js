@@ -33,7 +33,9 @@ QUALITY:
 
 module.exports = async (req, res) => {
   const { applyRateLimit } = require('./_rateLimit');
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  var allowedOrigins = ['https://capitacoreai.io', 'https://www.capitacoreai.io'];
+  var origin = req.headers.origin;
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(origin) ? origin : 'https://capitacoreai.io');
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -46,6 +48,17 @@ module.exports = async (req, res) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     console.error('[SECURITY] generate-dashboard: unauthenticated request blocked');
     return res.status(401).json({ error: 'Not authenticated' });
+  }
+  const token = authHeader.split(' ')[1];
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnon = process.env.SUPABASE_ANON_KEY;
+
+  const userRes = await fetch(supabaseUrl + '/auth/v1/user', {
+    headers: { 'Authorization': 'Bearer ' + token, 'apikey': supabaseAnon },
+  });
+  if (!userRes.ok) {
+    console.error('[SECURITY] generate-dashboard: invalid token from', req.headers['x-forwarded-for'] || 'unknown');
+    return res.status(401).json({ error: 'Invalid session' });
   }
 
   const { prompt } = req.body;

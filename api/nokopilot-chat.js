@@ -235,7 +235,9 @@ Keep responses SHORT. Answer then Suggest. That's it.`;
 
 module.exports = async (req, res) => {
   const { applyRateLimit } = require('./_rateLimit');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  var allowedOrigins = ['https://capitacoreai.io', 'https://www.capitacoreai.io'];
+  var origin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes(origin) ? origin : 'https://capitacoreai.io');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -268,7 +270,8 @@ module.exports = async (req, res) => {
     const isAdmin = adminData[0]?.is_admin === true;
     const balance = adminData[0]?.token_balance || 0;
 
-    const { action, messages, networkContext } = req.body;
+    const { action, messages } = req.body;
+    let { networkContext } = req.body;
 
     // ─── Start Conversation (deduct 1 credit) ─────────────────
     if (action === 'start_conversation') {
@@ -300,6 +303,9 @@ module.exports = async (req, res) => {
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'No messages provided' });
       }
+      if (messages.length > 100) {
+        return res.status(400).json({ error: 'Too many messages' });
+      }
 
       // Server-side credit check: must have credits or be admin
       if (!isAdmin && balance <= 0) {
@@ -308,6 +314,16 @@ module.exports = async (req, res) => {
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'AI not configured' });
+
+      // Validate networkContext to prevent prompt injection
+      if (networkContext) {
+        if (typeof networkContext !== 'object' || Array.isArray(networkContext)) {
+          networkContext = null;
+        } else {
+          var contextStr = JSON.stringify(networkContext);
+          if (contextStr.length > 50000) networkContext = null;
+        }
+      }
 
       // Build the messages array for Claude
       // Find the last REAL user message (not fetch_results/action_results)

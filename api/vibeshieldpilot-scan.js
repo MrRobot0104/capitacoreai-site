@@ -1,7 +1,9 @@
 const { applyRateLimit } = require('./_rateLimit');
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  var allowedOrigins = ['https://capitacoreai.io', 'https://www.capitacoreai.io'];
+  var origin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes(origin) ? origin : 'https://capitacoreai.io');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();

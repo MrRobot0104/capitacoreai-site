@@ -7,7 +7,9 @@ const PACKAGES = {
 
 module.exports = async (req, res) => {
   const { applyRateLimit } = require('./_rateLimit');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  var allowedOrigins = ['https://capitacoreai.io', 'https://www.capitacoreai.io'];
+  var origin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes(origin) ? origin : 'https://capitacoreai.io');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -51,8 +53,9 @@ module.exports = async (req, res) => {
     params.append('line_items[0][price_data][product_data][name]', plan.name);
     params.append('line_items[0][price_data][unit_amount]', plan.price.toString());
     params.append('line_items[0][quantity]', '1');
-    params.append('success_url', (req.headers.origin || 'https://capitacoreai.io') + '/pricing.html?payment=success');
-    params.append('cancel_url', (req.headers.origin || 'https://capitacoreai.io') + '/pricing.html?payment=cancelled');
+    var baseUrl = process.env.APP_URL || 'https://capitacoreai.io';
+    params.append('success_url', baseUrl + '/pricing.html?payment=success');
+    params.append('cancel_url', baseUrl + '/pricing.html?payment=cancelled');
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

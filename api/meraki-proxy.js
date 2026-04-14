@@ -3,7 +3,9 @@
 
 module.exports = async (req, res) => {
   const { applyRateLimit } = require('./_rateLimit');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  var allowedOrigins = ['https://capitacoreai.io', 'https://www.capitacoreai.io'];
+  var origin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes(origin) ? origin : 'https://capitacoreai.io');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -29,11 +31,23 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing merakiKey or path' });
     }
 
-    // Validate path — allowlist of safe Meraki API prefixes
-    const allowedPrefixes = ['/organizations', '/networks', '/devices', '/appliance', '/switch', '/wireless', '/camera', '/insight', '/sm', '/sensor', '/cellularGateway', '/licensing', '/administered'];
-    const cleanPath = path.replace(/\.\./g, '').replace(/\/\//g, '/');
-    if (!cleanPath.startsWith('/') || !allowedPrefixes.some(function(p) { return cleanPath.startsWith(p); })) {
-      console.error('[SECURITY] meraki-proxy: blocked path:', path);
+    // Validate path — use URL parser to prevent traversal
+    var cleanPath = path.replace(/\/\//g, '/');
+    try {
+      var targetUrl = new URL('https://api.meraki.com/api/v1' + cleanPath);
+      if (targetUrl.hostname !== 'api.meraki.com') {
+        console.error('[SECURITY] meraki-proxy: host mismatch:', targetUrl.hostname);
+        return res.status(400).json({ error: 'Invalid API path' });
+      }
+      // Ensure the resolved path still starts with an allowed prefix
+      var resolvedPath = targetUrl.pathname.replace('/api/v1', '');
+      var allowedPrefixes = ['/organizations', '/networks', '/devices', '/appliance', '/switch', '/wireless', '/camera', '/insight', '/sm', '/sensor', '/cellularGateway', '/licensing', '/administered'];
+      if (!resolvedPath.startsWith('/') || !allowedPrefixes.some(function(p) { return resolvedPath.startsWith(p); })) {
+        console.error('[SECURITY] meraki-proxy: blocked path:', resolvedPath);
+        return res.status(400).json({ error: 'Invalid API path' });
+      }
+      cleanPath = resolvedPath;
+    } catch (e) {
       return res.status(400).json({ error: 'Invalid API path' });
     }
 
