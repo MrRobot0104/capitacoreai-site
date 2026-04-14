@@ -782,9 +782,21 @@ async function handleSend() {
     return;
   }
 
+  // Before adding the new message, clean stale fetch/action results from history
+  // Keep only the last assistant response and remove data blobs so Claude focuses on the new question
+  chatHistory = chatHistory.filter(function(m) {
+    if (m.role === 'user' && (m.content.includes('<fetch_results>') || m.content.includes('<action_results>') || m.content.includes('<network_data>'))) {
+      return false; // Remove data blobs from previous interactions
+    }
+    return true;
+  });
+  // Keep history manageable — only last 6 real messages
+  if (chatHistory.length > 6) {
+    chatHistory = chatHistory.slice(-6);
+  }
+
   chatHistory.push({ role: 'user', content: text });
   showTyping();
-
 
   try {
     var networkContext = await gatherNetworkContext();
@@ -793,10 +805,9 @@ async function handleSend() {
 
     // ─── Conversation Loop: Claude can fetch data and keep going ───
     for (var loop = 0; loop < maxLoops; loop++) {
-      // Trim history — but always keep the latest user message intact
-      if (chatHistory.length > 20) {
-        // Keep first 2 messages (initial context) + last 10 messages
-        chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-10));
+      // Keep history tight within the fetch loop
+      if (chatHistory.length > 14) {
+        chatHistory = chatHistory.slice(-10);
       }
 
       // Always send network context so Claude knows the selected network scope
