@@ -2,6 +2,12 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "framework": null,
+  "crons": [
+    {
+      "path": "/api/newspilot-cron",
+      "schedule": "0 13 * * 1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -36,6 +42,10 @@
     "api/newspilot-chat.js": {
       "memory": 512,
       "maxDuration": 120
+    },
+    "api/newspilot-cron.js": {
+      "memory": 1024,
+      "maxDuration": 300
     },
     "api/nokopilot-chat.js": {
       "memory": 512,
