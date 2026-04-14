@@ -166,95 +166,73 @@ module.exports = async function handler(req, res) {
 
       sendEvent({ type: 'scan_started' });
 
-      // 4. Stream events — try managed-agents header first, fall back to agent-api
-      var streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/stream', {
-        method: 'GET',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'agent-api-2026-03-01',
-          'Accept': 'text/event-stream',
-        },
-      });
-      // If agent-api header doesn't work, try managed-agents
-      if (!streamRes.ok && streamRes.status === 400) {
-        streamRes = await fetch('https://api.anthropic.com/v1/sessions/' + sessionId + '/stream', {
+      // 4. Poll for events (streaming requires incompatible beta header, so we poll)
+      var lastEventId = null;
+      var pollDone = false;
+      var pollCount = 0;
+      var maxPolls = 120; // 120 * 2.5s = 5 minutes max
+
+      while (!pollDone && pollCount < maxPolls) {
+        pollCount++;
+        var pollUrl = 'https://api.anthropic.com/v1/sessions/' + sessionId + '/events';
+        if (lastEventId) pollUrl += '?after_id=' + lastEventId;
+
+        var pollRes = await fetch(pollUrl, {
           method: 'GET',
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'managed-agents-2026-04-01',
-            'Accept': 'text/event-stream',
-          },
+          headers: agentHeaders,
         });
-      }
 
-      if (!streamRes.ok) {
-        var streamErr = await streamRes.text().catch(function() { return ''; });
-        console.error('Stream connect failed:', streamRes.status, streamErr);
-        sendEvent({ type: 'error', message: 'Failed to connect to scan stream (HTTP ' + streamRes.status + '). ' + streamErr.substring(0, 200) });
-        res.end();
-        return;
-      }
+        if (!pollRes.ok) {
+          // Wait and retry on transient errors
+          if (pollRes.status >= 500) { await new Promise(function(r) { setTimeout(r, 3000); }); continue; }
+          var pollErr = await pollRes.text().catch(function() { return ''; });
+          sendEvent({ type: 'error', message: 'Poll failed (HTTP ' + pollRes.status + '): ' + pollErr.substring(0, 200) });
+          break;
+        }
 
-      var reader = streamRes.body.getReader();
-      var decoder = new TextDecoder();
-      var buffer = '';
-      var streamDone = false;
+        var eventsData = await pollRes.json();
+        var events = eventsData.data || eventsData || [];
+        if (!Array.isArray(events)) events = [];
 
-      while (!streamDone) {
-        var chunk = await reader.read();
-        if (chunk.done) { streamDone = true; break; }
+        if (events.length === 0) {
+          // No new events — wait before polling again
+          await new Promise(function(r) { setTimeout(r, 2500); });
+          continue;
+        }
 
-        buffer += decoder.decode(chunk.value, { stream: true });
-        var parts = buffer.split('\n\n');
-        buffer = parts.pop() || '';
+        for (var i = 0; i < events.length; i++) {
+          var evt = events[i];
+          lastEventId = evt.id || lastEventId;
 
-        for (var i = 0; i < parts.length; i++) {
-          var part = parts[i].trim();
-          if (!part) continue;
-
-          var dataMatch = part.match(/^data:\s*(.+)$/m);
-          if (!dataMatch) continue;
-
-          try {
-            var evt = JSON.parse(dataMatch[1]);
-
-            if (evt.type === 'agent.message') {
-              // Per docs: agent.message has .content[] array of blocks
-              var content = '';
-              var contentArr = evt.content || (evt.agent_message && evt.agent_message.content);
-              if (typeof contentArr === 'string') {
-                content = contentArr;
-              } else if (Array.isArray(contentArr)) {
-                content = contentArr.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
-              } else if (contentArr) {
-                content = JSON.stringify(contentArr);
-              }
-              if (content) sendEvent({ type: 'message', content: content });
-            } else if (evt.type === 'agent.tool_use') {
-              // Per docs: agent.tool_use has .name and .input at top level
-              var toolName = evt.name || (evt.tool_use && evt.tool_use.name) || '';
-              var toolInput = evt.input || (evt.tool_use && evt.tool_use.input) || {};
-              var inputSummary = {};
-              if (typeof toolInput.command === 'string') inputSummary.command = toolInput.command.substring(0, 300);
-              else if (typeof toolInput.path === 'string') inputSummary.path = toolInput.path;
-              else if (typeof toolInput.pattern === 'string') inputSummary.pattern = toolInput.pattern;
-              else if (typeof toolInput.file_path === 'string') inputSummary.path = toolInput.file_path;
-              sendEvent({ type: 'tool_use', tool: toolName, input: inputSummary });
-            } else if (evt.type === 'session.status_idle') {
-              sendEvent({ type: 'scan_complete' });
-              streamDone = true;
-              break;
-            } else if (evt.type === 'session.status_terminated') {
-              sendEvent({ type: 'terminated', message: 'Scan session ended unexpectedly.' });
-              streamDone = true;
-              break;
-            }
-          } catch (e) {
-            // Parse error — skip
+          if (evt.type === 'agent.message') {
+            var content = '';
+            var contentArr = evt.content || [];
+            if (typeof contentArr === 'string') content = contentArr;
+            else if (Array.isArray(contentArr)) content = contentArr.filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text || ''; }).join('');
+            if (content) sendEvent({ type: 'message', content: content });
+          } else if (evt.type === 'agent.tool_use') {
+            var toolName = evt.name || '';
+            var toolInput = evt.input || {};
+            var inputSummary = {};
+            if (typeof toolInput.command === 'string') inputSummary.command = toolInput.command.substring(0, 300);
+            else if (typeof toolInput.path === 'string') inputSummary.path = toolInput.path;
+            else if (typeof toolInput.file_path === 'string') inputSummary.path = toolInput.file_path;
+            else if (typeof toolInput.pattern === 'string') inputSummary.pattern = toolInput.pattern;
+            sendEvent({ type: 'tool_use', tool: toolName, input: inputSummary });
+          } else if (evt.type === 'session.status_idle') {
+            sendEvent({ type: 'scan_complete' });
+            pollDone = true;
+            break;
+          } else if (evt.type === 'session.status_terminated') {
+            sendEvent({ type: 'terminated', message: 'Scan session ended.' });
+            pollDone = true;
+            break;
           }
         }
+      }
+
+      if (!pollDone) {
+        sendEvent({ type: 'terminated', message: 'Scan timed out after 5 minutes.' });
       }
 
       // 5. Fetch output files (security scorecard HTML)
