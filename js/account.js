@@ -15,6 +15,10 @@ async function init() {
   var result = await sb.auth.getSession();
   var session = result.data.session;
   if (session) { showDashboard(session.user); updateNav(true); }
+  else {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'signup') switchTab('signup');
+  }
 }
 init();
 
