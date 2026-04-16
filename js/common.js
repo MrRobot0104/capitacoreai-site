@@ -20,6 +20,7 @@ function updateMobileMenuAuth(session) {
   var agentsDiv = document.getElementById('menuMyAgents');
   var navMyAgents = document.getElementById('navMyAgents');
   var navLoginBtn = document.getElementById('navLoginBtn');
+  var navOpenApp = document.getElementById('navOpenApp');
 
   if (!authDiv) return; // page doesn't have the menu elements
 
@@ -28,6 +29,7 @@ function updateMobileMenuAuth(session) {
     if (agentsDiv) agentsDiv.style.display = 'block';
     if (navMyAgents) navMyAgents.style.display = 'inline';
     if (navLoginBtn) navLoginBtn.style.display = 'none';
+    if (navOpenApp) navOpenApp.style.display = 'inline-block';
 
     // Fetch credits and populate menu
     sb.from('profiles').select('token_balance, first_name, username, is_admin').eq('id', session.user.id).single().then(function(result) {
@@ -62,6 +64,7 @@ function updateMobileMenuAuth(session) {
     if (agentsDiv) agentsDiv.style.display = 'none';
     if (navMyAgents) navMyAgents.style.display = 'none';
     if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
+    if (navOpenApp) navOpenApp.style.display = 'none';
   }
 }
 

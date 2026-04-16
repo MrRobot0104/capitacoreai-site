@@ -214,9 +214,11 @@ async function handleLogout() {
 function updateNav(loggedIn) {
   var n = document.getElementById('navMyAgents');
   var l = document.getElementById('navLoginBtn');
+  var o = document.getElementById('navOpenApp');
   var ma = document.getElementById('menuAuth');
   if (n) { n.style.display = loggedIn ? 'inline' : 'none'; if (loggedIn) n.classList.add('active'); }
   if (l) l.style.display = loggedIn ? 'none' : 'inline-block';
+  if (o) o.style.display = loggedIn ? 'inline-block' : 'none';
   if (ma) ma.style.display = loggedIn ? 'none' : 'block';
 }
 

@@ -5,11 +5,13 @@ async function checkMenuAuth(session) {
   }
   var navMyAgents = document.getElementById('navMyAgents');
   var navLoginBtn = document.getElementById('navLoginBtn');
+  var navOpenApp = document.getElementById('navOpenApp');
   if (session) {
     document.getElementById('menuAuth').style.display = 'none';
     document.getElementById('menuMyAgents').style.display = 'block';
     if (navMyAgents) navMyAgents.style.display = 'inline';
     if (navLoginBtn) navLoginBtn.style.display = 'none';
+    if (navOpenApp) navOpenApp.style.display = 'inline-block';
     var result = await sb.from('profiles').select('token_balance, is_admin').eq('id', session.user.id).single();
     var data = result.data;
     var bal = data ? data.token_balance : 0;
@@ -21,6 +23,7 @@ async function checkMenuAuth(session) {
   } else {
     if (navMyAgents) navMyAgents.style.display = 'none';
     if (navLoginBtn) navLoginBtn.style.display = 'inline-block';
+    if (navOpenApp) navOpenApp.style.display = 'none';
   }
 }
 sb.auth.onAuthStateChange(function(event, session) { checkMenuAuth(session); });
